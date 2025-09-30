@@ -103,6 +103,8 @@ import { ReportsTab } from "./admissions/Reports";
 import { NewAdmissionTab } from "./admissions/NewAdmissionTab";
 import { supabase } from "@/lib/supabaseClient";
 
+type AdmissionsView = "new" | "today" | "month" | "year" | "all" | "reports";
+
 export default function Admissions() {
   const [items, setItems] = useState<AdmissionRecord[]>([]);
 
