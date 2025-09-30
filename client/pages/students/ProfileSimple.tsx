@@ -62,23 +62,12 @@ export function ProfileSimple({
         </div>
       </div>
 
-      <div className="space-y-2">
-        <div className="text-xs text-muted-foreground">Documents</div>
-        <div className="space-y-1 text-sm">
-          {student.documents.length === 0 ? (
-            <div className="text-muted-foreground text-xs">No documents uploaded</div>
-          ) : (
-            student.documents.map((d, idx) => (
-              <div key={idx} className="flex items-center justify-between">
-                <a href={d.url} className="underline" target="_blank" rel="noreferrer">
-                  {d.name}
-                </a>
-                <Badge variant={d.verified ? "default" : "secondary"}>
-                  {d.verified ? "Verified" : "Pending"}
-                </Badge>
-              </div>
-            ))
-          )}
+      <div className="space-y-1">
+        <div className="text-xs text-muted-foreground">Enrollment</div>
+        <div className="rounded border p-2 text-sm">
+          <div><span className="text-xs text-muted-foreground">Course:</span> {student.admission.course}</div>
+          <div><span className="text-xs text-muted-foreground">Batch:</span> {student.admission.batch}</div>
+          <div><span className="text-xs text-muted-foreground">Campus:</span> {student.admission.campus}</div>
         </div>
       </div>
     </div>
