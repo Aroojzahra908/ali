@@ -493,6 +493,158 @@ export default function Admissions() {
     [fetchApplications],
   );
 
+  const handleCreated = useCallback(
+    (record: AdmissionRecord) => {
+      setItems((prev) => {
+        const byId = new Map(prev.map((item) => [item.id, item] as const));
+        byId.set(record.id, record);
+        return Array.from(byId.values()).sort((a, b) => {
+          const aTime = new Date(a.createdAt).getTime();
+          const bTime = new Date(b.createdAt).getTime();
+          return bTime - aTime;
+        });
+      });
+      setView("today");
+      setCourseFilter("__all");
+      setCampusFilter("__all");
+      void fetchApplications();
+    },
+    [fetchApplications],
+  );
+
+  const courseOptions = useMemo(() => {
+    const set = new Set<string>();
+    for (const item of items) {
+      if (item.course) set.add(item.course);
+    }
+    return Array.from(set).sort();
+  }, [items]);
+
+  const campusOptions = useMemo(() => {
+    const set = new Set<string>();
+    for (const item of items) {
+      if (item.campus) set.add(item.campus);
+    }
+    return Array.from(set).sort();
+  }, [items]);
+
+  const counts = useMemo(() => {
+    const now = new Date();
+    const dayStart = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+    ).getTime();
+    const dayEnd = dayStart + 24 * 60 * 60 * 1000;
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+    const yearStart = new Date(now.getFullYear(), 0, 1).getTime();
+
+    let today = 0;
+    let month = 0;
+    let year = 0;
+
+    for (const item of items) {
+      const createdTime = new Date(item.createdAt).getTime();
+      if (Number.isNaN(createdTime)) continue;
+      if (createdTime >= dayStart && createdTime < dayEnd) today += 1;
+      if (createdTime >= monthStart) month += 1;
+      if (createdTime >= yearStart) year += 1;
+    }
+
+    return {
+      today,
+      month,
+      year,
+      all: items.length,
+    };
+  }, [items]);
+
+  const filterItems = useCallback(
+    (target: AdmissionsView) => {
+      const now = new Date();
+      const dayStart = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate(),
+      ).getTime();
+      const dayEnd = dayStart + 24 * 60 * 60 * 1000;
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+      const yearStart = new Date(now.getFullYear(), 0, 1).getTime();
+
+      return items.filter((item) => {
+        if (courseFilter !== "__all" && item.course !== courseFilter) return false;
+        if (campusFilter !== "__all" && item.campus !== campusFilter) return false;
+
+        const createdTime = new Date(item.createdAt).getTime();
+        if (Number.isNaN(createdTime)) return target === "all" || target === "reports";
+
+        switch (target) {
+          case "today":
+            return createdTime >= dayStart && createdTime < dayEnd;
+          case "month":
+            return createdTime >= monthStart;
+          case "year":
+            return createdTime >= yearStart;
+          case "all":
+          case "reports":
+            return true;
+          default:
+            return true;
+        }
+      });
+    },
+    [items, courseFilter, campusFilter],
+  );
+
+  const resetFilters = useCallback(() => {
+    setCourseFilter("__all");
+    setCampusFilter("__all");
+  }, []);
+
+  const renderFilters = useCallback(
+    () => (
+      <>
+        <Select value={courseFilter} onValueChange={setCourseFilter}>
+          <SelectTrigger className="w-[160px]">
+            <SelectValue placeholder="Course" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__all">All Courses</SelectItem>
+            {courseOptions.map((course) => (
+              <SelectItem key={course} value={course}>
+                {course}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={campusFilter} onValueChange={setCampusFilter}>
+          <SelectTrigger className="w-[160px]">
+            <SelectValue placeholder="Campus" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__all">All Campuses</SelectItem>
+            {campusOptions.map((campusName) => (
+              <SelectItem key={campusName} value={campusName}>
+                {campusName}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {courseFilter !== "__all" || campusFilter !== "__all" ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={resetFilters}
+          >
+            Reset
+          </Button>
+        ) : null}
+      </>
+    ),
+    [courseFilter, campusFilter, courseOptions, campusOptions, resetFilters],
+  );
+
   return (
     <div className="space-y-4">
       <div>
