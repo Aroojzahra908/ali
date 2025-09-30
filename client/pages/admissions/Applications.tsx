@@ -340,7 +340,11 @@ export function ApplicationsTab({
             <SheetTitle>Admission Details</SheetTitle>
           </SheetHeader>
           {record && onUpdate && (
-            <Details rec={record} onChange={onUpdate} onDelete={(r) => void handleDelete(r)} />
+            <Details
+              rec={record}
+              onChange={onUpdate}
+              onDelete={(r) => void handleDelete(r)}
+            />
           )}
         </SheetContent>
       </Sheet>

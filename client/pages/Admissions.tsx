@@ -108,12 +108,18 @@ export default function Admissions() {
           if (!error && Array.isArray(data)) {
             for (const entry of data) {
               const rawId =
-                entry.app_id ?? entry.id ?? entry.appId ?? entry.appID ?? entry.uuid;
+                entry.app_id ??
+                entry.id ??
+                entry.appId ??
+                entry.appID ??
+                entry.uuid;
               if (!rawId) continue;
               const id = String(rawId);
-              const created = entry.created_at ?? entry.createdAt ?? new Date().toISOString();
+              const created =
+                entry.created_at ?? entry.createdAt ?? new Date().toISOString();
               const installments =
-                Array.isArray(entry.fee_installments) && entry.fee_installments.length > 0
+                Array.isArray(entry.fee_installments) &&
+                entry.fee_installments.length > 0
                   ? entry.fee_installments.map((inst: any, index: number) => ({
                       id: String(inst.id ?? `I${index + 1}`),
                       amount: Number(inst.amount ?? 0) || 0,
@@ -126,7 +132,9 @@ export default function Admissions() {
                         amount: Number(entry.fee_total ?? 0) || 0,
                         dueDate:
                           entry.next_due_date ??
-                          new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+                          new Date(
+                            Date.now() + 7 * 24 * 60 * 60 * 1000,
+                          ).toISOString(),
                       },
                     ];
               const documents = Array.isArray(entry.documents)
@@ -139,7 +147,8 @@ export default function Admissions() {
               records.set(id, {
                 id,
                 createdAt: String(created),
-                status: (entry.status as AdmissionRecord["status"]) ?? "Pending",
+                status:
+                  (entry.status as AdmissionRecord["status"]) ?? "Pending",
                 student: {
                   name: String(entry.name ?? ""),
                   email: String(entry.email ?? ""),
@@ -274,7 +283,10 @@ export default function Admissions() {
           }
         }
       } catch (error) {
-        console.error("Error fetching public_applications from Supabase:", error);
+        console.error(
+          "Error fetching public_applications from Supabase:",
+          error,
+        );
       }
     } else {
       try {

@@ -82,7 +82,10 @@ export function Details({
       upsertStudent(student);
     }
     navigate("/dashboard/students");
-    toast({ title: "Admission confirmed", description: `Student added: ${student.name}` });
+    toast({
+      title: "Admission confirmed",
+      description: `Student added: ${student.name}`,
+    });
   };
 
   const reject = () => {
@@ -300,9 +303,15 @@ export function Details({
 
       <div className="flex flex-wrap gap-2">
         <Button onClick={confirmAdmission}>Approve & Move to Students</Button>
-        <Button variant="outline" onClick={markAllPaid}>Mark as Paid</Button>
-        <Button variant="destructive" onClick={() => onDelete?.(rec)}>Delete</Button>
-        <Button variant="outline" onClick={printForm}>Print Admission Form</Button>
+        <Button variant="outline" onClick={markAllPaid}>
+          Mark as Paid
+        </Button>
+        <Button variant="destructive" onClick={() => onDelete?.(rec)}>
+          Delete
+        </Button>
+        <Button variant="outline" onClick={printForm}>
+          Print Admission Form
+        </Button>
       </div>
     </div>
   );
