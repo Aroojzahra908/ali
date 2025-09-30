@@ -14,9 +14,11 @@ import { useNavigate } from "react-router-dom";
 export function Details({
   rec,
   onChange,
+  onDelete,
 }: {
   rec: AdmissionRecord;
   onChange: (next: AdmissionRecord) => void;
+  onDelete?: (rec: AdmissionRecord) => void;
 }) {
   const { toast } = useToast();
   const [batch, setBatch] = useState(rec.batch);
@@ -30,7 +32,7 @@ export function Details({
     toast({ title: `Approved. Student ID ${id}` });
   };
 
-  const confirmAdmission = () => {
+  const confirmAdmission = async () => {
     const id = rec.studentId || genStudentId(rec.student.name);
     const next: AdmissionRecord = {
       ...rec,
@@ -66,8 +68,20 @@ export function Details({
       documents: [],
       communications: [],
     };
-    upsertStudent(student);
-    navigate("/dashboard/fees#student");
+    try {
+      const { supabase } = await import("@/lib/supabaseClient");
+      if (supabase) {
+        const { error } = await supabase
+          .from("students")
+          .upsert({ id: student.id, record: student }, { onConflict: "id" });
+        if (error) throw error;
+      } else {
+        upsertStudent(student);
+      }
+    } catch {
+      upsertStudent(student);
+    }
+    navigate("/dashboard/students");
     toast({ title: "Admission confirmed", description: `Student added: ${student.name}` });
   };
 
@@ -91,6 +105,20 @@ export function Details({
   const transfer = () => {
     onChange({ ...rec, batch, campus });
     toast({ title: "Transferred" });
+  };
+
+  const markAllPaid = () => {
+    const now = new Date().toISOString();
+    onChange({
+      ...rec,
+      fee: {
+        ...rec.fee,
+        installments: rec.fee.installments.map((i) =>
+          i.paidAt ? i : { ...i, paidAt: now },
+        ),
+      },
+    });
+    toast({ title: "Marked as Paid" });
   };
 
   const notify = (kind: "sms" | "email") => {
@@ -271,6 +299,9 @@ export function Details({
       <Separator />
 
       <div className="flex flex-wrap gap-2">
+        <Button onClick={confirmAdmission}>Approve & Move to Students</Button>
+        <Button variant="outline" onClick={markAllPaid}>Mark as Paid</Button>
+        <Button variant="destructive" onClick={() => onDelete?.(rec)}>Delete</Button>
         <Button variant="outline" onClick={printForm}>Print Admission Form</Button>
       </div>
     </div>
