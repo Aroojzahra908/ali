@@ -568,15 +568,22 @@ export default function Admissions() {
         now.getDate(),
       ).getTime();
       const dayEnd = dayStart + 24 * 60 * 60 * 1000;
-      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+      const monthStart = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        1,
+      ).getTime();
       const yearStart = new Date(now.getFullYear(), 0, 1).getTime();
 
       return items.filter((item) => {
-        if (courseFilter !== "__all" && item.course !== courseFilter) return false;
-        if (campusFilter !== "__all" && item.campus !== campusFilter) return false;
+        if (courseFilter !== "__all" && item.course !== courseFilter)
+          return false;
+        if (campusFilter !== "__all" && item.campus !== campusFilter)
+          return false;
 
         const createdTime = new Date(item.createdAt).getTime();
-        if (Number.isNaN(createdTime)) return target === "all" || target === "reports";
+        if (Number.isNaN(createdTime))
+          return target === "all" || target === "reports";
 
         switch (target) {
           case "today":
@@ -740,7 +747,9 @@ export default function Admissions() {
         </TabsContent>
 
         <TabsContent value="reports" className="space-y-6">
-          <div className="flex flex-wrap justify-end gap-2">{renderFilters()}</div>
+          <div className="flex flex-wrap justify-end gap-2">
+            {renderFilters()}
+          </div>
           <ReportsTab data={filterItems("reports")} />
         </TabsContent>
       </Tabs>

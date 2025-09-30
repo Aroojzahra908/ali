@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type FormEvent,
+} from "react";
 import { Link } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
@@ -51,7 +57,10 @@ type CourseRow = {
   status?: string | null;
 };
 
-function normalizeRecord(source: any, fallback: AdmissionRecord): AdmissionRecord {
+function normalizeRecord(
+  source: any,
+  fallback: AdmissionRecord,
+): AdmissionRecord {
   const nextInstallments = Array.isArray(source?.fee_installments)
     ? source.fee_installments.map((inst: any, index: number) => ({
         id: String(inst?.id ?? `I${index + 1}`),
@@ -76,7 +85,9 @@ function normalizeRecord(source: any, fallback: AdmissionRecord): AdmissionRecor
   return {
     ...fallback,
     id: String(source?.app_id ?? source?.id ?? fallback.id),
-    createdAt: String(source?.created_at ?? source?.createdAt ?? fallback.createdAt),
+    createdAt: String(
+      source?.created_at ?? source?.createdAt ?? fallback.createdAt,
+    ),
     status: (source?.status as AdmissionRecord["status"]) ?? fallback.status,
     course: String(source?.course ?? fallback.course),
     batch: String(source?.batch ?? fallback.batch),
@@ -89,7 +100,9 @@ function normalizeRecord(source: any, fallback: AdmissionRecord): AdmissionRecor
     notes: source?.notes ?? fallback.notes,
     studentId: source?.student_id ?? source?.studentId ?? fallback.studentId,
     rejectedReason:
-      source?.rejected_reason ?? source?.rejectedReason ?? fallback.rejectedReason,
+      source?.rejected_reason ??
+      source?.rejectedReason ??
+      fallback.rejectedReason,
   };
 }
 
@@ -293,7 +306,9 @@ export function NewAdmissionTab({ onCreated }: Props) {
         toast({
           title: "Submission failed",
           description:
-            error instanceof Error ? error.message : "Please try again shortly.",
+            error instanceof Error
+              ? error.message
+              : "Please try again shortly.",
           variant: "destructive",
         });
       } finally {
@@ -377,7 +392,11 @@ export function NewAdmissionTab({ onCreated }: Props) {
                 disabled={loadingCourses || courses.length === 0}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder={loadingCourses ? "Loading courses…" : "Select course"} />
+                  <SelectValue
+                    placeholder={
+                      loadingCourses ? "Loading courses…" : "Select course"
+                    }
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   {courses.map((course) => (
@@ -412,7 +431,9 @@ export function NewAdmissionTab({ onCreated }: Props) {
 
           {selectedCourse ? (
             <div className="rounded-lg border bg-muted/50 p-4 text-sm text-muted-foreground">
-              <div className="font-medium text-foreground">{selectedCourse.name}</div>
+              <div className="font-medium text-foreground">
+                {selectedCourse.name}
+              </div>
               <div>Fee: {currencyDisplay.format(selectedCourse.fees || 0)}</div>
               {selectedCourse.duration ? (
                 <div>Duration: {selectedCourse.duration}</div>

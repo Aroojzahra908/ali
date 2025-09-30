@@ -57,7 +57,7 @@ export function Directory({
   const [version, setVersion] = useState(0);
 
   useEffect(() => {
-    setStatus(lockedStatus ?? (initialStatus ?? ""));
+    setStatus(lockedStatus ?? initialStatus ?? "");
   }, [initialStatus, lockedStatus]);
 
   useEffect(() => {
