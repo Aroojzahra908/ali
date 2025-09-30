@@ -263,12 +263,7 @@ export function Directory({
                     <DropdownMenuContent align="end" className="w-56">
                       <DropdownMenuLabel>Quick Actions</DropdownMenuLabel>
                       <DropdownMenuGroup>
-                        <DropdownMenuItem onClick={() => {
-                          const inst = nextUnpaidInstallment(s);
-                          if (!inst) { toast({ title: "All installments paid" }); return; }
-                          onChange(markInstallmentPaid(s, inst.id));
-                          toast({ title: `Collected ₨${inst.amount.toLocaleString()} (${inst.id})` });
-                        }}>Collect Fee Installment</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => { setOpenId(s.id); }}>View Profile…</DropdownMenuItem>
                       </DropdownMenuGroup>
                       <DropdownMenuSeparator />
                       <DropdownMenuGroup>
