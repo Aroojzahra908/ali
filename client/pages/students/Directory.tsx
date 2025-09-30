@@ -62,6 +62,7 @@ export function Directory({
   initialStatus?: StudentStatus;
   lockedStatus?: StudentStatus;
 }) {
+  const { toast } = useToast();
   const [q, setQ] = useState("");
   const [status, setStatus] = useState<string>(initialStatus ?? "");
   const [course, setCourse] = useState<string>("");
