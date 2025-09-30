@@ -40,17 +40,25 @@ const statuses: StudentStatus[] = [
 export function Directory({
   data,
   onChange,
+  initialStatus,
+  lockedStatus,
 }: {
   data: StudentRecord[];
   onChange: (rec: StudentRecord) => void;
+  initialStatus?: StudentStatus;
+  lockedStatus?: StudentStatus;
 }) {
   const [q, setQ] = useState("");
-  const [status, setStatus] = useState<string>("");
+  const [status, setStatus] = useState<string>(initialStatus ?? "");
   const [course, setCourse] = useState<string>("");
   const [batch, setBatch] = useState<string>("");
   const [campus, setCampus] = useState<string>("");
   const [openId, setOpenId] = useState<string | null>(null);
   const [version, setVersion] = useState(0);
+
+  useEffect(() => {
+    setStatus(lockedStatus ?? initialStatus ?? "");
+  }, [initialStatus, lockedStatus]);
 
   useEffect(() => {
     const bump = () => setVersion((v) => v + 1);
@@ -74,6 +82,8 @@ export function Directory({
     new Set(data.map((d) => d.admission.campus)),
   ).sort();
 
+  const effectiveStatus = lockedStatus ?? status;
+
   const filtered = useMemo(() => {
     const s = q.toLowerCase();
     return data.filter(
@@ -82,12 +92,12 @@ export function Directory({
           d.name.toLowerCase().includes(s) ||
           d.id.toLowerCase().includes(s) ||
           d.admission.course.toLowerCase().includes(s)) &&
-        (!status || d.status === status) &&
+        (!effectiveStatus || d.status === effectiveStatus) &&
         (!course || d.admission.course === course) &&
         (!batch || d.admission.batch === batch) &&
         (!campus || d.admission.campus === campus),
     );
-  }, [data, q, status, course, batch, campus]);
+  }, [data, q, effectiveStatus, course, batch, campus]);
 
   const rec = data.find((d) => d.id === openId) || null;
 
@@ -99,22 +109,28 @@ export function Directory({
           value={q}
           onChange={(e) => setQ(e.target.value)}
         />
-        <Select
-          value={status}
-          onValueChange={(v) => setStatus(v === "__all" ? "" : v)}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="__all">All Status</SelectItem>
-            {statuses.map((s) => (
-              <SelectItem key={s} value={s}>
-                {s}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {lockedStatus ? (
+          <div className="rounded-md border px-3 py-2 text-sm font-medium">
+            {lockedStatus} students
+          </div>
+        ) : (
+          <Select
+            value={status || "__all"}
+            onValueChange={(v) => setStatus(v === "__all" ? "" : v)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all">All Status</SelectItem>
+              {statuses.map((s) => (
+                <SelectItem key={s} value={s}>
+                  {s}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
         <Select
           value={course}
           onValueChange={(v) => setCourse(v === "__all" ? "" : v)}
@@ -167,7 +183,7 @@ export function Directory({
           variant="outline"
           onClick={() => {
             setQ("");
-            setStatus("");
+            setStatus(lockedStatus ?? "");
             setCourse("");
             setBatch("");
             setCampus("");
