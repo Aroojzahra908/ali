@@ -1,415 +1,95 @@
-// import { useEffect, useState, FormEvent } from "react";
-// import { Label } from "@/components/ui/label";
-// import { Input } from "@/components/ui/input";
-// import { Textarea } from "@/components/ui/textarea";
-// import { Button } from "@/components/ui/button";
-// import { useToast } from "@/hooks/use-toast";
-// import { COURSES } from "@/data/courses";
-// import { addPublicApplication, addPublicEnquiry } from "@/lib/publicStore";
-// import { createApplication, createEnquiry } from "@/lib/publicApi";
-// import { getStoredCourses } from "@/lib/courseStore";
-// import { addStudent } from "@/lib/studentStore";
+import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import {
+  CheckCircle2,
+  Clock,
+  FileText,
+  GraduationCap,
+  MapPin,
+  Phone,
+  ShieldCheck,
+  CalendarDays,
+} from "lucide-react";
 
-// export default function AdmissionForm() {
-//   const { toast } = useToast();
-
-//   const [courseOptions, setCourseOptions] = useState<
-//     { id: string; name: string }[]
-//   >(() => {
-//     const base = COURSES.map((c) => ({ id: c.id, name: c.name }));
-//     try {
-//       const stored = getStoredCourses().map((c) => ({
-//         id: c.id,
-//         name: c.name,
-//       }));
-//       const m = new Map<string, { id: string; name: string }>();
-//       [...base, ...stored].forEach((it) => {
-//         if (!m.has(it.name)) m.set(it.name, it);
-//       });
-//       return Array.from(m.values());
-//     } catch {
-//       return base;
-//     }
-//   });
-
-//   const params = new URLSearchParams(location.search);
-//   const preCourse =
-//     params.get("course") || (courseOptions[0]?.name ?? COURSES[0].name);
-
-//   const [fullName, setFullName] = useState("");
-//   const [email, setEmail] = useState("");
-//   const [phone, setPhone] = useState("");
-//   const [course, setCourse] = useState(preCourse);
-//   const [startDate, setStartDate] = useState("");
-//   const [message, setMessage] = useState("");
-//   const [submitting, setSubmitting] = useState(false);
-
-//   useEffect(() => {
-//     // keep URL param selection in state if query changes
-//     const c = new URLSearchParams(location.search).get("course");
-//     if (c) setCourse(c);
-//   }, [location.search]);
-
-//   useEffect(() => {
-//     const update = () => {
-//       const base = COURSES.map((c) => ({ id: c.id, name: c.name }));
-//       const stored = getStoredCourses().map((c) => ({
-//         id: c.id,
-//         name: c.name,
-//       }));
-//       const m = new Map<string, { id: string; name: string }>();
-//       [...base, ...stored].forEach((it) => {
-//         if (!m.has(it.name)) m.set(it.name, it);
-//       });
-//       const next = Array.from(m.values());
-//       setCourseOptions(next);
-//       if (!next.find((o) => o.name === course)) {
-//         setCourse(next[0]?.name ?? "");
-//       }
-//     };
-//     window.addEventListener("courses:changed", update as EventListener);
-//     window.addEventListener("storage", update as EventListener);
-//     return () => {
-//       window.removeEventListener("courses:changed", update as EventListener);
-//       window.removeEventListener("storage", update as EventListener);
-//     };
-//   }, [course]);
-
-//   const onSubmit = async (e: FormEvent) => {
-//     e.preventDefault();
-//     setSubmitting(true);
-//     await new Promise((r) => setTimeout(r, 300));
-
-//     try {
-//       await Promise.all([
-//         createEnquiry({
-//           name: fullName,
-//           course,
-//           contact: phone,
-//           email,
-//           preferredStart: startDate,
-//         }),
-//         createApplication({
-//           name: fullName,
-//           email,
-//           phone,
-//           course,
-//           preferredStart: startDate,
-//         }),
-//       ]);
-//     } catch {
-//       // Fallback to local storage if server not reachable
-//       addPublicEnquiry({
-//         name: fullName,
-//         course,
-//         contact: phone,
-//         email,
-//         preferredStart: startDate,
-//       });
-//       addPublicApplication({
-//         name: fullName,
-//         email,
-//         phone,
-//         course,
-//         preferredStart: startDate,
-//       });
-//     }
-
-//     addStudent({
-//       name: fullName,
-//       email,
-//       phone,
-//       course,
-//       preferredStart: startDate,
-//     });
-
-//     setSubmitting(false);
-//     toast({
-//       title: "Application submitted",
-//       description: "Admin panel me record add ho gaya hai.",
-//     });
-//     setFullName("");
-//     setEmail("");
-//     setPhone("");
-//     setCourse(courseOptions[0]?.name ?? COURSES[0].name);
-//     setStartDate("");
-//     setMessage("");
-//   };
-
-//   return (
-//     <div className="mx-auto w-full max-w-xl">
-//       <h2 className="text-2xl font-bold">Admission Form</h2>
-//       <p className="mt-1 text-sm text-muted-foreground">
-//         Student Name, Email, Phone, Course select, Starting Date preference.
-//       </p>
-//       <form className="mt-6 space-y-4" onSubmit={onSubmit}>
-//         <div className="space-y-1.5">
-//           <Label htmlFor="fullName">Student Name</Label>
-//           <Input
-//             id="fullName"
-//             value={fullName}
-//             onChange={(e) => setFullName(e.target.value)}
-//             required
-//           />
-//         </div>
-//         <div className="grid gap-4 sm:grid-cols-2">
-//           <div className="space-y-1.5">
-//             <Label htmlFor="email">Email</Label>
-//             <Input
-//               id="email"
-//               type="email"
-//               value={email}
-//               onChange={(e) => setEmail(e.target.value)}
-//               required
-//             />
-//           </div>
-//           <div className="space-y-1.5">
-//             <Label htmlFor="phone">Phone</Label>
-//             <Input
-//               id="phone"
-//               value={phone}
-//               onChange={(e) => setPhone(e.target.value)}
-//               required
-//             />
-//           </div>
-//         </div>
-//         <div className="grid gap-4 sm:grid-cols-2">
-//           <div className="space-y-1.5">
-//             <Label htmlFor="course">Select Course</Label>
-//             <select
-//               id="course"
-//               className="h-10 w-full rounded-md border bg-background px-3 text-sm"
-//               value={course}
-//               onChange={(e) => setCourse(e.target.value)}
-//             >
-//               {courseOptions.map((c) => (
-//                 <option key={c.id} value={c.name}>
-//                   {c.name}
-//                 </option>
-//               ))}
-//             </select>
-//           </div>
-//           <div className="space-y-1.5">
-//             <Label htmlFor="start">Starting Date Preference</Label>
-//             <Input
-//               id="start"
-//               type="date"
-//               value={startDate}
-//               onChange={(e) => setStartDate(e.target.value)}
-//             />
-//           </div>
-//         </div>
-//         <div className="space-y-1.5">
-//           <Label htmlFor="message">Message (optional)</Label>
-//           <Textarea
-//             id="message"
-//             value={message}
-//             onChange={(e) => setMessage(e.target.value)}
-//             placeholder="Any notes or questions"
-//           />
-//         </div>
-//         <Button type="submit" disabled={submitting} className="w-full">
-//           {submitting ? "Submitting…" : "Submit"}
-//         </Button>
-//       </form>
-//     </div>
-//   );
-// }
-
-// import { useState, FormEvent } from "react";
-// import { Input } from "@/components/ui/input";
-// import { Textarea } from "@/components/ui/textarea";
-// import { Label } from "@/components/ui/label";
-// import { Button } from "@/components/ui/button";
-// import { useToast } from "@/hooks/use-toast";
-// import { supabase } from "@/lib/supabaseClient";
-// import { COURSES } from "@/data/courses";
-// import { useNavigate } from "react-router-dom";
-
-// export default function AdmissionForm() {
-//   const { toast } = useToast();
-//   const navigate = useNavigate();
-//   const [fullName, setFullName] = useState("");
-//   const [email, setEmail] = useState("");
-//   const [phone, setPhone] = useState("");
-//   const [course, setCourse] = useState(COURSES[0]?.name || "");
-//   const [startDate, setStartDate] = useState("");
-//   const [message, setMessage] = useState("");
-//   const [submitting, setSubmitting] = useState(false);
-//   const [voucher, setVoucher] = useState<null | {
-//     id: string;
-//     amount: number;
-//     course: string;
-//   }>(null);
-
-//   const courseFee = (name: string) => COURSES.find((c) => c.name === name)?.fees || 0;
-
-//   const onSubmit = async (e: FormEvent) => {
-//     e.preventDefault();
-//     setSubmitting(true);
-
-//     const amount = courseFee(course);
-
-//     const { error } = await supabase.from("applications").insert([
-//       {
-//         name: fullName,
-//         email,
-//         phone,
-//         course,
-//         start_date: startDate || null,
-//         message: message || null,
-//         batch: "TBD",
-//         campus: "Main",
-//         fee_total: amount,
-//         fee_installments: [{ id: "V1", amount, dueDate: new Date().toISOString() }],
-//         documents: [],
-//       },
-//     ]);
-
-//     setSubmitting(false);
-
-//     if (error) {
-//       toast({ title: "Error", description: error.message });
-//       return;
-//     }
-
-//     setVoucher({ id: `VCH-${Date.now()}`, amount, course });
-//     toast({ title: "Fee voucher generated", description: `Amount ₨ ${amount.toLocaleString()}` });
-//   };
-
-//   async function markPaid() {
-//     if (!voucher) return;
-//     const studentId = `STU-${Date.now()}`;
-//     const record = {
-//       id: studentId,
-//       record: {
-//         id: studentId,
-//         name: fullName,
-//         email,
-//         phone,
-//         status: "Current",
-//         admission: {
-//           course,
-//           batch: "UNASSIGNED",
-//           campus: "Main",
-//           date: new Date().toISOString(),
-//         },
-//         fee: {
-//           total: voucher.amount,
-//           installments: [
-//             {
-//               id: "V1",
-//               amount: voucher.amount,
-//               dueDate: new Date().toISOString(),
-//               paidAt: new Date().toISOString(),
-//             },
-//           ],
-//         },
-//         attendance: [],
-//         documents: [],
-//         communications: [],
-//       },
-//     } as any;
-//     try {
-//       const { error } = await supabase
-//         .from("students")
-//         .upsert(record, { onConflict: "id" });
-//       if (error) throw error;
-//     } catch {
-//       try {
-//         const { upsertStudent } = await import("@/lib/studentStore");
-//         upsertStudent(record.record);
-//       } catch {}
-//     }
-//     toast({ title: "Fee received", description: "Student added to directory." });
-//     navigate("/dashboard/students");
-//   }
-
-//   function printVoucher(v: { id: string; amount: number; course: string }, name: string) {
-//     const w = window.open("", "_blank");
-//     if (!w) return;
-//     const html = `<!doctype html><html><head><meta charset='utf-8'><title>Voucher ${v.id}</title>
-//       <style>body{font-family:ui-sans-serif,system-ui;line-height:1.5;padding:24px}h1{font-size:18px;margin:0 0 8px}table{border-collapse:collapse;width:100%}td{padding:6px 8px;border:1px solid #e5e7eb}</style>
-//       </head><body>
-//       <h1>Fee Voucher</h1>
-//       <table><tr><td>Voucher #</td><td>${v.id}</td></tr>
-//       <tr><td>Student</td><td>${name}</td></tr>
-//       <tr><td>Course</td><td>${v.course}</td></tr>
-//       <tr><td>Amount</td><td>₨ ${v.amount.toLocaleString()}</td></tr></table>
-//       <script>window.print()<\/script></body></html>`;
-//     w.document.write(html);
-//     w.document.close();
-//   }
-
-//   return (
-//     <div className="mx-auto w-full max-w-xl">
-//       <h2 className="text-2xl font-bold">Admission Form</h2>
-//       {!voucher ? (
-//         <form className="mt-6 space-y-4" onSubmit={onSubmit}>
-//           <div>
-//             <Label htmlFor="fullName">Student Name</Label>
-//             <Input id="fullName" value={fullName} onChange={(e) => setFullName(e.target.value)} required />
-//           </div>
-//           <div>
-//             <Label htmlFor="email">Email</Label>
-//             <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-//           </div>
-//           <div>
-//             <Label htmlFor="phone">Phone</Label>
-//             <Input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} required />
-//           </div>
-//           <div>
-//             <Label htmlFor="course">Select Course</Label>
-//             <select id="course" className="w-full rounded-md border px-3 py-2" value={course} onChange={(e) => setCourse(e.target.value)}>
-//               {COURSES.map((c) => (
-//                 <option key={c.id} value={c.name}>
-//                   {c.name} — ₨ {c.fees.toLocaleString()}
-//                 </option>
-//               ))}
-//             </select>
-//           </div>
-//           <div>
-//             <Label htmlFor="start">Starting Date Preference</Label>
-//             <Input id="start" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
-//           </div>
-//           <div>
-//             <Label htmlFor="message">Message (optional)</Label>
-//             <Textarea id="message" value={message} onChange={(e) => setMessage(e.target.value)} />
-//           </div>
-//           <Button type="submit" disabled={submitting}>{submitting ? "Submitting…" : "Generate Fee Voucher"}</Button>
-//         </form>
-//       ) : (
-//         <div className="mt-6 space-y-4 rounded-md border p-4">
-//           <div className="text-lg font-semibold">Fee Voucher</div>
-//           <div className="text-sm text-muted-foreground">Voucher #: {voucher.id}</div>
-//           <div className="text-sm">Student: {fullName}</div>
-//           <div className="text-sm">Course: {voucher.course}</div>
-//           <div className="text-sm">Amount: ₨ {voucher.amount.toLocaleString()}</div>
-//           <div className="flex gap-2 pt-2">
-//             <Button onClick={markPaid}>Mark Fee as Paid</Button>
-//             <Button variant="outline" onClick={() => setVoucher(null)}>Edit Details</Button>
-//             <Button variant="outline" onClick={() => printVoucher(voucher, fullName)}>Print Voucher</Button>
-//           </div>
-//         </div>
-//       )}
-//     </div>
-//   );
-// }
-
-import { useState, useEffect, FormEvent } from "react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabaseClient";
-import { useNavigate } from "react-router-dom";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  VoucherCard,
+  type VoucherDetails,
+} from "@/components/admissions/VoucherCard";
 
-// Same Course type as in admin panel
+const currencyDisplay = new Intl.NumberFormat("en-PK", {
+  style: "currency",
+  currency: "PKR",
+  maximumFractionDigits: 0,
+});
+
+const heroHighlights = [
+  {
+    icon: GraduationCap,
+    label: "Industry mentors",
+  },
+  {
+    icon: Clock,
+    label: "Flexible batches",
+  },
+  {
+    icon: ShieldCheck,
+    label: "Placement support",
+  },
+];
+
+const processSteps = [
+  {
+    title: "Application review",
+    description:
+      "An admissions counselor validates your information and confirms seat availability.",
+    icon: FileText,
+  },
+  {
+    title: "Counselor call",
+    description:
+      "We connect within 24 hours to guide you on the onboarding journey and answer questions.",
+    icon: Phone,
+  },
+  {
+    title: "Voucher submission",
+    description:
+      "Carry the voucher to campus or email it to confirm fee payment and lock your seat.",
+    icon: CheckCircle2,
+  },
+];
+
 type Course = {
   id: string;
   name: string;
-  category: "Development" | "Design" | "Data" | "Marketing";
+  category: string;
   duration: string;
   fees: number;
   description?: string;
@@ -419,9 +99,176 @@ type Course = {
   created_at: string;
 };
 
+type SubmissionFields = {
+  name: string;
+  email: string;
+  phone: string;
+  courseName: string;
+  amount: number;
+};
+
+const VOUCHER_DUE_OFFSET = 7 * 24 * 60 * 60 * 1000;
+
+function futureDateLabel(value?: string | null) {
+  if (!value) return "Flexible schedule";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Flexible schedule";
+  return date.toLocaleDateString();
+}
+
+function buildVoucherId(reference: string) {
+  const suffix = reference.slice(-6).padStart(6, "0");
+  return `VCH-${suffix.toUpperCase()}`;
+}
+
+function printVoucher(voucher: VoucherDetails) {
+  const amount = currencyDisplay.format(voucher.amount || 0);
+  const issueDate = new Date(voucher.issueDate).toLocaleDateString();
+  const dueDate = new Date(voucher.dueDate).toLocaleDateString();
+  const doc = window.open("", "_blank", "noopener,noreferrer");
+  if (!doc) return;
+
+  const html = `<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Voucher ${voucher.id}</title>
+<style>
+  :root {
+    color-scheme: light;
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  body {
+    margin: 0;
+    padding: 32px;
+    background: #f1f5f9;
+  }
+  .voucher {
+    max-width: 720px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 30px 70px rgba(79, 70, 229, 0.25);
+  }
+  .voucher__header {
+    padding: 36px;
+    background: linear-gradient(135deg, #5b21b6, #4c1d95, #1d4ed8);
+    color: white;
+    position: relative;
+  }
+  .voucher__header::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 80% 20%, rgba(255,255,255,0.25), transparent 60%);
+    pointer-events: none;
+  }
+  .voucher__tag {
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    opacity: 0.8;
+  }
+  .voucher__title {
+    margin: 16px 0 4px;
+    font-size: 36px;
+    font-weight: 700;
+  }
+  .voucher__reference {
+    font-size: 14px;
+    opacity: 0.85;
+  }
+  .voucher__body {
+    padding: 36px;
+  }
+  .voucher__row {
+    display: grid;
+    gap: 16px;
+  }
+  .voucher__row--three {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  }
+  .voucher__block {
+    border-radius: 18px;
+    background: #f8fafc;
+    padding: 20px;
+  }
+  .voucher__label {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: #64748b;
+  }
+  .voucher__value {
+    font-size: 18px;
+    font-weight: 600;
+    color: #111827;
+    margin-top: 4px;
+  }
+  .voucher__amount {
+    font-size: 34px;
+    font-weight: 700;
+    color: #1d4ed8;
+  }
+  .voucher__footer {
+    margin-top: 24px;
+    font-size: 12px;
+    color: #475569;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+  <div class="voucher">
+    <div class="voucher__header">
+      <div class="voucher__tag">EDUADMIN INSTITUTE</div>
+      <div class="voucher__title">Admission Voucher</div>
+      <div class="voucher__reference">Reference ${voucher.reference}</div>
+    </div>
+    <div class="voucher__body">
+      <div class="voucher__row voucher__row--three">
+        <div class="voucher__block">
+          <div class="voucher__label">Student</div>
+          <div class="voucher__value">${voucher.studentName}</div>
+          <div class="voucher__value" style="font-size:14px; color:#475569;">${voucher.email}</div>
+          <div class="voucher__value" style="font-size:14px; color:#475569;">${voucher.phone}</div>
+        </div>
+        <div class="voucher__block">
+          <div class="voucher__label">Course</div>
+          <div class="voucher__value">${voucher.courseName}</div>
+          <div class="voucher__value" style="font-size:14px; color:#475569;">Campus: ${voucher.campus}</div>
+        </div>
+        <div class="voucher__block">
+          <div class="voucher__label">Voucher ID</div>
+          <div class="voucher__value">${voucher.id}</div>
+          <div class="voucher__value" style="font-size:14px; color:#475569;">Issued ${issueDate}</div>
+          <div class="voucher__value" style="font-size:14px; color:#ef4444;">Due ${dueDate}</div>
+        </div>
+      </div>
+      <div class="voucher__block" style="margin-top: 24px; text-align:center;">
+        <div class="voucher__label">Payable Amount</div>
+        <div class="voucher__amount">${amount}</div>
+        <div style="margin-top:8px; font-size:13px; color:#475569;">
+          Present this voucher at campus reception or email admissions@eduadmin.pk
+          to confirm your enrollment.
+        </div>
+      </div>
+      <div class="voucher__footer">
+        Thank you for choosing EduAdmin. Our counselor will reach out shortly with next steps.
+      </div>
+    </div>
+  </div>
+  <script>window.print();</script>
+</body>
+</html>`;
+
+  doc.document.write(html);
+  doc.document.close();
+}
+
 export default function AdmissionForm() {
   const { toast } = useToast();
-  const navigate = useNavigate();
 
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -430,246 +277,497 @@ export default function AdmissionForm() {
   const [startDate, setStartDate] = useState("");
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [voucher, setVoucher] = useState<null | {
-    id: string;
-    amount: number;
-    course: string;
-  }>(null);
   const [courses, setCourses] = useState<Course[]>([]);
+  const [loadingCourses, setLoadingCourses] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [showVoucher, setShowVoucher] = useState(false);
+  const [voucher, setVoucher] = useState<VoucherDetails | null>(null);
 
-  // Fetch courses dynamically from Supabase
-  const fetchCourses = async () => {
-    const { data, error } = await supabase
-      .from("courses")
-      .select("*")
-      .eq("status", "live")
-      .order("created_at", { ascending: false });
+  const selectedCourse = useMemo(
+    () => courses.find((c) => c.id === course) ?? null,
+    [courses, course],
+  );
 
-    if (error) {
-      console.error("Error fetching courses:", error.message);
-    } else if (data?.length) {
-      setCourses(data);
-      setCourse(data[0].name); // set first course as default
-    }
-  };
-
-  useEffect(() => {
-    fetchCourses();
-  }, []);
-
-  const courseFee = (name: string) =>
-    courses.find((c) => c.name === name)?.fees || 0;
-
-  const onSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    setSubmitting(true);
-
-    const amount = courseFee(course);
-
-    const { error } = await supabase.from("applications").insert([
-      {
-        name: fullName,
-        email,
-        phone,
-        course,
-        start_date: startDate || null,
-        message: message || null,
-        batch: "TBD",
-        campus: "Main",
-        fee_total: amount,
-        fee_installments: [
-          { id: "V1", amount, dueDate: new Date().toISOString() },
-        ],
-        documents: [],
-      },
-    ]);
-
-    setSubmitting(false);
-
-    if (error) {
-      toast({ title: "Error", description: error.message });
+  const fetchCourses = useCallback(async () => {
+    if (!supabase) {
+      setCourses([]);
+      setLoadingCourses(false);
       return;
     }
 
-    toast({
-      title: "Application submitted",
-      description: "Admin panel me record add ho gaya hai.",
-    });
-
-    setFullName("");
-    setEmail("");
-    setPhone("");
-    setCourse(courses[0]?.name || "");
-    setStartDate("");
-    setMessage("");
-  };
-
-  async function markPaid() {
-    if (!voucher) return;
-    const studentId = `STU-${Date.now()}`;
-    const record = {
-      id: studentId,
-      record: {
-        id: studentId,
-        name: fullName,
-        email,
-        phone,
-        status: "Current",
-        admission: {
-          course,
-          batch: "UNASSIGNED",
-          campus: "Main",
-          date: new Date().toISOString(),
-        },
-        fee: {
-          total: voucher.amount,
-          installments: [
-            {
-              id: "V1",
-              amount: voucher.amount,
-              dueDate: new Date().toISOString(),
-              paidAt: new Date().toISOString(),
-            },
-          ],
-        },
-        attendance: [],
-        documents: [],
-        communications: [],
-      },
-    } as any;
-
+    setLoadingCourses(true);
     try {
-      const { error } = await supabase
-        .from("students")
-        .upsert(record, { onConflict: "id" });
-      if (error) throw error;
-    } catch {
-      try {
-        const { upsertStudent } = await import("@/lib/studentStore");
-        upsertStudent(record.record);
-      } catch {}
+      const { data, error } = await supabase
+        .from<Course>("courses")
+        .select("*")
+        .eq("status", "live")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Error fetching courses:", error.message);
+        toast({
+          title: "Unable to load courses",
+          description: "Please try again in a moment.",
+        });
+        return;
+      }
+
+      if (Array.isArray(data)) {
+        setCourses(data);
+      }
+    } finally {
+      setLoadingCourses(false);
     }
+  }, [toast]);
 
-    toast({
-      title: "Fee received",
-      description: "Student added to directory.",
-    });
-    navigate("/dashboard/students");
-  }
+  useEffect(() => {
+    void fetchCourses();
+  }, [fetchCourses]);
 
-  function printVoucher(
-    v: { id: string; amount: number; course: string },
-    name: string,
-  ) {
-    const w = window.open("", "_blank");
-    if (!w) return;
-    const html = `<!doctype html><html><head><meta charset='utf-8'><title>Voucher ${v.id}</title>
-      <style>body{font-family:ui-sans-serif,system-ui;line-height:1.5;padding:24px}h1{font-size:18px;margin:0 0 8px}table{border-collapse:collapse;width:100%}td{padding:6px 8px;border:1px solid #e5e7eb}</style>
-      </head><body>
-      <h1>Fee Voucher</h1>
-      <table><tr><td>Voucher #</td><td>${v.id}</td></tr>
-      <tr><td>Student</td><td>${name}</td></tr>
-      <tr><td>Course</td><td>${v.course}</td></tr>
-      <tr><td>Amount</td><td>₨ ${v.amount.toLocaleString()}</td></tr></table>
-      <script>window.print()<\/script></body></html>`;
-    w.document.write(html);
-    w.document.close();
-  }
+  useEffect(() => {
+    if (courses.length > 0 && !course) {
+      setCourse(courses[0].id);
+    }
+  }, [courses, course]);
+
+  const minStartDate = useMemo(
+    () => new Date().toISOString().split("T")[0],
+    [],
+  );
+
+  const handleSubmit = useCallback(
+    async (event: FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      if (submitting) return;
+
+      if (!supabase) {
+        toast({
+          title: "Configuration missing",
+          description: "Database connection is not available right now.",
+        });
+        return;
+      }
+
+      if (!selectedCourse) {
+        toast({
+          title: "Pick a course",
+          description: "Please choose a course to continue.",
+        });
+        return;
+      }
+
+      setSubmitting(true);
+
+      const trimmed: SubmissionFields = {
+        name: fullName.trim(),
+        email: email.trim(),
+        phone: phone.trim(),
+        courseName: selectedCourse.name,
+        amount: selectedCourse.fees || 0,
+      };
+
+      const issueDateISO = new Date().toISOString();
+      const dueDateISO = startDate
+        ? new Date(startDate).toISOString()
+        : new Date(Date.now() + VOUCHER_DUE_OFFSET).toISOString();
+
+      try {
+        const { data, error } = await supabase
+          .from("applications")
+          .insert([
+            {
+              name: trimmed.name,
+              email: trimmed.email,
+              phone: trimmed.phone,
+              course: trimmed.courseName,
+              start_date: startDate || null,
+              message: message ? message.trim() : null,
+              campus: "Main",
+              batch: "TBD",
+              status: "Pending",
+              fee_total: trimmed.amount,
+              fee_installments: [
+                {
+                  id: "V1",
+                  amount: trimmed.amount,
+                  dueDate: dueDateISO,
+                },
+              ],
+              documents: [],
+            },
+          ])
+          .select("id, app_id, created_at");
+
+        if (error) {
+          throw error;
+        }
+
+        const inserted = data?.[0];
+        const reference = inserted
+          ? String(inserted.app_id ?? inserted.id)
+          : `APP-${Date.now()}`;
+        const voucherDetails: VoucherDetails = {
+          id: buildVoucherId(reference),
+          reference,
+          amount: trimmed.amount,
+          courseName: trimmed.courseName,
+          studentName: trimmed.name,
+          email: trimmed.email,
+          phone: trimmed.phone,
+          issueDate: inserted?.created_at ?? issueDateISO,
+          dueDate: dueDateISO,
+          campus: "Main Campus",
+        };
+
+        setVoucher(voucherDetails);
+        setDialogOpen(true);
+        setShowVoucher(false);
+
+        toast({
+          title: "Application submitted",
+          description: "Thank you! Our counselor will contact you shortly.",
+        });
+
+        setFullName("");
+        setEmail("");
+        setPhone("");
+        setMessage("");
+        setStartDate("");
+      } catch (error) {
+        const description =
+          error instanceof Error ? error.message : "Please try again.";
+        toast({
+          title: "Submission failed",
+          description,
+        });
+      } finally {
+        setSubmitting(false);
+      }
+    },
+    [
+      fullName,
+      email,
+      phone,
+      message,
+      startDate,
+      selectedCourse,
+      submitting,
+      toast,
+    ],
+  );
 
   return (
-    <div className="mx-auto w-full max-w-xl">
-      <h2 className="text-2xl font-bold">Admission Form</h2>
-      {!voucher ? (
-        <form className="mt-6 space-y-4" onSubmit={onSubmit}>
-          <div>
-            <Label htmlFor="fullName">Student Name</Label>
-            <Input
-              id="fullName"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              required
-            />
+    <div className="mx-auto w-full max-w-6xl space-y-10 py-12">
+      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-primary via-indigo-500 to-sky-500 p-10 text-primary-foreground shadow-xl">
+        <div className="absolute -right-28 top-8 h-56 w-56 rounded-full bg-white/20 blur-3xl" />
+        <div className="space-y-6">
+          <span className="inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-white/80">
+            Admissions 2024
+          </span>
+          <div className="space-y-3">
+            <h1 className="text-4xl font-semibold tracking-tight text-white sm:text-5xl">
+              Begin your learning journey today
+            </h1>
+            <p className="max-w-2xl text-base text-white/85">
+              Complete the admission form below and our team will reach out with
+              onboarding details, schedules, and scholarship options within 24
+              hours.
+            </p>
           </div>
-          <div>
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
-          <div>
-            <Label htmlFor="phone">Phone</Label>
-            <Input
-              id="phone"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              required
-            />
-          </div>
-          <div>
-            <Label htmlFor="course">Select Course</Label>
-            <select
-              id="course"
-              className="w-full rounded-md border px-3 py-2"
-              value={course}
-              onChange={(e) => setCourse(e.target.value)}
-            >
-              {courses.map((c) => (
-                <option key={c.id} value={c.name}>
-                  {c.name} — ₨ {c.fees.toLocaleString()}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <Label htmlFor="start">Starting Date Preference</Label>
-            <Input
-              id="start"
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-            />
-          </div>
-          <div>
-            <Label htmlFor="message">Message (optional)</Label>
-            <Textarea
-              id="message"
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-            />
-          </div>
-          <Button type="submit" disabled={submitting}>
-            {submitting ? "Submitting…" : "Submit"}
-          </Button>
-        </form>
-      ) : (
-        <div className="mt-6 space-y-4 rounded-md border p-4">
-          <div className="text-lg font-semibold">Fee Voucher</div>
-          <div className="text-sm text-muted-foreground">
-            Voucher #: {voucher.id}
-          </div>
-          <div className="text-sm">Student: {fullName}</div>
-          <div className="text-sm">Course: {voucher.course}</div>
-          <div className="text-sm">
-            Amount: ₨ {voucher.amount.toLocaleString()}
-          </div>
-          <div className="flex gap-2 pt-2">
-            <Button onClick={markPaid}>Mark Fee as Paid</Button>
-            <Button variant="outline" onClick={() => setVoucher(null)}>
-              Edit Details
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => printVoucher(voucher, fullName)}
-            >
-              Print Voucher
-            </Button>
+          <div className="flex flex-wrap gap-3">
+            {heroHighlights.map(({ icon: Icon, label }) => (
+              <span
+                key={label}
+                className="inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-sm font-medium text-white"
+              >
+                <Icon className="h-4 w-4" />
+                {label}
+              </span>
+            ))}
           </div>
         </div>
+      </section>
+
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+        <Card className="border-none shadow-lg shadow-primary/5">
+          <CardHeader>
+            <CardTitle>Admission details</CardTitle>
+            <CardDescription>
+              Share your contact information and preferred course to reserve
+              your counseling slot.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form className="grid gap-6" onSubmit={handleSubmit}>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="fullName">Student name</Label>
+                  <Input
+                    id="fullName"
+                    placeholder="Your full name"
+                    value={fullName}
+                    onChange={(event) => setFullName(event.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="name@email.com"
+                    value={email}
+                    onChange={(event) => setEmail(event.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Phone</Label>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    placeholder="03XX-XXXXXXX"
+                    value={phone}
+                    onChange={(event) => setPhone(event.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="course">Select course</Label>
+                  <Select
+                    value={course}
+                    onValueChange={setCourse}
+                    disabled={
+                      loadingCourses || submitting || courses.length === 0
+                    }
+                  >
+                    <SelectTrigger id="course">
+                      <SelectValue
+                        placeholder={
+                          loadingCourses
+                            ? "Loading courses..."
+                            : "Choose a course"
+                        }
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {courses.map((item) => (
+                        <SelectItem key={item.id} value={item.id}>
+                          {item.name} — {currencyDisplay.format(item.fees)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    Live batches only — additional options will appear soon.
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="start">Preferred start date</Label>
+                  <Input
+                    id="start"
+                    type="date"
+                    min={minStartDate}
+                    value={startDate}
+                    onChange={(event) => setStartDate(event.target.value)}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Pick the date you would like to begin. We will try to align
+                    with your preference.
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="message">Message (optional)</Label>
+                  <Textarea
+                    id="message"
+                    placeholder="Share goals, previous experience, or scholarship requests"
+                    value={message}
+                    onChange={(event) => setMessage(event.target.value)}
+                    rows={4}
+                  />
+                </div>
+              </div>
+
+              <Button
+                type="submit"
+                size="lg"
+                disabled={
+                  submitting || !supabase || !selectedCourse || loadingCourses
+                }
+                className="w-full justify-center text-base font-semibold"
+              >
+                {submitting ? "Submitting..." : "Submit application"}
+              </Button>
+              {!supabase && (
+                <p className="text-sm text-destructive">
+                  Supabase credentials are missing. Admissions team has been
+                  notified.
+                </p>
+              )}
+            </form>
+          </CardContent>
+        </Card>
+
+        <div className="space-y-6">
+          <Card className="border-none bg-secondary/40 shadow-lg shadow-primary/5">
+            <CardHeader>
+              <CardTitle>Course overview</CardTitle>
+              <CardDescription>
+                Fees, duration, and schedule for your selected course.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              {selectedCourse ? (
+                <div className="space-y-5">
+                  <div className="rounded-2xl border border-border/70 bg-background p-5 shadow-sm">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <p className="text-lg font-semibold text-foreground">
+                          {selectedCourse.name}
+                        </p>
+                        {selectedCourse.description && (
+                          <p className="mt-1 text-sm text-muted-foreground">
+                            {selectedCourse.description}
+                          </p>
+                        )}
+                      </div>
+                      <Badge variant="secondary" className="uppercase">
+                        {selectedCourse.status}
+                      </Badge>
+                    </div>
+                    <div className="mt-4 space-y-3 text-sm">
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <CalendarDays className="h-4 w-4 text-primary" />
+                        Preferred start:{" "}
+                        {futureDateLabel(
+                          startDate || selectedCourse.start_date,
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Clock className="h-4 w-4 text-primary" />
+                        Duration: {selectedCourse.duration}
+                      </div>
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <MapPin className="h-4 w-4 text-primary" />
+                        Campus: Main Campus
+                      </div>
+                    </div>
+                    <div className="mt-5 rounded-xl bg-primary/5 p-4">
+                      <p className="text-xs text-muted-foreground">
+                        Course fee
+                      </p>
+                      <p className="text-2xl font-semibold text-primary">
+                        {currencyDisplay.format(selectedCourse.fees)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="rounded-2xl border border-dashed border-border p-6 text-sm text-muted-foreground">
+                  Courses will appear here as soon as they are available.
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="border-none shadow-lg shadow-primary/5">
+            <CardHeader>
+              <CardTitle>What happens next?</CardTitle>
+              <CardDescription>
+                A guided onboarding journey led by our admissions counselors.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ol className="space-y-4">
+                {processSteps.map(
+                  ({ title, description, icon: Icon }, index) => (
+                    <li
+                      key={title}
+                      className="flex gap-4 rounded-2xl border border-border/60 bg-card/70 p-4 shadow-sm"
+                    >
+                      <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+                        <Icon className="h-5 w-5" />
+                      </span>
+                      <div className="space-y-1">
+                        <p className="font-medium text-foreground">
+                          {index + 1}. {title}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {description}
+                        </p>
+                      </div>
+                    </li>
+                  ),
+                )}
+              </ol>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {showVoucher && voucher && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-semibold tracking-tight">
+                Fee voucher preview
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                Present or email this voucher to secure your admission seat.
+              </p>
+            </div>
+          </div>
+          <VoucherCard
+            voucher={voucher}
+            onPrint={() => printVoucher(voucher)}
+          />
+        </div>
       )}
+
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Thank you for applying!</DialogTitle>
+            <DialogDescription>
+              We have received your application. A counselor will reach out
+              shortly to share orientation details.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2 text-sm text-muted-foreground">
+            <p>
+              Keep an eye on your phone and inbox — we will confirm the
+              counseling slot and share batch availability.
+            </p>
+            <p>
+              You can generate a printable voucher right away to speed up your
+              enrollment.
+            </p>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setDialogOpen(false);
+              }}
+            >
+              Close
+            </Button>
+            <Button
+              type="button"
+              onClick={() => {
+                setDialogOpen(false);
+                setShowVoucher(true);
+              }}
+            >
+              Generate voucher
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
