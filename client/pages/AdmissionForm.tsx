@@ -576,19 +576,11 @@ export default function AdmissionForm() {
               <Button
                 type="submit"
                 size="lg"
-                disabled={
-                  submitting || !supabase || !selectedCourse || loadingCourses
-                }
+                disabled={submitting || !selectedCourse || loadingCourses}
                 className="w-full justify-center text-base font-semibold"
               >
                 {submitting ? "Submitting..." : "Submit application"}
               </Button>
-              {!supabase && (
-                <p className="text-sm text-destructive">
-                  Supabase credentials are missing. Admissions team has been
-                  notified.
-                </p>
-              )}
             </form>
           </CardContent>
         </Card>
