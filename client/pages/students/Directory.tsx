@@ -39,7 +39,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { StudentRecord, StudentStatus } from "./types";
 import { paymentStatus, nextUnpaidInstallment, markInstallmentPaid } from "./types";
 import { useToast } from "@/hooks/use-toast";
-import { Profile } from "./Profile";
+import { ProfileSimple } from "./ProfileSimple";
 import { getAllCourseNames } from "@/lib/courseStore";
 
 const statuses: StudentStatus[] = [
@@ -269,7 +269,6 @@ export function Directory({
                           onChange(markInstallmentPaid(s, inst.id));
                           toast({ title: `Collected ₨${inst.amount.toLocaleString()} (${inst.id})` });
                         }}>Collect Fee Installment</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => { setOpenId(s.id); }}>Enroll to Another Course…</DropdownMenuItem>
                       </DropdownMenuGroup>
                       <DropdownMenuSeparator />
                       <DropdownMenuGroup>
@@ -302,13 +301,52 @@ export function Directory({
                         <DropdownMenuSub>
                           <DropdownMenuSubTrigger>Transfers</DropdownMenuSubTrigger>
                           <DropdownMenuSubContent>
-                            <DropdownMenuItem onClick={() => setOpenId(s.id)}>Batch Transfer…</DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => setOpenId(s.id)}>Campus Transfer…</DropdownMenuItem>
+                            <DropdownMenuSub>
+                              <DropdownMenuSubTrigger>Batch Transfer</DropdownMenuSubTrigger>
+                              <DropdownMenuSubContent>
+                                {batches.map((b) => (
+                                  <DropdownMenuItem key={b} onClick={() => { onChange({ ...s, admission: { ...s.admission, batch: b } }); toast({ title: `Batch transferred to ${b}` }); }}>
+                                    {b}
+                                  </DropdownMenuItem>
+                                ))}
+                              </DropdownMenuSubContent>
+                            </DropdownMenuSub>
+                            <DropdownMenuSub>
+                              <DropdownMenuSubTrigger>Campus Transfer</DropdownMenuSubTrigger>
+                              <DropdownMenuSubContent>
+                                {[
+                                  "Main Campus",
+                                  "Sub Campus",
+                                  "FSD",
+                                  "Other",
+                                ].map((c) => (
+                                  <DropdownMenuItem key={c} onClick={() => { onChange({ ...s, admission: { ...s.admission, campus: c } }); toast({ title: `Campus transferred to ${c}` }); }}>
+                                    {c}
+                                  </DropdownMenuItem>
+                                ))}
+                              </DropdownMenuSubContent>
+                            </DropdownMenuSub>
                           </DropdownMenuSubContent>
                         </DropdownMenuSub>
                       </DropdownMenuGroup>
                       <DropdownMenuSeparator />
                       <DropdownMenuGroup>
+                        <DropdownMenuSub>
+                          <DropdownMenuSubTrigger>Attendance</DropdownMenuSubTrigger>
+                          <DropdownMenuSubContent>
+                            <DropdownMenuItem onClick={() => {
+                              const today = new Date().toISOString().slice(0, 10);
+                              onChange({ ...s, attendance: (() => { const idx = s.attendance.findIndex(a => a.date === today); if (idx >= 0) { const copy = [...s.attendance]; copy[idx] = { date: today, present: true }; return copy; } return [...s.attendance, { date: today, present: true }]; })() });
+                              toast({ title: "Marked Present (today)" });
+                            }}>Mark Present (Today)</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => {
+                              const today = new Date().toISOString().slice(0, 10);
+                              onChange({ ...s, attendance: (() => { const idx = s.attendance.findIndex(a => a.date === today); if (idx >= 0) { const copy = [...s.attendance]; copy[idx] = { date: today, present: false }; return copy; } return [...s.attendance, { date: today, present: false }]; })() });
+                              toast({ title: "Marked Absent (today)" });
+                            }}>Mark Absent (Today)</DropdownMenuItem>
+                          </DropdownMenuSubContent>
+                        </DropdownMenuSub>
+                        <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={() => { onChange({ ...s, status: "Alumni" }); toast({ title: "Course concluded" }); }}>Conclude Course</DropdownMenuItem>
                         <DropdownMenuItem onClick={() => { onChange({ ...s, status: "Not Completed" }); toast({ title: "Marked as Not Completed" }); }}>Not Completed</DropdownMenuItem>
                         <DropdownMenuItem onClick={() => { onChange({ ...s, status: "Suspended" }); toast({ title: "Course suspended" }); }}>Suspend Course</DropdownMenuItem>
@@ -329,7 +367,7 @@ export function Directory({
           <SheetHeader>
             <SheetTitle>Student Profile</SheetTitle>
           </SheetHeader>
-          {rec && <Profile student={rec} onChange={onChange} />}
+          {rec && <ProfileSimple student={rec} />}
         </SheetContent>
       </Sheet>
     </div>
