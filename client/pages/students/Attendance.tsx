@@ -1,8 +1,23 @@
 import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { useToast } from "@/hooks/use-toast";
 import { useEffect, useMemo, useState } from "react";
 import type { StudentRecord } from "./types";
 import { ensureAttendance } from "./types";
@@ -14,6 +29,7 @@ export function AttendanceTab({
   data: StudentRecord[];
   onChange: (rec: StudentRecord) => void;
 }) {
+  const { toast } = useToast();
   const batches = Array.from(new Set(data.map((d) => d.admission.batch))).sort();
   const [batch, setBatch] = useState<string>(batches[0] || "");
   const [date, setDate] = useState<string>(new Date().toISOString().slice(0, 10));
@@ -56,8 +72,38 @@ export function AttendanceTab({
     for (let i = 1; i < lines.length; i++) {
       const [sid, _name, _batch, d, pres] = lines[i].split(",");
       const stu = data.find((x) => x.id === sid);
-      if (stu && d) onChange(ensureAttendance(stu, d, pres.trim().toLowerCase() === "true"));
+      if (stu && d)
+        onChange(ensureAttendance(stu, d, pres.trim().toLowerCase() === "true"));
     }
+  };
+
+  const notifyAbsentees = () => {
+    const absentees = roster.filter((s) => !presentMap.get(s.id));
+    if (absentees.length === 0) {
+      toast({ title: "No absentees", description: "Everyone is marked present." });
+      return;
+    }
+
+    const timestamp = new Date().toISOString();
+    for (const student of absentees) {
+      onChange({
+        ...student,
+        communications: [
+          {
+            id: `sms-${student.id}-${Date.now()}`,
+            channel: "SMS",
+            message: `Absent on ${date}`,
+            at: timestamp,
+          },
+          ...(student.communications || []),
+        ],
+      });
+    }
+
+    toast({
+      title: "SMS reminders queued",
+      description: `${absentees.length} absentees notified via SMS.`,
+    });
   };
 
   return (
@@ -70,12 +116,21 @@ export function AttendanceTab({
           </SelectContent>
         </Select>
         <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
-        <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={exportCSV}>Export</Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button variant="outline" onClick={exportCSV}>
+            Export
+          </Button>
           <label className="inline-flex items-center gap-2 text-sm">
             <span>Import</span>
-            <input type="file" accept=".csv" onChange={(e) => e.target.files && e.target.files[0] && importCSV(e.target.files[0])} />
+            <input
+              type="file"
+              accept=".csv"
+              onChange={(e) =>
+                e.target.files && e.target.files[0] && importCSV(e.target.files[0])
+              }
+            />
           </label>
+          <Button onClick={notifyAbsentees}>Notify absentees via SMS</Button>
         </div>
       </div>
 
