@@ -130,6 +130,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { useMemo, useState } from "react";
+import type { ReactNode } from "react";
 import { paymentStatus } from "./types";
 import type { AdmissionRecord } from "./types";
 import { Details } from "./Details";
@@ -138,10 +139,16 @@ export function ApplicationsTab({
   data,
   onUpdate,
   onDeleted,
+  title = "Admission Applications",
+  subtitle,
+  filters = null,
 }: {
   data: AdmissionRecord[];
   onUpdate: (rec: AdmissionRecord) => void;
   onDeleted?: (id: string) => void;
+  title?: string;
+  subtitle?: string;
+  filters?: ReactNode;
 }) {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<"unpaid" | "paid">("unpaid");
@@ -245,9 +252,15 @@ export function ApplicationsTab({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="text-sm font-medium">Admission Applications</div>
-        <div className="ml-auto flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="space-y-1">
+          <div className="text-sm font-medium">{title}</div>
+          {subtitle ? (
+            <p className="text-xs text-muted-foreground">{subtitle}</p>
+          ) : null}
+        </div>
+        <div className="ml-auto flex flex-wrap items-center gap-2">
+          {filters}
           <Input
             className="max-w-xs"
             placeholder="Search name, course, campus…"

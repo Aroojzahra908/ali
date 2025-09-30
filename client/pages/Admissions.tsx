@@ -88,14 +88,28 @@
 // }
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useCallback, useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { AdmissionRecord } from "./admissions/types";
 import { ApplicationsTab } from "./admissions/Applications";
 import { ReportsTab } from "./admissions/Reports";
+import { NewAdmissionTab } from "./admissions/NewAdmissionTab";
 import { supabase } from "@/lib/supabaseClient";
+
+type AdmissionsView = "new" | "today" | "month" | "year" | "all" | "reports";
 
 export default function Admissions() {
   const [items, setItems] = useState<AdmissionRecord[]>([]);
+  const [view, setView] = useState<AdmissionsView>("new");
+  const [courseFilter, setCourseFilter] = useState<string>("__all");
+  const [campusFilter, setCampusFilter] = useState<string>("__all");
 
   const fetchApplications = useCallback(async () => {
     const records = new Map<string, AdmissionRecord>();
@@ -479,28 +493,264 @@ export default function Admissions() {
     [fetchApplications],
   );
 
+  const handleCreated = useCallback(
+    (record: AdmissionRecord) => {
+      setItems((prev) => {
+        const byId = new Map(prev.map((item) => [item.id, item] as const));
+        byId.set(record.id, record);
+        return Array.from(byId.values()).sort((a, b) => {
+          const aTime = new Date(a.createdAt).getTime();
+          const bTime = new Date(b.createdAt).getTime();
+          return bTime - aTime;
+        });
+      });
+      setView("today");
+      setCourseFilter("__all");
+      setCampusFilter("__all");
+      void fetchApplications();
+    },
+    [fetchApplications],
+  );
+
+  const courseOptions = useMemo(() => {
+    const set = new Set<string>();
+    for (const item of items) {
+      if (item.course) set.add(item.course);
+    }
+    return Array.from(set).sort();
+  }, [items]);
+
+  const campusOptions = useMemo(() => {
+    const set = new Set<string>();
+    for (const item of items) {
+      if (item.campus) set.add(item.campus);
+    }
+    return Array.from(set).sort();
+  }, [items]);
+
+  const counts = useMemo(() => {
+    const now = new Date();
+    const dayStart = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+    ).getTime();
+    const dayEnd = dayStart + 24 * 60 * 60 * 1000;
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+    const yearStart = new Date(now.getFullYear(), 0, 1).getTime();
+
+    let today = 0;
+    let month = 0;
+    let year = 0;
+
+    for (const item of items) {
+      const createdTime = new Date(item.createdAt).getTime();
+      if (Number.isNaN(createdTime)) continue;
+      if (createdTime >= dayStart && createdTime < dayEnd) today += 1;
+      if (createdTime >= monthStart) month += 1;
+      if (createdTime >= yearStart) year += 1;
+    }
+
+    return {
+      today,
+      month,
+      year,
+      all: items.length,
+    };
+  }, [items]);
+
+  const filterItems = useCallback(
+    (target: AdmissionsView) => {
+      const now = new Date();
+      const dayStart = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate(),
+      ).getTime();
+      const dayEnd = dayStart + 24 * 60 * 60 * 1000;
+      const monthStart = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        1,
+      ).getTime();
+      const yearStart = new Date(now.getFullYear(), 0, 1).getTime();
+
+      return items.filter((item) => {
+        if (courseFilter !== "__all" && item.course !== courseFilter)
+          return false;
+        if (campusFilter !== "__all" && item.campus !== campusFilter)
+          return false;
+
+        const createdTime = new Date(item.createdAt).getTime();
+        if (Number.isNaN(createdTime))
+          return target === "all" || target === "reports";
+
+        switch (target) {
+          case "today":
+            return createdTime >= dayStart && createdTime < dayEnd;
+          case "month":
+            return createdTime >= monthStart;
+          case "year":
+            return createdTime >= yearStart;
+          case "all":
+          case "reports":
+            return true;
+          default:
+            return true;
+        }
+      });
+    },
+    [items, courseFilter, campusFilter],
+  );
+
+  const resetFilters = useCallback(() => {
+    setCourseFilter("__all");
+    setCampusFilter("__all");
+  }, []);
+
+  const renderFilters = useCallback(
+    () => (
+      <>
+        <Select value={courseFilter} onValueChange={setCourseFilter}>
+          <SelectTrigger className="w-[160px]">
+            <SelectValue placeholder="Course" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__all">All Courses</SelectItem>
+            {courseOptions.map((course) => (
+              <SelectItem key={course} value={course}>
+                {course}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={campusFilter} onValueChange={setCampusFilter}>
+          <SelectTrigger className="w-[160px]">
+            <SelectValue placeholder="Campus" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__all">All Campuses</SelectItem>
+            {campusOptions.map((campusName) => (
+              <SelectItem key={campusName} value={campusName}>
+                {campusName}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {courseFilter !== "__all" || campusFilter !== "__all" ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={resetFilters}
+          >
+            Reset
+          </Button>
+        ) : null}
+      </>
+    ),
+    [courseFilter, campusFilter, courseOptions, campusOptions, resetFilters],
+  );
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div>
         <h1 className="text-xl font-semibold tracking-tight">Admissions</h1>
         <p className="text-sm text-muted-foreground">
-          Review, approve, transfer, and report on admissions.
+          Capture new admissions and track performance across key timeframes.
         </p>
       </div>
-      <Tabs defaultValue="applications">
-        <TabsList>
-          <TabsTrigger value="applications">Applications</TabsTrigger>
-          <TabsTrigger value="reports">Reports</TabsTrigger>
+      <Tabs
+        value={view}
+        onValueChange={(next) => setView(next as AdmissionsView)}
+        className="space-y-6"
+      >
+        <TabsList className="flex w-full flex-wrap gap-2 overflow-x-auto">
+          <TabsTrigger value="new" className="whitespace-nowrap">
+            New Admission
+          </TabsTrigger>
+          <TabsTrigger value="today" className="whitespace-nowrap">
+            Today’s Admissions
+            <span className="ml-2 rounded-full bg-secondary px-2 py-0.5 text-xs font-medium">
+              {counts.today}
+            </span>
+          </TabsTrigger>
+          <TabsTrigger value="month" className="whitespace-nowrap">
+            Current Month
+            <span className="ml-2 rounded-full bg-secondary px-2 py-0.5 text-xs font-medium">
+              {counts.month}
+            </span>
+          </TabsTrigger>
+          <TabsTrigger value="year" className="whitespace-nowrap">
+            Current Year
+            <span className="ml-2 rounded-full bg-secondary px-2 py-0.5 text-xs font-medium">
+              {counts.year}
+            </span>
+          </TabsTrigger>
+          <TabsTrigger value="all" className="whitespace-nowrap">
+            All Admissions
+            <span className="ml-2 rounded-full bg-secondary px-2 py-0.5 text-xs font-medium">
+              {counts.all}
+            </span>
+          </TabsTrigger>
+          <TabsTrigger value="reports" className="whitespace-nowrap">
+            Reports
+          </TabsTrigger>
         </TabsList>
-        <TabsContent value="applications">
+
+        <TabsContent value="new" className="space-y-6">
+          <NewAdmissionTab onCreated={handleCreated} />
+        </TabsContent>
+
+        <TabsContent value="today" className="space-y-6">
           <ApplicationsTab
-            data={items}
+            data={filterItems("today")}
             onUpdate={upsert}
             onDeleted={handleDeleted}
+            title="Today’s admissions"
+            subtitle="Review today’s intake by course and campus."
+            filters={renderFilters()}
           />
         </TabsContent>
-        <TabsContent value="reports">
-          <ReportsTab data={items} />
+
+        <TabsContent value="month" className="space-y-6">
+          <ApplicationsTab
+            data={filterItems("month")}
+            onUpdate={upsert}
+            onDeleted={handleDeleted}
+            title="Current month admissions"
+            subtitle="Compare month-to-date progress across courses and campuses."
+            filters={renderFilters()}
+          />
+        </TabsContent>
+
+        <TabsContent value="year" className="space-y-6">
+          <ApplicationsTab
+            data={filterItems("year")}
+            onUpdate={upsert}
+            onDeleted={handleDeleted}
+            title="Current year admissions"
+            subtitle="Track annual performance with unified filters."
+            filters={renderFilters()}
+          />
+        </TabsContent>
+
+        <TabsContent value="all" className="space-y-6">
+          <ApplicationsTab
+            data={filterItems("all")}
+            onUpdate={upsert}
+            onDeleted={handleDeleted}
+            title="All admissions"
+            subtitle="Full admissions history with course and campus filtering."
+            filters={renderFilters()}
+          />
+        </TabsContent>
+
+        <TabsContent value="reports" className="space-y-6">
+          <div className="flex flex-wrap justify-end gap-2">
+            {renderFilters()}
+          </div>
+          <ReportsTab data={filterItems("reports")} />
         </TabsContent>
       </Tabs>
     </div>
