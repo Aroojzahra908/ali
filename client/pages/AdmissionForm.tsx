@@ -345,14 +345,6 @@ export default function AdmissionForm() {
       event.preventDefault();
       if (submitting) return;
 
-      if (!supabase) {
-        toast({
-          title: "Configuration missing",
-          description: "Database connection is not available right now.",
-        });
-        return;
-      }
-
       if (!selectedCourse) {
         toast({
           title: "Pick a course",
