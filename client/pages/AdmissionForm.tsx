@@ -369,25 +369,46 @@ export default function AdmissionForm() {
         : new Date(Date.now() + VOUCHER_DUE_OFFSET).toISOString();
 
       try {
-        const response = await fetch("/api/public/applications", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            name: trimmed.name,
-            email: trimmed.email,
-            phone: trimmed.phone,
-            course: trimmed.courseName,
-            preferredStart: startDate || null,
-          }),
-        });
-        if (!response.ok) {
-          const errPayload = await response.json().catch(() => ({}));
-          throw new Error(errPayload?.error || "Network error");
+        let reference = `APP-${Date.now()}`;
+        let createdAt = issueDateISO;
+
+        if (supabase) {
+          const { data, error } = await supabase
+            .from("public_applications")
+            .insert({
+              name: trimmed.name,
+              email: trimmed.email,
+              phone: trimmed.phone,
+              course: trimmed.courseName,
+              preferred_start: startDate || null,
+            })
+            .select("id, created_at");
+          if (error) throw error;
+          const row = data?.[0];
+          if (row?.id) reference = String(row.id);
+          if (row?.created_at) createdAt = String(row.created_at);
+        } else {
+          const response = await fetch("/api/public/applications", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              name: trimmed.name,
+              email: trimmed.email,
+              phone: trimmed.phone,
+              course: trimmed.courseName,
+              preferredStart: startDate || null,
+            }),
+          });
+          if (!response.ok) {
+            const errPayload = await response.json().catch(() => ({}));
+            throw new Error(errPayload?.error || "Network error");
+          }
+          const payload = await response.json();
+          const inserted = payload?.item || null;
+          if (inserted?.id) reference = String(inserted.id);
+          if (inserted?.createdAt) createdAt = String(inserted.createdAt);
         }
-        const payload = await response.json();
-        const inserted = payload?.item || null;
-        const reference = inserted?.id ? String(inserted.id) : `APP-${Date.now()}`;
-        const createdAt = inserted?.createdAt || issueDateISO;
+
         const voucherDetails: VoucherDetails = {
           id: buildVoucherId(reference),
           reference,
