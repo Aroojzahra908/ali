@@ -17,6 +17,19 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+  DropdownMenuGroup,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+} from "@/components/ui/dropdown-menu";
+import { MoreHorizontal, Phone, Mail, MessageCircle } from "lucide-react";
+import {
   Sheet,
   SheetContent,
   SheetHeader,
@@ -24,7 +37,8 @@ import {
 } from "@/components/ui/sheet";
 import { useEffect, useMemo, useState } from "react";
 import type { StudentRecord, StudentStatus } from "./types";
-import { paymentStatus } from "./types";
+import { paymentStatus, nextUnpaidInstallment, markInstallmentPaid } from "./types";
+import { useToast } from "@/hooks/use-toast";
 import { Profile } from "./Profile";
 import { getAllCourseNames } from "@/lib/courseStore";
 
