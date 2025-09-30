@@ -1,10 +1,4 @@
-import {
-  FormEvent,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import {
   CheckCircle2,
   Clock,
@@ -45,7 +39,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { VoucherCard, type VoucherDetails } from "@/components/admissions/VoucherCard";
+import {
+  VoucherCard,
+  type VoucherDetails,
+} from "@/components/admissions/VoucherCard";
 
 const currencyDisplay = new Intl.NumberFormat("en-PK", {
   style: "currency",
@@ -472,9 +469,9 @@ export default function AdmissionForm() {
               Begin your learning journey today
             </h1>
             <p className="max-w-2xl text-base text-white/85">
-              Complete the admission form below and our team will reach out
-              with onboarding details, schedules, and scholarship options
-              within 24 hours.
+              Complete the admission form below and our team will reach out with
+              onboarding details, schedules, and scholarship options within 24
+              hours.
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
@@ -540,7 +537,9 @@ export default function AdmissionForm() {
                   <Select
                     value={course}
                     onValueChange={setCourse}
-                    disabled={loadingCourses || submitting || courses.length === 0}
+                    disabled={
+                      loadingCourses || submitting || courses.length === 0
+                    }
                   >
                     <SelectTrigger id="course">
                       <SelectValue
@@ -642,7 +641,10 @@ export default function AdmissionForm() {
                     <div className="mt-4 space-y-3 text-sm">
                       <div className="flex items-center gap-2 text-muted-foreground">
                         <CalendarDays className="h-4 w-4 text-primary" />
-                        Preferred start: {futureDateLabel(startDate || selectedCourse.start_date)}
+                        Preferred start:{" "}
+                        {futureDateLabel(
+                          startDate || selectedCourse.start_date,
+                        )}
                       </div>
                       <div className="flex items-center gap-2 text-muted-foreground">
                         <Clock className="h-4 w-4 text-primary" />
@@ -654,7 +656,9 @@ export default function AdmissionForm() {
                       </div>
                     </div>
                     <div className="mt-5 rounded-xl bg-primary/5 p-4">
-                      <p className="text-xs text-muted-foreground">Course fee</p>
+                      <p className="text-xs text-muted-foreground">
+                        Course fee
+                      </p>
                       <p className="text-2xl font-semibold text-primary">
                         {currencyDisplay.format(selectedCourse.fees)}
                       </p>
@@ -678,24 +682,26 @@ export default function AdmissionForm() {
             </CardHeader>
             <CardContent>
               <ol className="space-y-4">
-                {processSteps.map(({ title, description, icon: Icon }, index) => (
-                  <li
-                    key={title}
-                    className="flex gap-4 rounded-2xl border border-border/60 bg-card/70 p-4 shadow-sm"
-                  >
-                    <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
-                      <Icon className="h-5 w-5" />
-                    </span>
-                    <div className="space-y-1">
-                      <p className="font-medium text-foreground">
-                        {index + 1}. {title}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {description}
-                      </p>
-                    </div>
-                  </li>
-                ))}
+                {processSteps.map(
+                  ({ title, description, icon: Icon }, index) => (
+                    <li
+                      key={title}
+                      className="flex gap-4 rounded-2xl border border-border/60 bg-card/70 p-4 shadow-sm"
+                    >
+                      <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+                        <Icon className="h-5 w-5" />
+                      </span>
+                      <div className="space-y-1">
+                        <p className="font-medium text-foreground">
+                          {index + 1}. {title}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {description}
+                        </p>
+                      </div>
+                    </li>
+                  ),
+                )}
               </ol>
             </CardContent>
           </Card>
@@ -714,7 +720,10 @@ export default function AdmissionForm() {
               </p>
             </div>
           </div>
-          <VoucherCard voucher={voucher} onPrint={() => printVoucher(voucher)} />
+          <VoucherCard
+            voucher={voucher}
+            onPrint={() => printVoucher(voucher)}
+          />
         </div>
       )}
 

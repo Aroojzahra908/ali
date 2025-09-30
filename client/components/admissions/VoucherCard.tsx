@@ -81,9 +81,7 @@ export function VoucherCard({
         </div>
         <div>
           <p className="text-xs uppercase text-muted-foreground">Issued</p>
-          <p className="text-base font-semibold text-foreground">
-            {issueDate}
-          </p>
+          <p className="text-base font-semibold text-foreground">{issueDate}</p>
           <div className="mt-2 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
             <CalendarDays className="h-4 w-4" /> Issue Date
           </div>
@@ -124,8 +122,7 @@ export function VoucherCard({
                 {amountLabel}
               </p>
               <p className="text-xs text-muted-foreground">
-                Present this voucher at campus reception to complete
-                enrollment.
+                Present this voucher at campus reception to complete enrollment.
               </p>
             </div>
             <Button
