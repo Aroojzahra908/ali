@@ -173,51 +173,94 @@ export default function Admissions() {
       }
     }
 
-    try {
-      const response = await fetch("/api/public/applications");
-      if (response.ok) {
-        const payload = await response.json();
-        const items = Array.isArray(payload?.items) ? payload.items : [];
-        for (const entry of items) {
-          const rawId = entry.id ?? entry.app_id ?? entry.appId;
-          if (!rawId) continue;
-          const id = String(rawId);
-          if (records.has(id)) continue;
-          const created = entry.createdAt ?? new Date().toISOString();
-          const dueDate =
-            entry.preferredStart ??
-            new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-          records.set(id, {
-            id,
-            createdAt: String(created),
-            status: "Pending",
-            student: {
-              name: String(entry.name ?? ""),
-              email: String(entry.email ?? ""),
-              phone: String(entry.phone ?? ""),
-            },
-            course: String(entry.course ?? ""),
-            batch: "TBD",
-            campus: "Main",
-            fee: {
-              total: 0,
-              installments: [
-                {
-                  id: "due",
-                  amount: 0,
-                  dueDate,
-                },
-              ],
-            },
-            documents: [],
-            notes: entry.preferredStart
-              ? `Preferred start: ${entry.preferredStart}`
-              : undefined,
-          });
+    if (supabase) {
+      try {
+        const { data, error } = await supabase
+          .from("public_applications")
+          .select("id,name,email,phone,course,preferred_start,created_at");
+        if (!error && Array.isArray(data)) {
+          for (const entry of data) {
+            const rawId = entry.id ?? entry.app_id ?? entry.appId;
+            if (!rawId) continue;
+            const id = String(rawId);
+            if (records.has(id)) continue;
+            const created = entry.created_at ?? new Date().toISOString();
+            const dueDate =
+              entry.preferred_start ??
+              new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+            records.set(id, {
+              id,
+              createdAt: String(created),
+              status: "Pending",
+              student: {
+                name: String(entry.name ?? ""),
+                email: String(entry.email ?? ""),
+                phone: String(entry.phone ?? ""),
+              },
+              course: String(entry.course ?? ""),
+              batch: "TBD",
+              campus: "Main",
+              fee: {
+                total: 0,
+                installments: [{ id: "due", amount: 0, dueDate }],
+              },
+              documents: [],
+              notes: entry.preferred_start
+                ? `Preferred start: ${entry.preferred_start}`
+                : undefined,
+            });
+          }
         }
+      } catch (error) {
+        console.error("Error fetching public_applications from Supabase:", error);
       }
-    } catch (error) {
-      console.error("Error fetching applications from API:", error);
+    } else {
+      try {
+        const response = await fetch("/api/public/applications");
+        if (response.ok) {
+          const payload = await response.json();
+          const items = Array.isArray(payload?.items) ? payload.items : [];
+          for (const entry of items) {
+            const rawId = entry.id ?? entry.app_id ?? entry.appId;
+            if (!rawId) continue;
+            const id = String(rawId);
+            if (records.has(id)) continue;
+            const created = entry.createdAt ?? new Date().toISOString();
+            const dueDate =
+              entry.preferredStart ??
+              new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+            records.set(id, {
+              id,
+              createdAt: String(created),
+              status: "Pending",
+              student: {
+                name: String(entry.name ?? ""),
+                email: String(entry.email ?? ""),
+                phone: String(entry.phone ?? ""),
+              },
+              course: String(entry.course ?? ""),
+              batch: "TBD",
+              campus: "Main",
+              fee: {
+                total: 0,
+                installments: [
+                  {
+                    id: "due",
+                    amount: 0,
+                    dueDate,
+                  },
+                ],
+              },
+              documents: [],
+              notes: entry.preferredStart
+                ? `Preferred start: ${entry.preferredStart}`
+                : undefined,
+            });
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching applications from API:", error);
+      }
     }
 
     const ordered = Array.from(records.values()).sort((a, b) => {
