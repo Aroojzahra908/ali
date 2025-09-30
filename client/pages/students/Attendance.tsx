@@ -1,4 +1,4 @@
-import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -52,6 +52,11 @@ export function AttendanceTab({
     return m;
   }, [roster, date]);
 
+  const presentCount = useMemo(() =>
+    roster.reduce((sum, s) => sum + (presentMap.get(s.id) ? 1 : 0), 0),
+  [roster, presentMap]);
+  const absentCount = roster.length - presentCount;
+
   const toggle = (id: string, value: boolean) => {
     const stu = data.find((d) => d.id === id);
     if (!stu) return;
@@ -83,11 +88,15 @@ export function AttendanceTab({
         />
       </div>
 
+      <div className="text-sm text-muted-foreground">
+        Present: {presentCount} • Absent: {absentCount}
+      </div>
+
       <Table>
         <TableHeader>
           <TableRow>
             <TableHead>Student</TableHead>
-            <TableHead className="text-right">Present</TableHead>
+            <TableHead className="text-right">Status</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -98,10 +107,25 @@ export function AttendanceTab({
                 <div className="text-xs text-muted-foreground">{s.id}</div>
               </TableCell>
               <TableCell className="text-right">
-                <Checkbox
-                  checked={!!presentMap.get(s.id)}
-                  onCheckedChange={(v) => toggle(s.id, !!v)}
-                />
+                <div className="flex items-center justify-end gap-2">
+                  <span className="text-xs">
+                    {presentMap.get(s.id) ? "Present" : "Absent"}
+                  </span>
+                  <Button
+                    size="sm"
+                    variant={presentMap.get(s.id) ? "default" : "outline"}
+                    onClick={() => toggle(s.id, true)}
+                  >
+                    Present
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={!presentMap.get(s.id) ? "default" : "outline"}
+                    onClick={() => toggle(s.id, false)}
+                  >
+                    Absent
+                  </Button>
+                </div>
               </TableCell>
             </TableRow>
           ))}
