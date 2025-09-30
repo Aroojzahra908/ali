@@ -141,7 +141,7 @@ export function ApplicationsTab({
   onDeleted,
   title = "Admission Applications",
   subtitle,
-  filters,
+  filters = null,
 }: {
   data: AdmissionRecord[];
   onUpdate: (rec: AdmissionRecord) => void;
