@@ -16,7 +16,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useToast } from "@/hooks/use-toast";
 import { useEffect, useMemo, useState } from "react";
 import type { StudentRecord } from "./types";
 import { ensureAttendance } from "./types";
