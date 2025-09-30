@@ -373,44 +373,31 @@ export default function AdmissionForm() {
         let createdAt = issueDateISO;
 
         if (supabase) {
-          let row: any = null;
-          const payloadBase = {
+          const payload = {
             name: trimmed.name,
             email: trimmed.email,
             phone: trimmed.phone,
             course: trimmed.courseName,
+            start_date: startDate || null,
+            message: message ? message.trim() : null,
+            campus: "Main",
+            batch: "TBD",
+            status: "Pending",
+            fee_total: trimmed.amount,
+            fee_installments: [
+              { id: "V1", amount: trimmed.amount, dueDate: dueDateISO },
+            ],
+            documents: [],
           };
-          try {
-            const { data, error } = await supabase
-              .from("admissions")
-              .insert(payloadBase)
-              .select("id, app_id, created_at, createdAt")
-              .limit(1);
-            if (error) throw error;
-            row = data?.[0] ?? null;
-          } catch (e1) {
-            try {
-              const { data, error } = await supabase
-                .from("applications")
-                .insert(payloadBase)
-                .select("id, app_id, created_at, createdAt")
-                .limit(1);
-              if (error) throw error;
-              row = data?.[0] ?? null;
-            } catch (e2) {
-              const { data, error } = await supabase
-                .from("public_applications")
-                .insert({ ...payloadBase, preferred_start: startDate || null })
-                .select("id, created_at, createdAt")
-                .limit(1);
-              if (error) throw error;
-              row = data?.[0] ?? null;
-            }
-          }
-          if (row?.app_id) reference = String(row.app_id);
-          else if (row?.id) reference = String(row.id);
-          if (row?.created_at) createdAt = String(row.created_at);
-          if (row?.createdAt) createdAt = String(row.createdAt);
+          const { data, error } = await supabase
+            .from("applications")
+            .insert(payload)
+            .select("app_id, created_at")
+            .single();
+          if (error) throw error;
+          if (data?.app_id !== undefined && data?.app_id !== null)
+            reference = String(data.app_id);
+          if (data?.created_at) createdAt = String(data.created_at);
         } else {
           const response = await fetch("/api/public/applications", {
             method: "POST",
