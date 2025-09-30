@@ -369,40 +369,25 @@ export default function AdmissionForm() {
         : new Date(Date.now() + VOUCHER_DUE_OFFSET).toISOString();
 
       try {
-        const { data, error } = await supabase
-          .from("applications")
-          .insert([
-            {
-              name: trimmed.name,
-              email: trimmed.email,
-              phone: trimmed.phone,
-              course: trimmed.courseName,
-              start_date: startDate || null,
-              message: message ? message.trim() : null,
-              campus: "Main",
-              batch: "TBD",
-              status: "Pending",
-              fee_total: trimmed.amount,
-              fee_installments: [
-                {
-                  id: "V1",
-                  amount: trimmed.amount,
-                  dueDate: dueDateISO,
-                },
-              ],
-              documents: [],
-            },
-          ])
-          .select("id, app_id, created_at");
-
-        if (error) {
-          throw error;
+        const response = await fetch("/api/public/applications", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: trimmed.name,
+            email: trimmed.email,
+            phone: trimmed.phone,
+            course: trimmed.courseName,
+            preferredStart: startDate || null,
+          }),
+        });
+        if (!response.ok) {
+          const errPayload = await response.json().catch(() => ({}));
+          throw new Error(errPayload?.error || "Network error");
         }
-
-        const inserted = data?.[0];
-        const reference = inserted
-          ? String(inserted.app_id ?? inserted.id)
-          : `APP-${Date.now()}`;
+        const payload = await response.json();
+        const inserted = payload?.item || null;
+        const reference = inserted?.id ? String(inserted.id) : `APP-${Date.now()}`;
+        const createdAt = inserted?.createdAt || issueDateISO;
         const voucherDetails: VoucherDetails = {
           id: buildVoucherId(reference),
           reference,
@@ -411,7 +396,7 @@ export default function AdmissionForm() {
           studentName: trimmed.name,
           email: trimmed.email,
           phone: trimmed.phone,
-          issueDate: inserted?.created_at ?? issueDateISO,
+          issueDate: createdAt,
           dueDate: dueDateISO,
           campus: "Main Campus",
         };
