@@ -102,6 +102,68 @@ export default function Admissions() {
 
     if (supabase) {
       try {
+        // Fetch admissions first
+        try {
+          const { data, error } = await supabase.from("admissions").select("*");
+          if (!error && Array.isArray(data)) {
+            for (const entry of data) {
+              const rawId =
+                entry.app_id ?? entry.id ?? entry.appId ?? entry.appID ?? entry.uuid;
+              if (!rawId) continue;
+              const id = String(rawId);
+              const created = entry.created_at ?? entry.createdAt ?? new Date().toISOString();
+              const installments =
+                Array.isArray(entry.fee_installments) && entry.fee_installments.length > 0
+                  ? entry.fee_installments.map((inst: any, index: number) => ({
+                      id: String(inst.id ?? `I${index + 1}`),
+                      amount: Number(inst.amount ?? 0) || 0,
+                      dueDate: inst.due_date ?? inst.dueDate ?? created,
+                      paidAt: inst.paid_at ?? inst.paidAt ?? undefined,
+                    }))
+                  : [
+                      {
+                        id: "due",
+                        amount: Number(entry.fee_total ?? 0) || 0,
+                        dueDate:
+                          entry.next_due_date ??
+                          new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+                      },
+                    ];
+              const documents = Array.isArray(entry.documents)
+                ? entry.documents.map((doc: any, index: number) => ({
+                    name: String(doc.name ?? `Document ${index + 1}`),
+                    url: String(doc.url ?? "#"),
+                    verified: Boolean(doc.verified),
+                  }))
+                : [];
+              records.set(id, {
+                id,
+                createdAt: String(created),
+                status: (entry.status as AdmissionRecord["status"]) ?? "Pending",
+                student: {
+                  name: String(entry.name ?? ""),
+                  email: String(entry.email ?? ""),
+                  phone: String(entry.phone ?? ""),
+                  dob: entry.dob ?? undefined,
+                  address: entry.address ?? undefined,
+                },
+                course: String(entry.course ?? ""),
+                batch: String(entry.batch ?? "TBD"),
+                campus: String(entry.campus ?? "Main"),
+                fee: { total: Number(entry.fee_total ?? 0) || 0, installments },
+                documents,
+                notes: entry.notes ?? undefined,
+                studentId: entry.student_id ?? entry.studentId ?? undefined,
+                rejectedReason:
+                  entry.rejected_reason ?? entry.rejectedReason ?? undefined,
+              });
+            }
+          }
+        } catch (e) {
+          // ignore and continue
+        }
+
+        // Then applications
         const { data, error } = await supabase.from("applications").select("*");
         if (!error && Array.isArray(data)) {
           for (const entry of data) {
