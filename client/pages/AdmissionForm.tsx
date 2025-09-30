@@ -373,20 +373,44 @@ export default function AdmissionForm() {
         let createdAt = issueDateISO;
 
         if (supabase) {
-          const { data, error } = await supabase
-            .from("public_applications")
-            .insert({
-              name: trimmed.name,
-              email: trimmed.email,
-              phone: trimmed.phone,
-              course: trimmed.courseName,
-              preferred_start: startDate || null,
-            })
-            .select("id, created_at");
-          if (error) throw error;
-          const row = data?.[0];
-          if (row?.id) reference = String(row.id);
+          let row: any = null;
+          const payloadBase = {
+            name: trimmed.name,
+            email: trimmed.email,
+            phone: trimmed.phone,
+            course: trimmed.courseName,
+          };
+          try {
+            const { data, error } = await supabase
+              .from("admissions")
+              .insert(payloadBase)
+              .select("id, app_id, created_at, createdAt")
+              .limit(1);
+            if (error) throw error;
+            row = data?.[0] ?? null;
+          } catch (e1) {
+            try {
+              const { data, error } = await supabase
+                .from("applications")
+                .insert(payloadBase)
+                .select("id, app_id, created_at, createdAt")
+                .limit(1);
+              if (error) throw error;
+              row = data?.[0] ?? null;
+            } catch (e2) {
+              const { data, error } = await supabase
+                .from("public_applications")
+                .insert({ ...payloadBase, preferred_start: startDate || null })
+                .select("id, created_at, createdAt")
+                .limit(1);
+              if (error) throw error;
+              row = data?.[0] ?? null;
+            }
+          }
+          if (row?.app_id) reference = String(row.app_id);
+          else if (row?.id) reference = String(row.id);
           if (row?.created_at) createdAt = String(row.created_at);
+          if (row?.createdAt) createdAt = String(row.createdAt);
         } else {
           const response = await fetch("/api/public/applications", {
             method: "POST",
