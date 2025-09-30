@@ -447,7 +447,6 @@ export default function AdmissionForm() {
       }
     },
     [
-      course,
       fullName,
       email,
       phone,
