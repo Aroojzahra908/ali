@@ -294,6 +294,7 @@ export default function AdmissionForm() {
   const fetchCourses = useCallback(async () => {
     if (!supabase) {
       setCourses([]);
+      setLoadingCourses(false);
       return;
     }
 
