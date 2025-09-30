@@ -503,7 +503,7 @@ export default function AdmissionForm() {
       </section>
 
       <div className="grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-        <Card className="border-none shadow-lg shadow-primary/5">
+        <Card className="border-none bg-white shadow-lg shadow-primary/5">
           <CardHeader>
             <CardTitle>Admission details</CardTitle>
             <CardDescription>
