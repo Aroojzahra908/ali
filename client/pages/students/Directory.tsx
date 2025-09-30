@@ -37,7 +37,7 @@ import {
 } from "@/components/ui/sheet";
 import { useEffect, useMemo, useState } from "react";
 import type { StudentRecord, StudentStatus } from "./types";
-import { paymentStatus, nextUnpaidInstallment, markInstallmentPaid } from "./types";
+import { paymentStatus } from "./types";
 import { useToast } from "@/hooks/use-toast";
 import { ProfileSimple } from "./ProfileSimple";
 import { getAllCourseNames } from "@/lib/courseStore";
