@@ -249,9 +249,74 @@ export function Directory({
                 </Badge>
               </TableCell>
               <TableCell className="text-right">
-                <Button size="sm" onClick={() => setOpenId(s.id)}>
-                  View
-                </Button>
+                <div className="inline-flex items-center gap-2">
+                  <Button size="sm" variant="outline" onClick={() => setOpenId(s.id)}>
+                    View
+                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button size="sm" variant="ghost" aria-label="Actions">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-56">
+                      <DropdownMenuLabel>Quick Actions</DropdownMenuLabel>
+                      <DropdownMenuGroup>
+                        <DropdownMenuItem onClick={() => {
+                          const inst = nextUnpaidInstallment(s);
+                          if (!inst) { toast({ title: "All installments paid" }); return; }
+                          onChange(markInstallmentPaid(s, inst.id));
+                          toast({ title: `Collected ₨${inst.amount.toLocaleString()} (${inst.id})` });
+                        }}>Collect Fee Installment</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => { setOpenId(s.id); }}>Enroll to Another Course…</DropdownMenuItem>
+                      </DropdownMenuGroup>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuGroup>
+                        <DropdownMenuSub>
+                          <DropdownMenuSubTrigger>Communicate</DropdownMenuSubTrigger>
+                          <DropdownMenuSubContent>
+                            <DropdownMenuItem onClick={() => {
+                              onChange({ ...s, communications: [{ id: `call-${Date.now()}`, channel: "Call", message: "Admin initiated voice call", at: new Date().toISOString() }, ...s.communications ] });
+                              toast({ title: "Voice call logged" });
+                            }}>
+                              <Phone className="mr-2 h-4 w-4" /> Voice Call
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => {
+                              onChange({ ...s, communications: [{ id: `email-${Date.now()}`, channel: "Email", message: "Admin email sent", at: new Date().toISOString() }, ...s.communications ] });
+                              toast({ title: "Email sent" });
+                            }}>
+                              <Mail className="mr-2 h-4 w-4" /> Email
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => {
+                              onChange({ ...s, communications: [{ id: `wa-${Date.now()}`, channel: "WhatsApp", message: "Admin WhatsApp message", at: new Date().toISOString() }, ...s.communications ] });
+                              toast({ title: "WhatsApp sent" });
+                            }}>
+                              <MessageCircle className="mr-2 h-4 w-4" /> WhatsApp
+                            </DropdownMenuItem>
+                          </DropdownMenuSubContent>
+                        </DropdownMenuSub>
+                      </DropdownMenuGroup>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuGroup>
+                        <DropdownMenuSub>
+                          <DropdownMenuSubTrigger>Transfers</DropdownMenuSubTrigger>
+                          <DropdownMenuSubContent>
+                            <DropdownMenuItem onClick={() => setOpenId(s.id)}>Batch Transfer…</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setOpenId(s.id)}>Campus Transfer…</DropdownMenuItem>
+                          </DropdownMenuSubContent>
+                        </DropdownMenuSub>
+                      </DropdownMenuGroup>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuGroup>
+                        <DropdownMenuItem onClick={() => { onChange({ ...s, status: "Alumni" }); toast({ title: "Course concluded" }); }}>Conclude Course</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => { onChange({ ...s, status: "Not Completed" }); toast({ title: "Marked as Not Completed" }); }}>Not Completed</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => { onChange({ ...s, status: "Suspended" }); toast({ title: "Course suspended" }); }}>Suspend Course</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => { onChange({ ...s, status: "Freeze" }); toast({ title: "Course frozen" }); }}>Freeze</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => { toast({ title: "Certificate request submitted" }); }}>Request Certificate</DropdownMenuItem>
+                      </DropdownMenuGroup>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               </TableCell>
             </TableRow>
           ))}
