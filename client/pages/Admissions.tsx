@@ -646,27 +646,102 @@ export default function Admissions() {
   );
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div>
         <h1 className="text-xl font-semibold tracking-tight">Admissions</h1>
         <p className="text-sm text-muted-foreground">
-          Review, approve, transfer, and report on admissions.
+          Capture new admissions and track performance across key timeframes.
         </p>
       </div>
-      <Tabs defaultValue="applications">
-        <TabsList>
-          <TabsTrigger value="applications">Applications</TabsTrigger>
-          <TabsTrigger value="reports">Reports</TabsTrigger>
+      <Tabs
+        value={view}
+        onValueChange={(next) => setView(next as AdmissionsView)}
+        className="space-y-6"
+      >
+        <TabsList className="flex w-full flex-wrap gap-2 overflow-x-auto">
+          <TabsTrigger value="new" className="whitespace-nowrap">
+            New Admission
+          </TabsTrigger>
+          <TabsTrigger value="today" className="whitespace-nowrap">
+            Today’s Admissions
+            <span className="ml-2 rounded-full bg-secondary px-2 py-0.5 text-xs font-medium">
+              {counts.today}
+            </span>
+          </TabsTrigger>
+          <TabsTrigger value="month" className="whitespace-nowrap">
+            Current Month
+            <span className="ml-2 rounded-full bg-secondary px-2 py-0.5 text-xs font-medium">
+              {counts.month}
+            </span>
+          </TabsTrigger>
+          <TabsTrigger value="year" className="whitespace-nowrap">
+            Current Year
+            <span className="ml-2 rounded-full bg-secondary px-2 py-0.5 text-xs font-medium">
+              {counts.year}
+            </span>
+          </TabsTrigger>
+          <TabsTrigger value="all" className="whitespace-nowrap">
+            All Admissions
+            <span className="ml-2 rounded-full bg-secondary px-2 py-0.5 text-xs font-medium">
+              {counts.all}
+            </span>
+          </TabsTrigger>
+          <TabsTrigger value="reports" className="whitespace-nowrap">
+            Reports
+          </TabsTrigger>
         </TabsList>
-        <TabsContent value="applications">
+
+        <TabsContent value="new" className="space-y-6">
+          <NewAdmissionTab onCreated={handleCreated} />
+        </TabsContent>
+
+        <TabsContent value="today" className="space-y-6">
           <ApplicationsTab
-            data={items}
+            data={filterItems("today")}
             onUpdate={upsert}
             onDeleted={handleDeleted}
+            title="Today’s admissions"
+            subtitle="Review today’s intake by course and campus."
+            filters={renderFilters()}
           />
         </TabsContent>
-        <TabsContent value="reports">
-          <ReportsTab data={items} />
+
+        <TabsContent value="month" className="space-y-6">
+          <ApplicationsTab
+            data={filterItems("month")}
+            onUpdate={upsert}
+            onDeleted={handleDeleted}
+            title="Current month admissions"
+            subtitle="Compare month-to-date progress across courses and campuses."
+            filters={renderFilters()}
+          />
+        </TabsContent>
+
+        <TabsContent value="year" className="space-y-6">
+          <ApplicationsTab
+            data={filterItems("year")}
+            onUpdate={upsert}
+            onDeleted={handleDeleted}
+            title="Current year admissions"
+            subtitle="Track annual performance with unified filters."
+            filters={renderFilters()}
+          />
+        </TabsContent>
+
+        <TabsContent value="all" className="space-y-6">
+          <ApplicationsTab
+            data={filterItems("all")}
+            onUpdate={upsert}
+            onDeleted={handleDeleted}
+            title="All admissions"
+            subtitle="Full admissions history with course and campus filtering."
+            filters={renderFilters()}
+          />
+        </TabsContent>
+
+        <TabsContent value="reports" className="space-y-6">
+          <div className="flex flex-wrap justify-end gap-2">{renderFilters()}</div>
+          <ReportsTab data={filterItems("reports")} />
         </TabsContent>
       </Tabs>
     </div>
