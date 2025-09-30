@@ -290,36 +290,40 @@ export default function AdmissionForm() {
   );
 
   const fetchCourses = useCallback(async () => {
-    if (!supabase) {
-      setCourses([]);
-      setLoadingCourses(false);
-      return;
-    }
-
     setLoadingCourses(true);
     try {
-      const { data, error } = await supabase
-        .from<Course>("courses")
-        .select("*")
-        .eq("status", "live")
-        .order("created_at", { ascending: false });
+      if (supabase) {
+        const { data, error } = await supabase
+          .from<Course>("courses")
+          .select("*")
+          .eq("status", "live")
+          .order("created_at", { ascending: false });
 
-      if (error) {
-        console.error("Error fetching courses:", error.message);
-        toast({
-          title: "Unable to load courses",
-          description: "Please try again in a moment.",
-        });
-        return;
+        if (error) {
+          console.error("Error fetching courses:", error.message);
+        } else if (Array.isArray(data) && data.length) {
+          setCourses(data);
+          return;
+        }
       }
-
-      if (Array.isArray(data)) {
-        setCourses(data);
-      }
+      // Fallback to local static list when DB is not configured or empty
+      const mapped: Course[] = COURSES.map((c) => ({
+        id: c.id,
+        name: c.name,
+        category: "General",
+        duration: c.duration,
+        fees: c.fees,
+        description: c.description,
+        featured: false,
+        status: "live",
+        start_date: null,
+        created_at: new Date().toISOString(),
+      }));
+      setCourses(mapped);
     } finally {
       setLoadingCourses(false);
     }
-  }, [toast]);
+  }, []);
 
   useEffect(() => {
     void fetchCourses();
