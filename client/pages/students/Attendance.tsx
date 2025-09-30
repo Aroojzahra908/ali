@@ -52,9 +52,10 @@ export function AttendanceTab({
     return m;
   }, [roster, date]);
 
-  const presentCount = useMemo(() =>
-    roster.reduce((sum, s) => sum + (presentMap.get(s.id) ? 1 : 0), 0),
-  [roster, presentMap]);
+  const presentCount = useMemo(
+    () => roster.reduce((sum, s) => sum + (presentMap.get(s.id) ? 1 : 0), 0),
+    [roster, presentMap],
+  );
   const absentCount = roster.length - presentCount;
 
   const toggle = (id: string, value: boolean) => {
@@ -62,9 +63,6 @@ export function AttendanceTab({
     if (!stu) return;
     onChange(ensureAttendance(stu, date, value));
   };
-
-
-
 
   return (
     <div className="space-y-4">

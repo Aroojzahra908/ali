@@ -2,11 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import type { StudentRecord } from "./types";
 
-export function ProfileSimple({
-  student,
-}: {
-  student: StudentRecord;
-}) {
+export function ProfileSimple({ student }: { student: StudentRecord }) {
   return (
     <div className="space-y-4">
       <div>
@@ -35,7 +31,9 @@ export function ProfileSimple({
               .map((a) => (
                 <div key={a.date} className="flex justify-between">
                   <span>{new Date(a.date).toLocaleDateString()}</span>
-                  <span className={a.present ? "text-green-600" : "text-red-600"}>
+                  <span
+                    className={a.present ? "text-green-600" : "text-red-600"}
+                  >
                     {a.present ? "Present" : "Absent"}
                   </span>
                 </div>
@@ -65,9 +63,18 @@ export function ProfileSimple({
       <div className="space-y-1">
         <div className="text-xs text-muted-foreground">Enrollment</div>
         <div className="rounded border p-2 text-sm">
-          <div><span className="text-xs text-muted-foreground">Course:</span> {student.admission.course}</div>
-          <div><span className="text-xs text-muted-foreground">Batch:</span> {student.admission.batch}</div>
-          <div><span className="text-xs text-muted-foreground">Campus:</span> {student.admission.campus}</div>
+          <div>
+            <span className="text-xs text-muted-foreground">Course:</span>{" "}
+            {student.admission.course}
+          </div>
+          <div>
+            <span className="text-xs text-muted-foreground">Batch:</span>{" "}
+            {student.admission.batch}
+          </div>
+          <div>
+            <span className="text-xs text-muted-foreground">Campus:</span>{" "}
+            {student.admission.campus}
+          </div>
         </div>
       </div>
     </div>
