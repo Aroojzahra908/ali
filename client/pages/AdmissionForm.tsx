@@ -43,6 +43,7 @@ import {
   VoucherCard,
   type VoucherDetails,
 } from "@/components/admissions/VoucherCard";
+import { COURSES } from "@/data/courses";
 
 const currencyDisplay = new Intl.NumberFormat("en-PK", {
   style: "currency",
