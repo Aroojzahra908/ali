@@ -107,6 +107,9 @@ type AdmissionsView = "new" | "today" | "month" | "year" | "all" | "reports";
 
 export default function Admissions() {
   const [items, setItems] = useState<AdmissionRecord[]>([]);
+  const [view, setView] = useState<AdmissionsView>("new");
+  const [courseFilter, setCourseFilter] = useState<string>("__all");
+  const [campusFilter, setCampusFilter] = useState<string>("__all");
 
   const fetchApplications = useCallback(async () => {
     const records = new Map<string, AdmissionRecord>();
