@@ -88,10 +88,19 @@
 // }
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useCallback, useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { AdmissionRecord } from "./admissions/types";
 import { ApplicationsTab } from "./admissions/Applications";
 import { ReportsTab } from "./admissions/Reports";
+import { NewAdmissionTab } from "./admissions/NewAdmissionTab";
 import { supabase } from "@/lib/supabaseClient";
 
 export default function Admissions() {
