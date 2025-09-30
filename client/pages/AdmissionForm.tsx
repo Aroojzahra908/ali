@@ -43,6 +43,7 @@ import {
   VoucherCard,
   type VoucherDetails,
 } from "@/components/admissions/VoucherCard";
+import { COURSES } from "@/data/courses";
 
 const currencyDisplay = new Intl.NumberFormat("en-PK", {
   style: "currency",
@@ -125,98 +126,31 @@ function printVoucher(voucher: VoucherDetails) {
   const amount = currencyDisplay.format(voucher.amount || 0);
   const issueDate = new Date(voucher.issueDate).toLocaleDateString();
   const dueDate = new Date(voucher.dueDate).toLocaleDateString();
-  const doc = window.open("", "_blank", "noopener,noreferrer");
-  if (!doc) return;
 
   const html = `<!doctype html>
 <html>
 <head>
 <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Voucher ${voucher.id}</title>
 <style>
-  :root {
-    color-scheme: light;
-    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  }
-  body {
-    margin: 0;
-    padding: 32px;
-    background: #f1f5f9;
-  }
-  .voucher {
-    max-width: 720px;
-    margin: 0 auto;
-    background: white;
-    border-radius: 24px;
-    overflow: hidden;
-    box-shadow: 0 30px 70px rgba(79, 70, 229, 0.25);
-  }
-  .voucher__header {
-    padding: 36px;
-    background: linear-gradient(135deg, #5b21b6, #4c1d95, #1d4ed8);
-    color: white;
-    position: relative;
-  }
-  .voucher__header::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(circle at 80% 20%, rgba(255,255,255,0.25), transparent 60%);
-    pointer-events: none;
-  }
-  .voucher__tag {
-    font-size: 11px;
-    letter-spacing: 0.3em;
-    text-transform: uppercase;
-    opacity: 0.8;
-  }
-  .voucher__title {
-    margin: 16px 0 4px;
-    font-size: 36px;
-    font-weight: 700;
-  }
-  .voucher__reference {
-    font-size: 14px;
-    opacity: 0.85;
-  }
-  .voucher__body {
-    padding: 36px;
-  }
-  .voucher__row {
-    display: grid;
-    gap: 16px;
-  }
-  .voucher__row--three {
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  }
-  .voucher__block {
-    border-radius: 18px;
-    background: #f8fafc;
-    padding: 20px;
-  }
-  .voucher__label {
-    font-size: 10px;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: #64748b;
-  }
-  .voucher__value {
-    font-size: 18px;
-    font-weight: 600;
-    color: #111827;
-    margin-top: 4px;
-  }
-  .voucher__amount {
-    font-size: 34px;
-    font-weight: 700;
-    color: #1d4ed8;
-  }
-  .voucher__footer {
-    margin-top: 24px;
-    font-size: 12px;
-    color: #475569;
-    text-align: center;
-  }
+  :root { color-scheme: light; font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+  @page { margin: 16mm; }
+  body { margin: 0; padding: 32px; background: #f1f5f9; }
+  .voucher { max-width: 720px; margin: 0 auto; background: white; border-radius: 24px; overflow: hidden; box-shadow: 0 30px 70px rgba(79, 70, 229, 0.25); }
+  .voucher__header { padding: 36px; background: linear-gradient(135deg, #5b21b6, #4c1d95, #1d4ed8); color: white; position: relative; }
+  .voucher__header::after { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 80% 20%, rgba(255,255,255,0.25), transparent 60%); pointer-events: none; }
+  .voucher__tag { font-size: 11px; letter-spacing: 0.3em; text-transform: uppercase; opacity: 0.8; }
+  .voucher__title { margin: 16px 0 4px; font-size: 36px; font-weight: 700; }
+  .voucher__reference { font-size: 14px; opacity: 0.85; }
+  .voucher__body { padding: 36px; }
+  .voucher__row { display: grid; gap: 16px; }
+  .voucher__row--three { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+  .voucher__block { border-radius: 18px; background: #f8fafc; padding: 20px; }
+  .voucher__label { font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: #64748b; }
+  .voucher__value { font-size: 18px; font-weight: 600; color: #111827; margin-top: 4px; }
+  .voucher__amount { font-size: 34px; font-weight: 700; color: #1d4ed8; }
+  .voucher__footer { margin-top: 24px; font-size: 12px; color: #475569; text-align: center; }
 </style>
 </head>
 <body>
@@ -250,21 +184,52 @@ function printVoucher(voucher: VoucherDetails) {
         <div class="voucher__label">Payable Amount</div>
         <div class="voucher__amount">${amount}</div>
         <div style="margin-top:8px; font-size:13px; color:#475569;">
-          Present this voucher at campus reception or email admissions@eduadmin.pk
-          to confirm your enrollment.
+          Present this voucher at campus reception or email admissions@eduadmin.pk to confirm your enrollment.
         </div>
       </div>
-      <div class="voucher__footer">
-        Thank you for choosing EduAdmin. Our counselor will reach out shortly with next steps.
-      </div>
+      <div class="voucher__footer">Thank you for choosing EduAdmin. Our counselor will reach out shortly with next steps.</div>
     </div>
   </div>
-  <script>window.print();</script>
 </body>
 </html>`;
 
-  doc.document.write(html);
-  doc.document.close();
+  try {
+    const iframe = document.createElement("iframe");
+    iframe.style.position = "fixed";
+    iframe.style.right = "0";
+    iframe.style.bottom = "0";
+    iframe.style.width = "0";
+    iframe.style.height = "0";
+    iframe.style.border = "0";
+    document.body.appendChild(iframe);
+    const win = iframe.contentWindow;
+    if (!win) throw new Error("no-iframe");
+    win.document.open();
+    win.document.write(html);
+    win.document.close();
+    const printNow = () => {
+      try {
+        win.focus();
+        win.print();
+      } finally {
+        setTimeout(() => document.body.removeChild(iframe), 500);
+      }
+    };
+    if (win.document.readyState === "complete") setTimeout(printNow, 50);
+    else win.addEventListener("load", () => setTimeout(printNow, 50));
+  } catch {
+    const w = window.open("", "PRINT", "width=900,height=650,top=100,left=150");
+    if (!w) return;
+    w.document.write(html);
+    w.document.close();
+    const after = () => {
+      w.focus();
+      w.print();
+      setTimeout(() => w.close(), 300);
+    };
+    if (w.document.readyState === "complete") setTimeout(after, 50);
+    else w.addEventListener("load", () => setTimeout(after, 50));
+  }
 }
 
 export default function AdmissionForm() {
@@ -289,36 +254,40 @@ export default function AdmissionForm() {
   );
 
   const fetchCourses = useCallback(async () => {
-    if (!supabase) {
-      setCourses([]);
-      setLoadingCourses(false);
-      return;
-    }
-
     setLoadingCourses(true);
     try {
-      const { data, error } = await supabase
-        .from<Course>("courses")
-        .select("*")
-        .eq("status", "live")
-        .order("created_at", { ascending: false });
+      if (supabase) {
+        const { data, error } = await supabase
+          .from<Course>("courses")
+          .select("*")
+          .eq("status", "live")
+          .order("created_at", { ascending: false });
 
-      if (error) {
-        console.error("Error fetching courses:", error.message);
-        toast({
-          title: "Unable to load courses",
-          description: "Please try again in a moment.",
-        });
-        return;
+        if (error) {
+          console.error("Error fetching courses:", error.message);
+        } else if (Array.isArray(data) && data.length) {
+          setCourses(data);
+          return;
+        }
       }
-
-      if (Array.isArray(data)) {
-        setCourses(data);
-      }
+      // Fallback to local static list when DB is not configured or empty
+      const mapped: Course[] = COURSES.map((c) => ({
+        id: c.id,
+        name: c.name,
+        category: "General",
+        duration: c.duration,
+        fees: c.fees,
+        description: c.description,
+        featured: false,
+        status: "live",
+        start_date: null,
+        created_at: new Date().toISOString(),
+      }));
+      setCourses(mapped);
     } finally {
       setLoadingCourses(false);
     }
-  }, [toast]);
+  }, []);
 
   useEffect(() => {
     void fetchCourses();
@@ -339,14 +308,6 @@ export default function AdmissionForm() {
     async (event: FormEvent<HTMLFormElement>) => {
       event.preventDefault();
       if (submitting) return;
-
-      if (!supabase) {
-        toast({
-          title: "Configuration missing",
-          description: "Database connection is not available right now.",
-        });
-        return;
-      }
 
       if (!selectedCourse) {
         toast({
@@ -372,40 +333,57 @@ export default function AdmissionForm() {
         : new Date(Date.now() + VOUCHER_DUE_OFFSET).toISOString();
 
       try {
-        const { data, error } = await supabase
-          .from("applications")
-          .insert([
-            {
+        let reference = `APP-${Date.now()}`;
+        let createdAt = issueDateISO;
+
+        if (supabase) {
+          const payload = {
+            name: trimmed.name,
+            email: trimmed.email,
+            phone: trimmed.phone,
+            course: trimmed.courseName,
+            start_date: startDate || null,
+            message: message ? message.trim() : null,
+            campus: "Main",
+            batch: "TBD",
+            status: "Pending",
+            fee_total: trimmed.amount,
+            fee_installments: [
+              { id: "V1", amount: trimmed.amount, dueDate: dueDateISO },
+            ],
+            documents: [],
+          };
+          const { data, error } = await supabase
+            .from("applications")
+            .insert(payload)
+            .select("app_id, created_at")
+            .single();
+          if (error) throw error;
+          if (data?.app_id !== undefined && data?.app_id !== null)
+            reference = String(data.app_id);
+          if (data?.created_at) createdAt = String(data.created_at);
+        } else {
+          const response = await fetch("/api/public/applications", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
               name: trimmed.name,
               email: trimmed.email,
               phone: trimmed.phone,
               course: trimmed.courseName,
-              start_date: startDate || null,
-              message: message ? message.trim() : null,
-              campus: "Main",
-              batch: "TBD",
-              status: "Pending",
-              fee_total: trimmed.amount,
-              fee_installments: [
-                {
-                  id: "V1",
-                  amount: trimmed.amount,
-                  dueDate: dueDateISO,
-                },
-              ],
-              documents: [],
-            },
-          ])
-          .select("id, app_id, created_at");
-
-        if (error) {
-          throw error;
+              preferredStart: startDate || null,
+            }),
+          });
+          if (!response.ok) {
+            const errPayload = await response.json().catch(() => ({}));
+            throw new Error(errPayload?.error || "Network error");
+          }
+          const payload = await response.json();
+          const inserted = payload?.item || null;
+          if (inserted?.id) reference = String(inserted.id);
+          if (inserted?.createdAt) createdAt = String(inserted.createdAt);
         }
 
-        const inserted = data?.[0];
-        const reference = inserted
-          ? String(inserted.app_id ?? inserted.id)
-          : `APP-${Date.now()}`;
         const voucherDetails: VoucherDetails = {
           id: buildVoucherId(reference),
           reference,
@@ -414,7 +392,7 @@ export default function AdmissionForm() {
           studentName: trimmed.name,
           email: trimmed.email,
           phone: trimmed.phone,
-          issueDate: inserted?.created_at ?? issueDateISO,
+          issueDate: createdAt,
           dueDate: dueDateISO,
           campus: "Main Campus",
         };
@@ -489,7 +467,7 @@ export default function AdmissionForm() {
       </section>
 
       <div className="grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-        <Card className="border-none shadow-lg shadow-primary/5">
+        <Card className="border-none bg-white shadow-lg shadow-primary/5">
           <CardHeader>
             <CardTitle>Admission details</CardTitle>
             <CardDescription>
@@ -594,85 +572,16 @@ export default function AdmissionForm() {
               <Button
                 type="submit"
                 size="lg"
-                disabled={
-                  submitting || !supabase || !selectedCourse || loadingCourses
-                }
+                disabled={submitting || !selectedCourse || loadingCourses}
                 className="w-full justify-center text-base font-semibold"
               >
                 {submitting ? "Submitting..." : "Submit application"}
               </Button>
-              {!supabase && (
-                <p className="text-sm text-destructive">
-                  Supabase credentials are missing. Admissions team has been
-                  notified.
-                </p>
-              )}
             </form>
           </CardContent>
         </Card>
 
         <div className="space-y-6">
-          <Card className="border-none bg-secondary/40 shadow-lg shadow-primary/5">
-            <CardHeader>
-              <CardTitle>Course overview</CardTitle>
-              <CardDescription>
-                Fees, duration, and schedule for your selected course.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-5">
-              {selectedCourse ? (
-                <div className="space-y-5">
-                  <div className="rounded-2xl border border-border/70 bg-background p-5 shadow-sm">
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div>
-                        <p className="text-lg font-semibold text-foreground">
-                          {selectedCourse.name}
-                        </p>
-                        {selectedCourse.description && (
-                          <p className="mt-1 text-sm text-muted-foreground">
-                            {selectedCourse.description}
-                          </p>
-                        )}
-                      </div>
-                      <Badge variant="secondary" className="uppercase">
-                        {selectedCourse.status}
-                      </Badge>
-                    </div>
-                    <div className="mt-4 space-y-3 text-sm">
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <CalendarDays className="h-4 w-4 text-primary" />
-                        Preferred start:{" "}
-                        {futureDateLabel(
-                          startDate || selectedCourse.start_date,
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <Clock className="h-4 w-4 text-primary" />
-                        Duration: {selectedCourse.duration}
-                      </div>
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <MapPin className="h-4 w-4 text-primary" />
-                        Campus: Main Campus
-                      </div>
-                    </div>
-                    <div className="mt-5 rounded-xl bg-primary/5 p-4">
-                      <p className="text-xs text-muted-foreground">
-                        Course fee
-                      </p>
-                      <p className="text-2xl font-semibold text-primary">
-                        {currencyDisplay.format(selectedCourse.fees)}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="rounded-2xl border border-dashed border-border p-6 text-sm text-muted-foreground">
-                  Courses will appear here as soon as they are available.
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
           <Card className="border-none shadow-lg shadow-primary/5">
             <CardHeader>
               <CardTitle>What happens next?</CardTitle>
