@@ -172,7 +172,7 @@ export default function CourseCatalog() {
                 <Button asChild variant="secondary" className="bg-white text-foreground hover:bg-white/90">
                   <Link to="/admission-form">Get Admission</Link>
                 </Button>
-                <Button asChild variant="outline" className="border-white/60 text-white hover:bg-white/10">
+                <Button asChild className="bg-white text-black hover:bg-white/90">
                   <Link to="/contact">Contact Us</Link>
                 </Button>
               </div>
@@ -218,7 +218,7 @@ export default function CourseCatalog() {
                 </button>
               ))}
             </div>
-            <Button asChild className="h-9">
+            <Button asChild className="h-9 bg-white text-black hover:bg-white/90">
               <Link to="/contact">Contact Us</Link>
             </Button>
           </div>
