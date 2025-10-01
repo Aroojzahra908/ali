@@ -544,11 +544,7 @@ export function Profile({
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-2">
           <div className="text-xs text-muted-foreground">Mark Attendance</div>
-          <Input
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-          />
+          <DatePicker value={date} onChange={(v) => setDate(v)} />
           <div className="space-x-2">
             <Button size="sm" onClick={() => markAttendance(true)}>
               Present
