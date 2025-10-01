@@ -30,7 +30,7 @@ import {
   getCertificate,
   updateCertificateStatus,
   deleteCertificate,
-} from "./routes/certificates\";"
+} from "./routes/certificates";
 
 export function createServer() {
   const app = express();
