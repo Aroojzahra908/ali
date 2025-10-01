@@ -88,49 +88,15 @@ function RoleBadge({ role }: { role: Role }) {
   return <Badge className={className}>{role}</Badge>;
 }
 
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import supabase, { isSupabaseConfigured } from "@/lib/supabase";
+
 export default function Users() {
-  const [users, setUsers] = useState<UserItem[]>([
-    {
-      id: "u-1",
-      name: "Owner User",
-      email: "owner@example.com",
-      role: "Owner",
-      phone: "",
-      status: "active",
-    },
-    {
-      id: "u-2",
-      name: "Admin User",
-      email: "admin@example.com",
-      role: "Admin",
-      phone: "",
-      status: "active",
-    },
-    {
-      id: "u-3",
-      name: "Suspended Instructor",
-      email: "instructor@example.com",
-      role: "Instructor",
-      phone: "",
-      status: "suspended",
-    },
-  ]);
-
-  const [selectedId, setSelectedId] = useState<string>(users[0]?.id || "");
-  const selected = useMemo(
-    () => users.find((u) => u.id === selectedId) || users[0],
-    [users, selectedId],
-  );
-
-  const active = users.filter((u) => u.status === "active");
-  const suspended = users.filter((u) => u.status === "suspended");
+  const qc = useQueryClient();
 
   // Create form state (Select values aren't part of FormData by default)
   const [createRole, setCreateRole] = useState<Role>(ROLES[1]);
   const [createStatus, setCreateStatus] = useState<UserStatus>("active");
-
-  // Manage form role control
-  const [manageRole, setManageRole] = useState<Role | undefined>(selected?.role);
 
   // All Users filters/pagination
   const [query, setQuery] = useState("");
@@ -139,18 +105,129 @@ export default function Users() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
-  const addUser = (u: Omit<UserItem, "id">) => {
-    const id = `u-${Date.now()}`;
-    setUsers((prev) => [...prev, { ...u, id }]);
-    toast({ title: "User created", description: `${u.name} (${u.role}) added.` });
-  };
+  async function authHeaders() {
+    const { data } = await supabase.auth.getSession();
+    const token = data.session?.access_token;
+    if (!token) throw new Error("Not authenticated");
+    return { Authorization: `Bearer ${token}` } as Record<string, string>;
+  }
 
-  const updateUser = (id: string, patch: Partial<UserItem>) => {
-    setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, ...patch } : u)));
-    toast({ title: "User updated" });
-  };
+  const usersQuery = useQuery({
+    queryKey: ["admin-users"],
+    enabled: isSupabaseConfigured,
+    queryFn: async () => {
+      const headers = await authHeaders();
+      const resp = await fetch("/api/admin/users", { headers });
+      if (!resp.ok) {
+        const j = await resp.json().catch(() => ({}));
+        throw new Error(j.error || `Failed to load users (${resp.status})`);
+      }
+      const j = (await resp.json()) as { items: any[] };
+      return j.items.map((it) => ({
+        id: it.id as string,
+        name: String(it.full_name || ""),
+        email: String(it.email || ""),
+        role: (String(it.role || "student").charAt(0).toUpperCase() + String(it.role || "student").slice(1)) as Role,
+        phone: it.phone ? String(it.phone) : "",
+        status: String(it.status || "active") as UserStatus,
+      })) as UserItem[];
+    },
+  });
 
-  const setStatus = (id: string, status: UserStatus) => updateUser(id, { status });
+  const users = usersQuery.data || [];
+  const [selectedId, setSelectedId] = useState<string>("");
+  const selected = useMemo(() => users.find((u) => u.id === selectedId) || users[0], [users, selectedId]);
+  const [manageRole, setManageRole] = useState<Role | undefined>(selected?.role);
+
+  // Keep selection in sync when data changes
+  if (!selectedId && users[0]?.id) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+    selectedId || setSelectedId(users[0].id);
+  }
+
+  const active = users.filter((u) => u.status === "active");
+  const suspended = users.filter((u) => u.status === "suspended");
+
+  const createMut = useMutation({
+    mutationFn: async (payload: { name: string; email: string; phone?: string; role: Role; status: UserStatus }) => {
+      const headers = { ...(await authHeaders()), "content-type": "application/json" } as HeadersInit;
+      const resp = await fetch("/api/admin/users", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          email: payload.email,
+          full_name: payload.name,
+          phone: payload.phone || null,
+          role: payload.role.toLowerCase(),
+          status: payload.status.toLowerCase(),
+        }),
+      });
+      if (!resp.ok) {
+        const j = await resp.json().catch(() => ({}));
+        throw new Error(j.error || "Failed to create user");
+      }
+      return resp.json();
+    },
+    onSuccess: () => {
+      toast({ title: "User created" });
+      qc.invalidateQueries({ queryKey: ["admin-users"] });
+    },
+    onError: (e: any) => toast({ title: "Create failed", description: e?.message || String(e) }),
+  });
+
+  const updateMut = useMutation({
+    mutationFn: async (args: { id: string; patch: Partial<UserItem> }) => {
+      const headers = { ...(await authHeaders()), "content-type": "application/json" } as HeadersInit;
+      const body: any = {};
+      if (args.patch.name) body.full_name = args.patch.name;
+      if (args.patch.phone !== undefined) body.phone = args.patch.phone;
+      if (args.patch.role) body.role = String(args.patch.role).toLowerCase();
+      if (args.patch.status) body.status = String(args.patch.status).toLowerCase();
+      if (args.patch.email) body.email = args.patch.email; // optional
+      const resp = await fetch(`/api/admin/users/${args.id}`, {
+        method: "PATCH",
+        headers,
+        body: JSON.stringify(body),
+      });
+      if (!resp.ok) {
+        const j = await resp.json().catch(() => ({}));
+        throw new Error(j.error || "Failed to update user");
+      }
+      return resp.json();
+    },
+    onSuccess: () => {
+      toast({ title: "User updated" });
+      qc.invalidateQueries({ queryKey: ["admin-users"] });
+    },
+    onError: (e: any) => toast({ title: "Update failed", description: e?.message || String(e) }),
+  });
+
+  const resetPwdMut = useMutation({
+    mutationFn: async (id: string) => {
+      const headers = { ...(await authHeaders()) } as HeadersInit;
+      const resp = await fetch(`/api/admin/users/${id}/reset-password`, {
+        method: "POST",
+        headers,
+      });
+      if (!resp.ok) {
+        const j = await resp.json().catch(() => ({}));
+        throw new Error(j.error || "Failed to reset password");
+      }
+      return resp.json() as Promise<{ ok: boolean; password: string }>;
+    },
+    onSuccess: (data) => {
+      toast({ title: "Password reset", description: `Temporary password: ${data.password}` });
+    },
+    onError: (e: any) => toast({ title: "Reset failed", description: e?.message || String(e) }),
+  });
+
+  function addUser(u: Omit<UserItem, "id">) {
+    createMut.mutate({ name: u.name, email: u.email, phone: u.phone, role: u.role as Role, status: u.status });
+  }
+
+  function updateUser(id: string, patch: Partial<UserItem>) {
+    updateMut.mutate({ id, patch });
+  }
 
   const filteredUsers = users.filter((u) => {
     const matchesQuery = [u.name, u.email, u.role, u.phone]
@@ -165,10 +242,9 @@ export default function Users() {
 
   const pageCount = Math.max(1, Math.ceil(filteredUsers.length / pageSize));
   const currentPage = Math.min(page, pageCount);
-  const pageSlice = filteredUsers.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize,
-  );
+  const pageSlice = filteredUsers.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+  const setStatus = (id: string, status: UserStatus) => updateUser(id, { status });
 
   return (
     <div className="space-y-4">
