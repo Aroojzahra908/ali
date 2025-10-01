@@ -478,8 +478,8 @@ export function Details({
                   toast({ title: "Application created" });
                 }}
               >
-              Submit application
-            </Button>
+                Submit application
+              </Button>
             )}
           </DialogFooter>
         </DialogContent>
