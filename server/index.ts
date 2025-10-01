@@ -18,6 +18,12 @@ import {
 } from "./routes/public-submissions";
 import { getSupabase } from "./lib/supabase";
 import { listBatches, createBatch } from "./routes/batches";
+import {
+  listUsers,
+  createUser,
+  updateUser,
+  resetPassword,
+} from "./routes/users";
 
 export function createServer() {
   const app = express();
@@ -87,6 +93,13 @@ export function createServer() {
   app.post("/api/public/applications", postPublicApplication);
   app.get("/api/public/applications", listPublicApplications);
   app.post("/api/public/applications/delete", deletePublicApplication);
+
+  // Admin: Users management
+  // Registered only if service role env vars are present (checked inside handlers)
+  app.get("/api/admin/users", listUsers);
+  app.post("/api/admin/users", createUser);
+  app.patch("/api/admin/users/:id", updateUser);
+  app.post("/api/admin/users/:id/reset-password", resetPassword);
 
   // Role permissions persistence (read open, write requires ADMIN_API_TOKEN)
   app.get("/api/role-perms", getRolePerms);
