@@ -49,7 +49,8 @@ export function AttendanceTab({
         .from("batches")
         .select("batch_code")
         .order("created_at", { ascending: false });
-      if (!error && data) setBatchesDb((data as any[]).map((r) => r.batch_code));
+      if (!error && data)
+        setBatchesDb((data as any[]).map((r) => r.batch_code));
     })();
 
     const ch = supabase!

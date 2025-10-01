@@ -231,7 +231,9 @@ export function NewAdmissionTab({ onCreated }: Props) {
         let record = fallbackRecord;
 
         if (supabase) {
-          const startDateVal = (startDate && startDate.trim()) || new Date().toISOString().slice(0, 10);
+          const startDateVal =
+            (startDate && startDate.trim()) ||
+            new Date().toISOString().slice(0, 10);
           const fullPayload = {
             name: trimmedName,
             email: trimmedEmail,
@@ -353,7 +355,9 @@ export function NewAdmissionTab({ onCreated }: Props) {
           (typeof error?.hint === "string" && error.hint) ||
           (typeof error?.details === "string" && error.details) ||
           (typeof error?.code === "string" && `Error ${error.code}`) ||
-          (error && typeof error === "object" ? JSON.stringify(error) : String(error));
+          (error && typeof error === "object"
+            ? JSON.stringify(error)
+            : String(error));
         console.error("Admission submission failed:", msg, error);
         toast({
           title: "Submission failed",

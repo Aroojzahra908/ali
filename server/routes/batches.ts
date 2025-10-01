@@ -1,29 +1,46 @@
 import type { RequestHandler } from "express";
 import { getSupabase } from "../lib/supabase";
-import type { ApiErrorResponse, BatchCreateInput, BatchRow, CreateBatchResponse, ListBatchesResponse } from "@shared/api";
+import type {
+  ApiErrorResponse,
+  BatchCreateInput,
+  BatchRow,
+  CreateBatchResponse,
+  ListBatchesResponse,
+} from "@shared/api";
 
 export const listBatches: RequestHandler = async (_req, res) => {
   const supa = getSupabase();
   if (!supa) {
-    const payload: ApiErrorResponse = { ok: false, error: "Supabase not configured" };
+    const payload: ApiErrorResponse = {
+      ok: false,
+      error: "Supabase not configured",
+    };
     return res.status(500).json(payload);
   }
   const { data, error } = await supa
     .from("batches")
-    .select("batch_id, course_name, campus_name, batch_code, start_date, end_date, instructor, max_students, current_students, status, created_at")
+    .select(
+      "batch_id, course_name, campus_name, batch_code, start_date, end_date, instructor, max_students, current_students, status, created_at",
+    )
     .order("created_at", { ascending: false });
   if (error) {
     const payload: ApiErrorResponse = { ok: false, error: error.message };
     return res.status(500).json(payload);
   }
-  const payload: ListBatchesResponse = { ok: true, items: (data as BatchRow[]) ?? [] };
+  const payload: ListBatchesResponse = {
+    ok: true,
+    items: (data as BatchRow[]) ?? [],
+  };
   return res.json(payload);
 };
 
 export const createBatch: RequestHandler = async (req, res) => {
   const supa = getSupabase();
   if (!supa) {
-    const payload: ApiErrorResponse = { ok: false, error: "Supabase not configured" };
+    const payload: ApiErrorResponse = {
+      ok: false,
+      error: "Supabase not configured",
+    };
     return res.status(500).json(payload);
   }
 
@@ -40,7 +57,10 @@ export const createBatch: RequestHandler = async (req, res) => {
   ];
   for (const k of required) {
     if (body[k] === undefined || body[k] === null || body[k] === "") {
-      const payload: ApiErrorResponse = { ok: false, error: `Missing field: ${k}` };
+      const payload: ApiErrorResponse = {
+        ok: false,
+        error: `Missing field: ${k}`,
+      };
       return res.status(400).json(payload);
     }
   }

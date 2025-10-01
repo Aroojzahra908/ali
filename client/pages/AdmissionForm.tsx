@@ -337,7 +337,9 @@ export default function AdmissionForm() {
         let createdAt = issueDateISO;
 
         if (supabase) {
-          const startDateVal = (startDate && startDate.trim()) || new Date().toISOString().slice(0, 10);
+          const startDateVal =
+            (startDate && startDate.trim()) ||
+            new Date().toISOString().slice(0, 10);
           const fullPayload = {
             name: trimmed.name,
             email: trimmed.email,
@@ -459,7 +461,9 @@ export default function AdmissionForm() {
           (typeof error?.hint === "string" && error.hint) ||
           (typeof error?.details === "string" && error.details) ||
           (typeof error?.code === "string" && `Error ${error.code}`) ||
-          (error && typeof error === "object" ? JSON.stringify(error) : String(error));
+          (error && typeof error === "object"
+            ? JSON.stringify(error)
+            : String(error));
         toast({
           title: "Submission failed",
           description: msg,

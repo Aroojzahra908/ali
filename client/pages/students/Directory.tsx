@@ -139,7 +139,11 @@ export function Directory({
   const courses = useMemo(() => {
     const fromData = data.map((d) => d.admission.course).filter(Boolean);
     const stored = getAllCourseNames(); // only admin-added/store-synced names
-    const merged = new Set<string>([...coursesDb, ...(stored || []), ...fromData]);
+    const merged = new Set<string>([
+      ...coursesDb,
+      ...(stored || []),
+      ...fromData,
+    ]);
     return Array.from(merged).sort();
   }, [data, version, coursesDb]);
   const batches = useMemo(() => {

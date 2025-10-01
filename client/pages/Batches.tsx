@@ -96,7 +96,10 @@ export default function Batches() {
 
   useEffect(() => {
     if (!isSupabaseConfigured()) {
-      toast({ title: "Supabase not configured", description: "Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY" });
+      toast({
+        title: "Supabase not configured",
+        description: "Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY",
+      });
       return;
     }
     const load = async () => {
@@ -122,13 +125,16 @@ export default function Batches() {
         currentStudents: r.current_students,
       }));
       const seen = new Set<string>();
-      const items = mapped.filter((b) => (seen.has(b.id) ? false : (seen.add(b.id), true)));
+      const items = mapped.filter((b) =>
+        seen.has(b.id) ? false : (seen.add(b.id), true),
+      );
       setBatches(items);
       if (items[0]) setActiveBatchId(items[0].id);
     };
     load();
 
-    const channel = supabase!.channel("batches-rt")
+    const channel = supabase!
+      .channel("batches-rt")
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "batches" },
@@ -233,7 +239,10 @@ export default function Batches() {
   }) => {
     const code = genCode(cCourse, cCampus);
     if (!isSupabaseConfigured()) {
-      toast({ title: "Supabase not configured", description: "Set env vars first" });
+      toast({
+        title: "Supabase not configured",
+        description: "Set env vars first",
+      });
       return;
     }
     try {
@@ -273,7 +282,10 @@ export default function Batches() {
       setActiveBatchId(b.id);
       toast({ title: "Batch created", description: `${code} (${cCourse})` });
     } catch (err: any) {
-      const message = err?.code === "23505" ? "Batch code already exists" : err?.message || String(err);
+      const message =
+        err?.code === "23505"
+          ? "Batch code already exists"
+          : err?.message || String(err);
       toast({ title: "Create failed", description: message });
     }
   };
