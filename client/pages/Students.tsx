@@ -141,6 +141,19 @@ export default function Students() {
     }
   };
 
+  const remove = async (id: string) => {
+    setItems((prev) => prev.filter((s) => s.id !== id));
+    try {
+      const { error } = await supabase.from("students").delete().eq("id", id);
+      if (error) throw error;
+    } catch {
+      try {
+        const { deleteStudent } = await import("@/lib/studentStore");
+        deleteStudent(id);
+      } catch {}
+    }
+  };
+
   useEffect(() => {
     (async () => {
       try {
@@ -204,7 +217,7 @@ export default function Students() {
           <TabsTrigger value="reports">Reports</TabsTrigger>
         </TabsList>
         <TabsContent value="directory">
-          <Directory data={items} onChange={upsert} />
+          <Directory data={items} onChange={upsert} onDelete={remove} />
         </TabsContent>
         <TabsContent value="attendance">
           <AttendanceTab data={items} onChange={upsert} />
