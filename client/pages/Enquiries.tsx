@@ -737,10 +737,18 @@ function CreateEnquiry({ onCreated, openEnquiry }: { onCreated: (row: any) => vo
             payload.sources = sources;
             payload.source = sources[0] || "Website";
 
-            const { data, error } = await supabase
-              .from("enquiries")
-              .insert([payload])
-              .select();
+            let data: any = null;
+            let error: any = null;
+            try {
+              const r = await supabase
+                .from("enquiries")
+                .insert([payload])
+                .select();
+              data = r.data;
+              error = r.error;
+            } catch (e) {
+              error = e;
+            }
 
             if (error) {
               addLocalEnquiry({
