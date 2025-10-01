@@ -351,7 +351,7 @@ export default function AdmissionForm() {
             course: trimmed.courseName,
             start_date: startDateVal,
             message: message ? message.trim() : null,
-            campus: "Main",
+            campus: selectedCampus || (campusOptions[0] || ""),
             batch: "TBD",
             status: "Pending",
             fee_total: trimmed.amount,
