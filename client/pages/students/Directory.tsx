@@ -74,6 +74,7 @@ export function Directory({
   const [version, setVersion] = useState(0);
   const [batchesDb, setBatchesDb] = useState<string[]>([]);
   const [coursesDb, setCoursesDb] = useState<string[]>([]);
+  const supabaseReady = isSupabaseConfigured();
 
   useEffect(() => {
     setStatus(lockedStatus ?? initialStatus ?? "");
@@ -90,42 +91,45 @@ export function Directory({
   }, []);
 
   useEffect(() => {
-    if (!isSupabaseConfigured()) return;
-    (async () => {
-      const { data, error } = await supabase!
-        .from("batches")
-        .select("batch_code, course_name")
-        .order("created_at", { ascending: false });
-      if (!error && data) {
-        const bset = new Set<string>();
-        const cset = new Set<string>();
-        for (const r of data as any[]) {
-          if (r.batch_code) bset.add(r.batch_code);
-          if (r.course_name) cset.add(r.course_name);
-        }
-        setBatchesDb(Array.from(bset));
-        setCoursesDb(Array.from(cset));
-      }
-    })();
+    if (!supabaseReady) return;
+    let active = true;
 
-    const ch = supabase!
-      .channel("students-dir-batches")
+    const loadCourses = async () => {
+      const { data, error } = await supabase!
+        .from("courses")
+        .select("name")
+        .order("created_at", { ascending: false });
+      if (!error && data && active) {
+        const names = data
+          .map((row: any) =>
+            typeof row?.name === "string" ? row.name.trim() : "",
+          )
+          .filter((name) => name.length > 0);
+        setCoursesDb(Array.from(new Set(names)));
+      }
+    };
+
+    loadCourses();
+
+    const coursesChannel = supabase!
+      .channel("students-dir-courses")
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "batches" },
+        { event: "*", schema: "public", table: "courses" },
         (payload) => {
-          const r: any = payload.new ?? payload.old;
-          if (!r) return;
-          setBatchesDb((prev) => {
-            const set = new Set(prev);
-            if (payload.eventType === "DELETE") {
-              set.delete(r.batch_code);
-            } else if (r.batch_code) set.add(r.batch_code);
-            return Array.from(set);
-          });
-          setCoursesDb((prev) => {
-            const set = new Set(prev);
-            if (r.course_name) set.add(r.course_name);
+          const next = payload.new as { name?: string } | null;
+          const prev = payload.old as { name?: string } | null;
+          const nextName =
+            typeof next?.name === "string" ? next.name.trim() : "";
+          const prevName =
+            typeof prev?.name === "string" ? prev.name.trim() : "";
+
+          setCoursesDb((current) => {
+            const set = new Set(current);
+            if (prevName) set.delete(prevName);
+            if (payload.eventType !== "DELETE" && nextName) {
+              set.add(nextName);
+            }
             return Array.from(set);
           });
         },
@@ -133,20 +137,78 @@ export function Directory({
       .subscribe();
 
     return () => {
-      supabase!.removeChannel(ch);
+      active = false;
+      supabase!.removeChannel(coursesChannel);
     };
-  }, []);
+  }, [supabaseReady]);
+
+  useEffect(() => {
+    if (!supabaseReady) return;
+    let active = true;
+
+    const loadBatches = async () => {
+      const { data, error } = await supabase!
+        .from("batches")
+        .select("batch_code")
+        .order("created_at", { ascending: false });
+      if (!error && data && active) {
+        const codes = data
+          .map((row: any) =>
+            typeof row?.batch_code === "string" ? row.batch_code.trim() : "",
+          )
+          .filter((code) => code.length > 0);
+        setBatchesDb(Array.from(new Set(codes)));
+      }
+    };
+
+    loadBatches();
+
+    const batchesChannel = supabase!
+      .channel("students-dir-batches")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "batches" },
+        (payload) => {
+          const next = payload.new as { batch_code?: string } | null;
+          const prev = payload.old as { batch_code?: string } | null;
+          const nextCode =
+            typeof next?.batch_code === "string" ? next.batch_code.trim() : "";
+          const prevCode =
+            typeof prev?.batch_code === "string" ? prev.batch_code.trim() : "";
+
+          setBatchesDb((current) => {
+            const set = new Set(current);
+            if (prevCode) set.delete(prevCode);
+            if (payload.eventType !== "DELETE" && nextCode) {
+              set.add(nextCode);
+            }
+            return Array.from(set);
+          });
+        },
+      )
+      .subscribe();
+
+    return () => {
+      active = false;
+      supabase!.removeChannel(batchesChannel);
+    };
+  }, [supabaseReady]);
 
   const courses = useMemo(() => {
-    const fromData = data.map((d) => d.admission.course).filter(Boolean);
-    const stored = getAllCourseNames(); // only admin-added/store-synced names
-    const merged = new Set<string>([
-      ...coursesDb,
-      ...(stored || []),
-      ...fromData,
-    ]);
-    return Array.from(merged).sort();
-  }, [data, version, coursesDb]);
+    if (supabaseReady) {
+      return coursesDb
+        .map((name) => name.trim())
+        .filter((name) => name.length > 0)
+        .sort((a, b) => a.localeCompare(b));
+    }
+    const fromData = data.map((d) => d.admission.course).filter((name) => name);
+    const stored = getAllCourseNames();
+    const merged = new Set<string>([...stored, ...fromData]);
+    return Array.from(merged)
+      .map((name) => name.trim())
+      .filter((name) => name.length > 0)
+      .sort((a, b) => a.localeCompare(b));
+  }, [supabaseReady, data, version, coursesDb]);
   const batches = useMemo(() => {
     const fromData = data.map((d) => d.admission.batch).filter(Boolean);
     const merged = new Set<string>([...batchesDb, ...fromData]);
