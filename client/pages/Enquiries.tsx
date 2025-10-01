@@ -50,7 +50,13 @@ import {
   UserPlus,
 } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import {
   getLocalEnquiries,
   addLocalEnquiry,
@@ -71,7 +77,7 @@ const SOURCES = [
   "Referral",
   "Email Campaign",
 ] as const;
-const CAMPUSES = ["User's Campus", "Main Campus", "City Campus"] as const;
+// campuses are loaded from Supabase; no hardcoded list
 const STAGES = [
   "Prospective",
   "Need Analysis",
@@ -150,7 +156,9 @@ export default function Enquiries() {
 
       // also sync to student if enquiry linked to a student
       try {
-        const localEnq = getLocalEnquiries().find((e) => e.id === id as string) as any;
+        const localEnq = getLocalEnquiries().find(
+          (e) => e.id === (id as string),
+        ) as any;
         const studentId = localEnq?.studentId as string | undefined;
 
         // persist meta (fee total)
@@ -169,8 +177,14 @@ export default function Enquiries() {
               dueDate: it.due || new Date().toISOString(),
               paidAt: it.paid ? new Date().toISOString() : undefined,
             }));
-            const total = (typeof feeTotal === "number" ? feeTotal : mapped.reduce((s: number, x: any) => s + (x.amount || 0), 0));
-            const updated = { ...stu, fee: { total, installments: mapped } } as any;
+            const total =
+              typeof feeTotal === "number"
+                ? feeTotal
+                : mapped.reduce((s: number, x: any) => s + (x.amount || 0), 0);
+            const updated = {
+              ...stu,
+              fee: { total, installments: mapped },
+            } as any;
             try {
               upsertStudent(updated);
             } catch {}
@@ -354,51 +368,81 @@ export default function Enquiries() {
       {view === "Status Tracking" && <StatusTracking enquiries={filtered} />}
 
       {selectedId && (
-        <Dialog open={!!selectedId} onOpenChange={(open) => !open && setSelectedId(null)}>
+        <Dialog
+          open={!!selectedId}
+          onOpenChange={(open) => !open && setSelectedId(null)}
+        >
           <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>Enquiry Details</DialogTitle>
               <DialogDescription>
-                Details for enquiry <span className="font-medium">{selectedId}</span>
+                Details for enquiry{" "}
+                <span className="font-medium">{selectedId}</span>
               </DialogDescription>
             </DialogHeader>
             <div className="mt-4 space-y-2">
               {(function () {
                 const all = [...serverPub, ...(localPub || [])];
-                const row = all.find((p) => {
-                  const id = String(p.id ?? p.enquiry_id ?? p.created_at ?? p.id);
-                  return id === selectedId;
-                }) || null;
-                if (!row) return <div className="text-muted-foreground">Enquiry not found</div>;
+                const row =
+                  all.find((p) => {
+                    const id = String(
+                      p.id ?? p.enquiry_id ?? p.created_at ?? p.id,
+                    );
+                    return id === selectedId;
+                  }) || null;
+                if (!row)
+                  return (
+                    <div className="text-muted-foreground">
+                      Enquiry not found
+                    </div>
+                  );
                 return (
                   <div>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <div className="text-sm text-muted-foreground">Name</div>
+                        <div className="text-sm text-muted-foreground">
+                          Name
+                        </div>
                         <div className="font-medium">{row.name}</div>
                       </div>
                       <div>
-                        <div className="text-sm text-muted-foreground">Course</div>
+                        <div className="text-sm text-muted-foreground">
+                          Course
+                        </div>
                         <div className="font-medium">{row.course}</div>
                       </div>
                       <div>
-                        <div className="text-sm text-muted-foreground">Contact</div>
-                        <div className="font-medium">{row.contact || row.phone}</div>
+                        <div className="text-sm text-muted-foreground">
+                          Contact
+                        </div>
+                        <div className="font-medium">
+                          {row.contact || row.phone}
+                        </div>
                       </div>
                       <div>
-                        <div className="text-sm text-muted-foreground">Email</div>
+                        <div className="text-sm text-muted-foreground">
+                          Email
+                        </div>
                         <div className="font-medium">{row.email || "-"}</div>
                       </div>
                       <div>
-                        <div className="text-sm text-muted-foreground">CNIC</div>
+                        <div className="text-sm text-muted-foreground">
+                          CNIC
+                        </div>
                         <div className="font-medium">{row.cnic || "-"}</div>
                       </div>
                       <div>
-                        <div className="text-sm text-muted-foreground">Campus</div>
-                        <div className="font-medium">{row.campus || row.campus_name || "-"}</div>
+                        <div className="text-sm text-muted-foreground">
+                          Campus
+                        </div>
+                        <div className="font-medium">
+                          {row.campus || row.campus_name || "-"}
+                        </div>
                       </div>
                       <div className="md:col-span-2">
-                        <div className="text-sm text-muted-foreground">Remarks</div>
+                        <div className="text-sm text-muted-foreground">
+                          Remarks
+                        </div>
                         <div className="font-medium">{row.remarks || "-"}</div>
                       </div>
                     </div>
@@ -412,7 +456,9 @@ export default function Enquiries() {
                           setShowInstallments((s) => !s);
                         }}
                       >
-                        {showInstallments ? "Close Fees" : "Set Fees / Installments"}
+                        {showInstallments
+                          ? "Close Fees"
+                          : "Set Fees / Installments"}
                       </Button>
 
                       <Button
@@ -420,25 +466,42 @@ export default function Enquiries() {
                           try {
                             // create student locally and link to enquiry
                             const sid = `STU-${Date.now()}`;
-                            const admissionDate = row.next_follow || new Date().toISOString();
-                            const raw = (localStorage.getItem(`enquiry_installments_${selectedId}`) || "[]");
+                            const admissionDate =
+                              row.next_follow || new Date().toISOString();
+                            const raw =
+                              localStorage.getItem(
+                                `enquiry_installments_${selectedId}`,
+                              ) || "[]";
                             const enInst = JSON.parse(raw);
-                            const mappedInst = (enInst || []).map((it: any, idx: number) => ({
-                              id: `I${idx + 1}`,
-                              amount: Number(it.amount) || 0,
-                              dueDate: it.due || new Date().toISOString(),
-                              paidAt: it.paid ? new Date().toISOString() : undefined,
-                            }));
+                            const mappedInst = (enInst || []).map(
+                              (it: any, idx: number) => ({
+                                id: `I${idx + 1}`,
+                                amount: Number(it.amount) || 0,
+                                dueDate: it.due || new Date().toISOString(),
+                                paidAt: it.paid
+                                  ? new Date().toISOString()
+                                  : undefined,
+                              }),
+                            );
 
                             // determine course fee from stored courses if available
                             let courseFee: number | null = null;
                             try {
                               const courses = getStoredCourses();
-                              const found = courses.find((c) => c.name === row.course);
+                              const found = courses.find(
+                                (c) => c.name === row.course,
+                              );
                               if (found) courseFee = Number(found.fees || 0);
                             } catch {}
 
-                            const total = (typeof feeTotal === "number" && feeTotal > 0) ? feeTotal : (courseFee ?? mappedInst.reduce((s: number, x: any) => s + (x.amount || 0), 0));
+                            const total =
+                              typeof feeTotal === "number" && feeTotal > 0
+                                ? feeTotal
+                                : (courseFee ??
+                                  mappedInst.reduce(
+                                    (s: number, x: any) => s + (x.amount || 0),
+                                    0,
+                                  ));
 
                             const newStudent = {
                               id: sid,
@@ -460,7 +523,10 @@ export default function Enquiries() {
                             upsertStudent(newStudent);
                             // link enquiry -> student (ensure local copy exists for server entries)
                             try {
-                              const updated = updateLocalEnquiry(selectedId!, { status: "Enrolled", studentId: sid } as any);
+                              const updated = updateLocalEnquiry(selectedId!, {
+                                status: "Enrolled",
+                                studentId: sid,
+                              } as any);
                               if (!updated) {
                                 // add a local copy so we can store mapping
                                 addLocalEnquiry({
@@ -480,8 +546,18 @@ export default function Enquiries() {
                             } catch {}
                             // keep dialog open and show installments editor bound to student
                             setShowInstallments(true);
-                            setInstallments((enInst || []).map((it: any) => ({ amount: it.amount, due: it.due, paid: !!it.paid })));
-                            toast({ title: "Registered locally", description: "Student created and linked to this enquiry." });
+                            setInstallments(
+                              (enInst || []).map((it: any) => ({
+                                amount: it.amount,
+                                due: it.due,
+                                paid: !!it.paid,
+                              })),
+                            );
+                            toast({
+                              title: "Registered locally",
+                              description:
+                                "Student created and linked to this enquiry.",
+                            });
                           } catch (err) {
                             console.error(err);
                             toast({ title: "Registration failed" });
@@ -494,7 +570,9 @@ export default function Enquiries() {
 
                     {showInstallments && (
                       <div className="mt-4">
-                        <h4 className="text-sm font-medium mb-2">Installments</h4>
+                        <h4 className="text-sm font-medium mb-2">
+                          Installments
+                        </h4>
 
                         <div className="rounded-md border overflow-x-auto mb-3">
                           <Table>
@@ -504,7 +582,9 @@ export default function Enquiries() {
                                 <TableHead>Amount</TableHead>
                                 <TableHead>Due Date</TableHead>
                                 <TableHead>Paid</TableHead>
-                                <TableHead className="text-right">Actions</TableHead>
+                                <TableHead className="text-right">
+                                  Actions
+                                </TableHead>
                               </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -512,42 +592,79 @@ export default function Enquiries() {
                                 <TableRow key={idx}>
                                   <TableCell>{idx + 1}</TableCell>
                                   <TableCell>
-                                    <Input value={String(it.amount || "")} onChange={(e) => {
-                                      const v = e.target.value;
-                                      const copy = [...installments];
-                                      copy[idx] = { ...copy[idx], amount: Number(v || 0) };
-                                      setInstallments(copy);
-                                    }} className="w-28" />
+                                    <Input
+                                      value={String(it.amount || "")}
+                                      onChange={(e) => {
+                                        const v = e.target.value;
+                                        const copy = [...installments];
+                                        copy[idx] = {
+                                          ...copy[idx],
+                                          amount: Number(v || 0),
+                                        };
+                                        setInstallments(copy);
+                                      }}
+                                      className="w-28"
+                                    />
                                   </TableCell>
                                   <TableCell>
-                                    <Input type="date" value={it.due || ""} onChange={(e) => {
-                                      const v = e.target.value;
-                                      const copy = [...installments];
-                                      copy[idx] = { ...copy[idx], due: v };
-                                      setInstallments(copy);
-                                    }} />
+                                    <Input
+                                      type="date"
+                                      value={it.due || ""}
+                                      onChange={(e) => {
+                                        const v = e.target.value;
+                                        const copy = [...installments];
+                                        copy[idx] = { ...copy[idx], due: v };
+                                        setInstallments(copy);
+                                      }}
+                                    />
                                   </TableCell>
                                   <TableCell>
                                     {it.paid ? (
-                                      <div className="text-sm text-muted-foreground">{it.paidAt || "Paid"}</div>
+                                      <div className="text-sm text-muted-foreground">
+                                        {it.paidAt || "Paid"}
+                                      </div>
                                     ) : (
-                                      <div className="text-sm text-muted-foreground">Pending</div>
+                                      <div className="text-sm text-muted-foreground">
+                                        Pending
+                                      </div>
                                     )}
                                   </TableCell>
                                   <TableCell className="text-right">
                                     <div className="flex justify-end gap-2">
-                                      <Button size="sm" variant={it.paid ? "outline" : "default"} onClick={() => {
-                                        const copy = [...installments];
-                                        const now = new Date().toISOString();
-                                        copy[idx] = { ...copy[idx], paid: !copy[idx].paid, paidAt: !copy[idx].paid ? now : undefined };
-                                        setInstallments(copy);
-                                        saveInstallments(selectedId, copy);
-                                      }}>{it.paid ? "Mark Unpaid" : "Mark Paid"}</Button>
-                                      <Button size="sm" variant="ghost" onClick={() => {
-                                        const copy = installments.filter((_, i) => i !== idx);
-                                        setInstallments(copy);
-                                        saveInstallments(selectedId, copy);
-                                      }}>Remove</Button>
+                                      <Button
+                                        size="sm"
+                                        variant={
+                                          it.paid ? "outline" : "default"
+                                        }
+                                        onClick={() => {
+                                          const copy = [...installments];
+                                          const now = new Date().toISOString();
+                                          copy[idx] = {
+                                            ...copy[idx],
+                                            paid: !copy[idx].paid,
+                                            paidAt: !copy[idx].paid
+                                              ? now
+                                              : undefined,
+                                          };
+                                          setInstallments(copy);
+                                          saveInstallments(selectedId, copy);
+                                        }}
+                                      >
+                                        {it.paid ? "Mark Unpaid" : "Mark Paid"}
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={() => {
+                                          const copy = installments.filter(
+                                            (_, i) => i !== idx,
+                                          );
+                                          setInstallments(copy);
+                                          saveInstallments(selectedId, copy);
+                                        }}
+                                      >
+                                        Remove
+                                      </Button>
                                     </div>
                                   </TableCell>
                                 </TableRow>
@@ -555,7 +672,12 @@ export default function Enquiries() {
 
                               {installments.length === 0 && (
                                 <TableRow>
-                                  <TableCell colSpan={5} className="text-muted-foreground">No installments defined</TableCell>
+                                  <TableCell
+                                    colSpan={5}
+                                    className="text-muted-foreground"
+                                  >
+                                    No installments defined
+                                  </TableCell>
                                 </TableRow>
                               )}
                             </TableBody>
@@ -565,48 +687,103 @@ export default function Enquiries() {
                         <div className="flex items-center justify-between mb-3">
                           <div className="flex items-center gap-4">
                             <div>
-                              <div className="text-sm text-muted-foreground">Course Total Fees</div>
-                              <Input className="w-40" value={feeTotal != null ? String(feeTotal) : ""} onChange={(e) => setFeeTotal(Number(e.target.value || 0))} />
+                              <div className="text-sm text-muted-foreground">
+                                Course Total Fees
+                              </div>
+                              <Input
+                                className="w-40"
+                                value={feeTotal != null ? String(feeTotal) : ""}
+                                onChange={(e) =>
+                                  setFeeTotal(Number(e.target.value || 0))
+                                }
+                              />
                             </div>
                             <div>
-                              <div className="text-sm text-muted-foreground">Total Paid</div>
-                              <div className="font-medium">{(installments || []).reduce((s, it) => s + (Number(it.amount || 0) * (it.paid ? 1 : 0)), 0)}</div>
+                              <div className="text-sm text-muted-foreground">
+                                Total Paid
+                              </div>
+                              <div className="font-medium">
+                                {(installments || []).reduce(
+                                  (s, it) =>
+                                    s +
+                                    Number(it.amount || 0) * (it.paid ? 1 : 0),
+                                  0,
+                                )}
+                              </div>
                             </div>
                             <div>
-                              <div className="text-sm text-muted-foreground">Pending</div>
-                              <div className="font-medium">{(feeTotal != null ? feeTotal : (installments || []).reduce((s, it) => s + Number(it.amount || 0), 0)) - (installments || []).reduce((s, it) => s + (Number(it.amount || 0) * (it.paid ? 1 : 0)), 0)}</div>
+                              <div className="text-sm text-muted-foreground">
+                                Pending
+                              </div>
+                              <div className="font-medium">
+                                {(feeTotal != null
+                                  ? feeTotal
+                                  : (installments || []).reduce(
+                                      (s, it) => s + Number(it.amount || 0),
+                                      0,
+                                    )) -
+                                  (installments || []).reduce(
+                                    (s, it) =>
+                                      s +
+                                      Number(it.amount || 0) *
+                                        (it.paid ? 1 : 0),
+                                    0,
+                                  )}
+                              </div>
                             </div>
                           </div>
 
                           <div className="flex items-center gap-2">
-                            <Button size="sm" onClick={() => {
-                              const copy = [...installments, { amount: 0, due: "", paid: false }];
-                              setInstallments(copy);
-                              // don't auto-save until user clicks Save
-                            }}>
+                            <Button
+                              size="sm"
+                              onClick={() => {
+                                const copy = [
+                                  ...installments,
+                                  { amount: 0, due: "", paid: false },
+                                ];
+                                setInstallments(copy);
+                                // don't auto-save until user clicks Save
+                              }}
+                            >
                               Add Installment
                             </Button>
 
-                            <Button size="sm" variant="outline" onClick={() => saveInstallments(selectedId, installments)}>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() =>
+                                saveInstallments(selectedId, installments)
+                              }
+                            >
                               Save
                             </Button>
 
-                            <Button size="sm" onClick={() => {
-                              // export CSV report
-                              const rows = [( ["amount","due","paid"] ).join(",") , ...installments.map(it => `${it.amount},${it.due},${it.paid ? "yes" : "no"}`)];
-                              const blob = new Blob([rows.join("\n")], { type: "text/csv" });
-                              const url = URL.createObjectURL(blob);
-                              const a = document.createElement("a");
-                              a.href = url;
-                              a.download = `installments_${selectedId}.csv`;
-                              a.click();
-                              URL.revokeObjectURL(url);
-                            }}>
+                            <Button
+                              size="sm"
+                              onClick={() => {
+                                // export CSV report
+                                const rows = [
+                                  ["amount", "due", "paid"].join(","),
+                                  ...installments.map(
+                                    (it) =>
+                                      `${it.amount},${it.due},${it.paid ? "yes" : "no"}`,
+                                  ),
+                                ];
+                                const blob = new Blob([rows.join("\n")], {
+                                  type: "text/csv",
+                                });
+                                const url = URL.createObjectURL(blob);
+                                const a = document.createElement("a");
+                                a.href = url;
+                                a.download = `installments_${selectedId}.csv`;
+                                a.click();
+                                URL.revokeObjectURL(url);
+                              }}
+                            >
                               Export Report
                             </Button>
                           </div>
                         </div>
-
                       </div>
                     )}
                   </div>
@@ -620,10 +797,17 @@ export default function Enquiries() {
   );
 }
 
-function CreateEnquiry({ onCreated, openEnquiry }: { onCreated: (row: any) => void; openEnquiry?: (id: string) => void; }) {
+function CreateEnquiry({
+  onCreated,
+  openEnquiry,
+}: {
+  onCreated: (row: any) => void;
+  openEnquiry?: (id: string) => void;
+}) {
   const [probability, setProbability] = useState<number[]>([50]);
   const [sources, setSources] = useState<string[]>([]);
   const [courses, setCourses] = useState<string[]>([]);
+  const [campuses, setCampuses] = useState<string[]>([]);
   const [recent, setRecent] = useState<any[]>([]);
   const navigate = useNavigate();
 
@@ -632,26 +816,107 @@ function CreateEnquiry({ onCreated, openEnquiry }: { onCreated: (row: any) => vo
       try {
         const { data, error } = await supabase
           .from("courses")
-          .select("name,status,created_at")
-          .eq("status", "live")
+          .select("name,created_at")
           .order("created_at", { ascending: false });
-        if (!error && data) {
+        if (!error && Array.isArray(data)) {
           const names = data
             .map((d: any) => String(d.name || ""))
             .filter(Boolean);
           setCourses(Array.from(new Set(names)));
+          if (data.length === 0) {
+            toast({
+              title: "No courses in database",
+              description: "No rows in courses table.",
+            });
+          }
           return;
         }
       } catch {}
-      setCourses(getAllCourseNames());
+      setCourses([]);
+      toast({
+        title: "Courses unavailable",
+        description: "Could not load from Supabase. Check credentials.",
+      });
     };
     load();
+
+    // Realtime: update dropdown when courses change anywhere
+    let unsub: (() => void) | undefined;
+    try {
+      const ch = (supabase as any)?.channel?.("courses_enquiries_dropdown");
+      if (ch) {
+        ch.on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "courses" },
+          (payload: any) => {
+            const rec = payload.new || payload.old;
+            if (!rec) return;
+            setCourses((prev) => {
+              const set = new Set(prev);
+              if (payload.eventType === "DELETE") {
+                set.delete(String(rec.name || ""));
+              } else {
+                const n = String(rec.name || "");
+                if (n) set.add(n);
+              }
+              return Array.from(set);
+            });
+          },
+        ).subscribe();
+        unsub = () => {
+          try {
+            ch.unsubscribe();
+          } catch {}
+        };
+      }
+    } catch {}
+
+    // Load campuses and subscribe to realtime
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from("campuses")
+          .select("name,status,created_at")
+          .order("created_at", { ascending: false });
+        const names = (data || [])
+          .map((d: any) => String(d.name || ""))
+          .filter(Boolean);
+        setCampuses(Array.from(new Set(names)));
+      } catch {}
+      try {
+        const ch2 = (supabase as any)?.channel?.("campuses_enquiries_dropdown");
+        if (ch2) {
+          ch2
+            .on(
+              "postgres_changes",
+              { event: "*", schema: "public", table: "campuses" },
+              (payload: any) => {
+                const rec = payload.new || payload.old;
+                if (!rec) return;
+                setCampuses((prev) => {
+                  const set = new Set(prev);
+                  if (payload.eventType === "DELETE")
+                    set.delete(String(rec.name || ""));
+                  else {
+                    const n = String(rec.name || "");
+                    if (n) set.add(n);
+                  }
+                  return Array.from(set);
+                });
+              },
+            )
+            .subscribe();
+        }
+      } catch {}
+    })();
+
     const refresh = () => load();
     window.addEventListener("courses:changed", refresh as EventListener);
     window.addEventListener("storage", refresh as EventListener);
     return () => {
       window.removeEventListener("courses:changed", refresh as EventListener);
       window.removeEventListener("storage", refresh as EventListener);
+      if (unsub) unsub();
     };
   }, []);
 
@@ -672,7 +937,11 @@ function CreateEnquiry({ onCreated, openEnquiry }: { onCreated: (row: any) => vo
       const mergedMap = new Map<string, any>();
       [...server, ...local].forEach((p) => {
         const id = String(
-          p.id ?? p.enquiry_id ?? p.created_at ?? crypto.randomUUID?.() ?? Date.now(),
+          p.id ??
+            p.enquiry_id ??
+            p.created_at ??
+            crypto.randomUUID?.() ??
+            Date.now(),
         );
         mergedMap.set(id, {
           id,
@@ -692,7 +961,10 @@ function CreateEnquiry({ onCreated, openEnquiry }: { onCreated: (row: any) => vo
     window.addEventListener("storage", onChange as EventListener);
     return () => {
       mounted = false;
-      window.removeEventListener("enquiries:changed", onChange as EventListener);
+      window.removeEventListener(
+        "enquiries:changed",
+        onChange as EventListener,
+      );
       window.removeEventListener("storage", onChange as EventListener);
     };
   }, []);
@@ -736,10 +1008,18 @@ function CreateEnquiry({ onCreated, openEnquiry }: { onCreated: (row: any) => vo
             payload.sources = sources;
             payload.source = sources[0] || "Website";
 
-            const { data, error } = await supabase
-              .from("enquiries")
-              .insert([payload])
-              .select();
+            let data: any = null;
+            let error: any = null;
+            try {
+              const r = await supabase
+                .from("enquiries")
+                .insert([payload])
+                .select();
+              data = r.data;
+              error = r.error;
+            } catch (e) {
+              error = e;
+            }
 
             if (error) {
               addLocalEnquiry({
@@ -789,6 +1069,21 @@ function CreateEnquiry({ onCreated, openEnquiry }: { onCreated: (row: any) => vo
                 stage: payload.stage,
                 status: payload.status,
               });
+
+              try {
+                await supabase
+                  .from("applications")
+                  .insert([
+                    {
+                      name: payload.name,
+                      email: payload.email,
+                      phone: payload.contact,
+                      course: payload.course,
+                      status: "Pending",
+                    },
+                  ]);
+              } catch {}
+
               toast({
                 title: "Enquiry created",
                 description: `${payload.name} (${payload.course}) saved.`,
@@ -916,13 +1211,13 @@ function CreateEnquiry({ onCreated, openEnquiry }: { onCreated: (row: any) => vo
           </div>
           <div className="space-y-1.5">
             <Label>Preferred Campus</Label>
-            <Select name="campus" defaultValue={CAMPUSES[0]}>
+            <Select name="campus" defaultValue={campuses[0] || ""}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
-                  {CAMPUSES.map((c) => (
+                  {campuses.map((c) => (
                     <SelectItem key={c} value={c}>
                       {c}
                     </SelectItem>
@@ -982,7 +1277,11 @@ function CreateEnquiry({ onCreated, openEnquiry }: { onCreated: (row: any) => vo
                       const mergedMap = new Map<string, any>();
                       [...data, ...local].forEach((p) => {
                         const id = String(
-                          p.id ?? p.enquiry_id ?? p.created_at ?? crypto.randomUUID?.() ?? Date.now(),
+                          p.id ??
+                            p.enquiry_id ??
+                            p.created_at ??
+                            crypto.randomUUID?.() ??
+                            Date.now(),
                         );
                         mergedMap.set(id, {
                           id,
@@ -1021,9 +1320,16 @@ function CreateEnquiry({ onCreated, openEnquiry }: { onCreated: (row: any) => vo
                     <TableCell>{r.campus}</TableCell>
                     <TableCell>{r.status}</TableCell>
                     <TableCell className="text-right">
-                      <Button size="sm" onClick={() => {
-                            try { navigate(`/dashboard/enquiries/${encodeURIComponent(r.id)}`); } catch {}
-                          }}>
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          try {
+                            navigate(
+                              `/dashboard/enquiries/${encodeURIComponent(r.id)}`,
+                            );
+                          } catch {}
+                        }}
+                      >
                         View
                       </Button>
                     </TableCell>
@@ -1056,7 +1362,10 @@ function ImportBulk() {
     const lines = text.split(/\r?\n/).filter(Boolean);
     const parsed = lines.map((l) => l.split(",").map((c) => c.trim()));
     if (parsed.length) setRows(parsed);
-    toast({ title: "CSV uploaded", description: `${parsed.length - 1} records parsed.` });
+    toast({
+      title: "CSV uploaded",
+      description: `${parsed.length - 1} records parsed.`,
+    });
 
     // Insert into Supabase without changing UI
     try {
@@ -1082,7 +1391,10 @@ function ImportBulk() {
       const batch = items.filter((x) => x.name && x.course && x.contact);
       if (batch.length > 0) {
         await supabase.from("enquiries").insert(batch);
-        toast({ title: "Imported to Supabase", description: `${batch.length} saved` });
+        toast({
+          title: "Imported to Supabase",
+          description: `${batch.length} saved`,
+        });
         try {
           const ev = new Event("enquiries:changed");
           window.dispatchEvent(ev);

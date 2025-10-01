@@ -1,4 +1,3 @@
-import { useMemo, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -31,6 +30,7 @@ import {
 } from "@/components/ui/pagination";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "@/hooks/use-toast";
+import { useEffect, useMemo, useState } from "react";
 import {
   Pencil,
   UserMinus,
@@ -39,6 +39,11 @@ import {
   ShieldAlert,
   Shield,
 } from "lucide-react";
+
+import {
+  supabase,
+  isSupabaseConfigured as hasSupabase,
+} from "@/lib/supabaseClient";
 
 export type UserStatus = "active" | "suspended";
 export type Role = "Owner" | "Admin" | "Instructor" | "Frontdesk" | "Student";
@@ -78,38 +83,98 @@ function RoleBadge({ role }: { role: Role }) {
 }
 
 export default function Users() {
-  const [users, setUsers] = useState<UserItem[]>([
-    {
-      id: "u-1",
-      name: "System Admin",
-      email: "admin@example.com",
-      role: "Owner",
-      phone: "03100000000",
-      status: "active",
-    },
-    {
-      id: "u-2",
-      name: "Admissions Desk",
-      email: "frontdesk@example.com",
-      role: "Frontdesk",
-      phone: "03110000000",
-      status: "active",
-    },
-    {
-      id: "u-3",
-      name: "Suspended Instructor",
-      email: "instructor@example.com",
-      role: "Instructor",
-      phone: "03120000000",
-      status: "suspended",
-    },
-  ]);
+  const [users, setUsers] = useState<UserItem[]>([]);
 
-  const [selectedId, setSelectedId] = useState<string>("u-1");
+  const [selectedId, setSelectedId] = useState<string>("");
   const selected = useMemo(
     () => users.find((u) => u.id === selectedId) || users[0],
     [users, selectedId],
   );
+
+  useEffect(() => {
+    let unsub: (() => void) | undefined;
+    (async () => {
+      if (!hasSupabase()) {
+        // seed minimal defaults only when Supabase is not configured
+        setUsers([
+          {
+            id: "u-1",
+            name: "System Admin",
+            email: "admin@example.com",
+            role: "Owner",
+            phone: "03100000000",
+            status: "active",
+          },
+        ]);
+        setSelectedId("u-1");
+        return;
+      }
+
+      const { data, error } = await supabase!
+        .from("app_users")
+        .select("id,name,email,phone,role,status")
+        .order("created_at", { ascending: false });
+      if (!error && Array.isArray(data)) {
+        setUsers(
+          data.map((u: any) => ({
+            id: String(u.id),
+            name: u.name,
+            email: u.email,
+            phone: u.phone || "",
+            role: u.role as Role,
+            status: (u.status as UserStatus) || "active",
+          })),
+        );
+        if (data[0]?.id) setSelectedId(String(data[0].id));
+      }
+
+      try {
+        const channel = (supabase as any)?.channel?.("app_users_changes");
+        if (channel) {
+          channel
+            .on(
+              "postgres_changes",
+              { event: "*", schema: "public", table: "app_users" },
+              (payload: any) => {
+                const rec = payload.new || payload.old;
+                if (!rec) return;
+                if (payload.eventType === "DELETE") {
+                  setUsers((prev) =>
+                    prev.filter((u) => u.id !== String(rec.id)),
+                  );
+                  return;
+                }
+                const item: UserItem = {
+                  id: String(rec.id),
+                  name: rec.name,
+                  email: rec.email,
+                  phone: rec.phone || "",
+                  role: rec.role as Role,
+                  status: (rec.status as UserStatus) || "active",
+                };
+                setUsers((prev) => {
+                  const idx = prev.findIndex((u) => u.id === item.id);
+                  if (idx === -1) return [item, ...prev];
+                  const copy = prev.slice();
+                  copy[idx] = item;
+                  return copy;
+                });
+              },
+            )
+            .subscribe();
+          unsub = () => {
+            try {
+              channel.unsubscribe();
+            } catch {}
+          };
+        }
+      } catch {}
+    })();
+
+    return () => {
+      if (unsub) unsub();
+    };
+  }, []);
 
   const active = users.filter((u) => u.status === "active");
   const suspended = users.filter((u) => u.status === "suspended");
@@ -126,16 +191,64 @@ export default function Users() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
-  function addUser(u: Omit<UserItem, "id">) {
-    const id = `u-${Date.now()}`;
-    setUsers((prev) => [...prev, { ...u, id }]);
+  async function addUser(u: Omit<UserItem, "id">) {
+    if (hasSupabase()) {
+      const { data, error } = await supabase!
+        .from("app_users")
+        .insert([
+          {
+            name: u.name,
+            email: u.email,
+            phone: u.phone || null,
+            role: u.role,
+            status: u.status,
+          },
+        ])
+        .select("id,name,email,phone,role,status")
+        .single();
+      if (error) {
+        const code = (error as any)?.code;
+        const desc =
+          code === "42501"
+            ? "Blocked by RLS: allow INSERT on app_users for your role in Supabase."
+            : "Create failed. Check RLS and keys.";
+        toast({ title: "Failed to create user", description: desc });
+        return;
+      }
+      const id = String((data as any).id);
+      setUsers((prev) => [{ ...u, id }, ...prev]);
+    } else {
+      const id = `u-${Date.now()}`;
+      setUsers((prev) => [...prev, { ...u, id }]);
+    }
     toast({
       title: "User created",
       description: `${u.name} (${u.role}) added.`,
     });
   }
 
-  function updateUser(id: string, patch: Partial<UserItem>) {
+  async function updateUser(id: string, patch: Partial<UserItem>) {
+    if (hasSupabase()) {
+      const update: any = {};
+      if (patch.name !== undefined) update.name = patch.name;
+      if (patch.email !== undefined) update.email = patch.email;
+      if (patch.phone !== undefined) update.phone = patch.phone || null;
+      if (patch.role !== undefined) update.role = patch.role;
+      if (patch.status !== undefined) update.status = patch.status;
+      const { error } = await supabase!
+        .from("app_users")
+        .update(update)
+        .eq("id", id);
+      if (error) {
+        const code = (error as any)?.code;
+        const desc =
+          code === "42501"
+            ? "Blocked by RLS: allow UPDATE on app_users for your role in Supabase."
+            : "Update failed. Check RLS and keys.";
+        toast({ title: "Update failed", description: desc });
+        return;
+      }
+    }
     setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, ...patch } : u)));
     toast({ title: "User updated" });
   }
