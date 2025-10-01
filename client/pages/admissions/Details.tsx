@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { COURSES } from "@/data/courses";
+import { printVoucher as printVoucherUI, buildVoucherId } from "@/components/admissions/printVoucher";
 
 export function Details({
   rec,
