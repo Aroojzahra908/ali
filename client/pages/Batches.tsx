@@ -49,11 +49,13 @@ export interface BatchItem {
 export interface TimeSlot {
   id: string;
   batchId: string;
-  day: string; // Mon..Sun
+  day: string; // yyyy-mm-dd
   startTime: string; // HH:mm
   endTime: string; // HH:mm
   room: string;
   faculty?: string;
+  attendanceLink?: string;
+  created_at?: string;
 }
 
 // Courses now come from admin-added list via courseStore
@@ -169,6 +171,81 @@ export default function Batches() {
             }
             return prev;
           });
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase!.removeChannel(channel);
+    };
+  }, []);
+
+  // load time_slots from supabase and subscribe to realtime updates
+  useEffect(() => {
+    if (!isSupabaseConfigured()) return;
+    const loadSlots = async () => {
+      const { data, error } = await supabase!
+        .from("time_slots")
+        .select(
+          "id, batch_id, day, start_time, end_time, room, faculty, attendance_link, created_at",
+        )
+        .order("created_at", { ascending: true });
+      if (error) {
+        toast({ title: "Failed to load slots", description: error.message });
+        return;
+      }
+      const mapped = (data || []).map((r: any) => ({
+        id: r.id,
+        batchId: r.batch_id,
+        day: r.day,
+        startTime: r.start_time,
+        endTime: r.end_time,
+        room: r.room,
+        faculty: r.faculty,
+        attendanceLink: r.attendance_link,
+        created_at: r.created_at,
+      }));
+      setSlots(mapped);
+    };
+    loadSlots();
+
+    const channel = supabase!
+      .channel("time_slots-rt")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "time_slots" },
+        (payload: any) => {
+          if (payload.eventType === "INSERT") {
+            const r = payload.new;
+            const item: TimeSlot = {
+              id: r.id,
+              batchId: r.batch_id,
+              day: r.day,
+              startTime: r.start_time,
+              endTime: r.end_time,
+              room: r.room,
+              faculty: r.faculty,
+              attendanceLink: r.attendance_link,
+              created_at: r.created_at,
+            };
+            setSlots((prev) => [...prev, item]);
+          } else if (payload.eventType === "UPDATE") {
+            const r = payload.new;
+            setSlots((prev) => prev.map((p) => (p.id === r.id ? {
+              id: r.id,
+              batchId: r.batch_id,
+              day: r.day,
+              startTime: r.start_time,
+              endTime: r.end_time,
+              room: r.room,
+              faculty: r.faculty,
+              attendanceLink: r.attendance_link,
+              created_at: r.created_at,
+            } : p)));
+          } else if (payload.eventType === "DELETE") {
+            const r = payload.old;
+            setSlots((prev) => prev.filter((p) => p.id !== r.id));
+          }
         },
       )
       .subscribe();
@@ -302,17 +379,68 @@ export default function Batches() {
     }
   };
 
-  const addSlot = (payload: Omit<TimeSlot, "id">) => {
-    const id = `t-${Date.now()}`;
-    setSlots((prev) => [...prev, { ...payload, id }]);
-    toast({
-      title: "Slot added",
-      description: `${payload.day} ${payload.startTime}-${payload.endTime}`,
-    });
+  const addSlot = async (payload: Omit<TimeSlot, "id">) => {
+    if (!isSupabaseConfigured()) {
+      toast({ title: "Supabase not configured", description: "Cannot create slot." });
+      return;
+    }
+    try {
+      const attendanceLink = `https://ims.local/attendance/${payload.batchId}`;
+      const res = await supabase!
+        .from("time_slots")
+        .insert({
+          batch_id: payload.batchId,
+          day: payload.day,
+          start_time: payload.startTime,
+          end_time: payload.endTime,
+          room: payload.room,
+          faculty: payload.faculty,
+          attendance_link: attendanceLink,
+        })
+        .select(
+          "id, batch_id, day, start_time, end_time, room, faculty, attendance_link, created_at",
+        )
+        .single();
+      if (res.error) {
+        toast({ title: "Create failed", description: res.error.message || String(res.error) });
+        return;
+      }
+      const r: any = res.data;
+      const item: TimeSlot = {
+        id: r.id,
+        batchId: r.batch_id,
+        day: r.day,
+        startTime: r.start_time,
+        endTime: r.end_time,
+        room: r.room,
+        faculty: r.faculty,
+        attendanceLink: r.attendance_link,
+        created_at: r.created_at,
+      };
+      setSlots((prev) => [...prev, item]);
+      toast({ title: "Slot added", description: `${payload.day} ${payload.startTime}-${payload.endTime}` });
+    } catch (err: any) {
+      toast({ title: "Create failed", description: err?.message || String(err) });
+    }
   };
 
-  const removeSlot = (id: string) =>
-    setSlots((prev) => prev.filter((s) => s.id !== id));
+  const removeSlot = async (id: string) => {
+    if (!isSupabaseConfigured()) {
+      toast({ title: "Supabase not configured", description: "Cannot remove slot." });
+      return;
+    }
+    try {
+      const { error } = await supabase!.from("time_slots").delete().eq("id", id);
+      if (error) {
+        toast({ title: "Remove failed", description: error.message });
+        return;
+      }
+      setSlots((prev) => prev.filter((s) => s.id !== id));
+      toast({ title: "Slot removed" });
+    } catch (err: any) {
+      toast({ title: "Remove failed", description: err?.message || String(err) });
+    }
+  };
 
   const mergeBatches = (sourceId: string, targetId: string) => {
     if (sourceId === targetId) return;
@@ -618,21 +746,8 @@ export default function Batches() {
                 }}
               >
                 <div className="space-y-1.5">
-                  <Label>Day</Label>
-                  <Select name="day" defaultValue={DAYS[0]}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        {DAYS.map((d) => (
-                          <SelectItem key={d} value={d}>
-                            {d}
-                          </SelectItem>
-                        ))}
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
+                  <Label>Date</Label>
+                  <Input name="day" type="date" defaultValue={today()} required />
                 </div>
                 <div className="space-y-1.5">
                   <Label>Start</Label>
