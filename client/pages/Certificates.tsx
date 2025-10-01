@@ -84,7 +84,11 @@ export default function Certificates() {
         requester_name: next.studentName || null,
         requester_email: null,
         notes: null,
-        metadata: { course: next.course || null, batch: next.batch || null, campus: next.campus || null },
+        metadata: {
+          course: next.course || null,
+          batch: next.batch || null,
+          campus: next.campus || null,
+        },
       };
 
       if (isUuid(next.studentId)) payload.student_id = next.studentId;
@@ -97,7 +101,8 @@ export default function Certificates() {
             .select("id")
             .ilike("name", next.course)
             .limit(1);
-          if (!cerr && Array.isArray(cdata) && cdata.length) payload.course_id = cdata[0].id;
+          if (!cerr && Array.isArray(cdata) && cdata.length)
+            payload.course_id = cdata[0].id;
         } catch {}
       }
 
@@ -109,7 +114,8 @@ export default function Certificates() {
             .select("batch_id")
             .ilike("batch_code", next.batch)
             .limit(1);
-          if (!berr && Array.isArray(bdata) && bdata.length) payload.batch_id = bdata[0].batch_id;
+          if (!berr && Array.isArray(bdata) && bdata.length)
+            payload.batch_id = bdata[0].batch_id;
         } catch {}
       }
 
@@ -149,35 +155,57 @@ export default function Certificates() {
 
   const approve = async (id: string, approver: string) => {
     setItems((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, status: "Approved", approvedBy: approver } : r)),
+      prev.map((r) =>
+        r.id === id ? { ...r, status: "Approved", approvedBy: approver } : r,
+      ),
     );
     if (!supabase || !isUuid(id)) return;
-    await supabase.from("certificates").update({ status: "approved", approved_by: approver }).eq("id", id);
+    await supabase
+      .from("certificates")
+      .update({ status: "approved", approved_by: approver })
+      .eq("id", id);
   };
 
   const reject = async (id: string, reason: string) => {
     setItems((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, status: "Rejected", rejectedReason: reason } : r)),
+      prev.map((r) =>
+        r.id === id ? { ...r, status: "Rejected", rejectedReason: reason } : r,
+      ),
     );
     if (!supabase || !isUuid(id)) return;
-    await supabase.from("certificates").update({ status: "cancelled", rejected_reason: reason }).eq("id", id);
+    await supabase
+      .from("certificates")
+      .update({ status: "cancelled", rejected_reason: reason })
+      .eq("id", id);
   };
 
   const updateStatus = async (id: string, status: CertificateStatus) => {
     setItems((prev) => prev.map((r) => (r.id === id ? { ...r, status } : r)));
     if (!supabase || !isUuid(id)) return;
-    await supabase.from("certificates").update({ status: uiToDbStatus(status) }).eq("id", id);
+    await supabase
+      .from("certificates")
+      .update({ status: uiToDbStatus(status) })
+      .eq("id", id);
   };
 
   const setTracking = async (_id: string, _trackingId: string) => {
     // courier_tracking_id not present in current DB schema; skip DB update
-    setItems((prev) => prev.map((r) => (r.id === _id ? { ...r, courierTrackingId: _trackingId } : r)));
+    setItems((prev) =>
+      prev.map((r) =>
+        r.id === _id ? { ...r, courierTrackingId: _trackingId } : r,
+      ),
+    );
   };
 
   const reprint = async (id: string) => {
-    setItems((prev) => prev.map((r) => (r.id === id ? { ...r, status: "Reprinting" } : r)));
+    setItems((prev) =>
+      prev.map((r) => (r.id === id ? { ...r, status: "Reprinting" } : r)),
+    );
     if (!supabase || !isUuid(id)) return;
-    await supabase.from("certificates").update({ status: "printing" }).eq("id", id);
+    await supabase
+      .from("certificates")
+      .update({ status: "printing" })
+      .eq("id", id);
   };
 
   useEffect(() => {

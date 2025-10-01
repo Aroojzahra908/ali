@@ -113,7 +113,11 @@ export default function Campuses() {
 
   const addCampus = async (c: Omit<Campus, "id">) => {
     if (!supabase) {
-      toast({ title: "Supabase not configured", description: "Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to enable campus storage." });
+      toast({
+        title: "Supabase not configured",
+        description:
+          "Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to enable campus storage.",
+      });
       return;
     }
     try {
@@ -131,7 +135,10 @@ export default function Campuses() {
         .select("id,name,code,city,address,status")
         .single();
       if (res.error) {
-        toast({ title: "Failed to add campus", description: res.error.message || String(res.error) });
+        toast({
+          title: "Failed to add campus",
+          description: res.error.message || String(res.error),
+        });
         return;
       }
       const data = res.data as any;
@@ -151,7 +158,11 @@ export default function Campuses() {
 
   const updateCampus = async (id: string, patch: Partial<Campus>) => {
     if (!supabase) {
-      toast({ title: "Supabase not configured", description: "Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to enable campus storage." });
+      toast({
+        title: "Supabase not configured",
+        description:
+          "Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to enable campus storage.",
+      });
       return;
     }
     try {
@@ -161,12 +172,12 @@ export default function Campuses() {
       if (patch.city !== undefined) update.city = patch.city;
       if (patch.address !== undefined) update.address = patch.address || null;
       if (patch.status !== undefined) update.status = patch.status;
-      const res = await supabase
-        .from("campuses")
-        .update(update)
-        .eq("id", id);
+      const res = await supabase.from("campuses").update(update).eq("id", id);
       if (res.error) {
-        toast({ title: "Update failed", description: res.error.message || String(res.error) });
+        toast({
+          title: "Update failed",
+          description: res.error.message || String(res.error),
+        });
         return;
       }
       setCampuses((prev) =>

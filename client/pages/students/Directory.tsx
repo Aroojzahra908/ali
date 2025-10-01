@@ -171,7 +171,6 @@ export function Directory({
     );
   }, [data, q, effectiveStatus, course, batch, campus]);
 
-
   return (
     <div className="space-y-4">
       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-6">
@@ -569,7 +568,6 @@ export function Directory({
           ))}
         </TableBody>
       </Table>
-
     </div>
   );
 }

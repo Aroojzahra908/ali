@@ -89,8 +89,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setPerms(base);
       } catch (err: any) {
         // Network or Supabase errors should not crash the app; show friendly toast
-        if (err && (err.message?.toLowerCase?.().includes("failed to fetch") || err.message?.toLowerCase?.().includes("network"))) {
-          toast({ title: "Network error", description: "Unable to reach Supabase. Check VITE_SUPABASE_URL and your network connection." });
+        if (
+          err &&
+          (err.message?.toLowerCase?.().includes("failed to fetch") ||
+            err.message?.toLowerCase?.().includes("network"))
+        ) {
+          toast({
+            title: "Network error",
+            description:
+              "Unable to reach Supabase. Check VITE_SUPABASE_URL and your network connection.",
+          });
         }
       }
     })();
@@ -155,7 +163,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } catch (err: any) {
         // If the error is a network/fetch failure, show clearer guidance
         const msg = String(err?.message || err || "Authentication error");
-        if (msg.toLowerCase().includes("failed to fetch") || msg.toLowerCase().includes("network")) {
+        if (
+          msg.toLowerCase().includes("failed to fetch") ||
+          msg.toLowerCase().includes("network")
+        ) {
           toast({
             title: "Network error",
             description:

@@ -4,8 +4,11 @@ import path from "path";
 import os from "os";
 import { getSupabase } from "../lib/supabase";
 
-const isServerless = !!process.env.NETLIFY || !!process.env.AWS_LAMBDA_FUNCTION_NAME;
-const baseDir = isServerless ? os.tmpdir() : path.join(import.meta.dirname, "../data");
+const isServerless =
+  !!process.env.NETLIFY || !!process.env.AWS_LAMBDA_FUNCTION_NAME;
+const baseDir = isServerless
+  ? os.tmpdir()
+  : path.join(import.meta.dirname, "../data");
 const dataDir = baseDir;
 const fsFile = path.join(dataDir, "certificates.json");
 
@@ -88,28 +91,30 @@ export const postCertificateRequest: RequestHandler = async (req, res) => {
       status: "requested",
       notes: notes ?? null,
       metadata: metadata ?? null,
-      statusHistory: [
-        { status: "requested", at: now, by: null, note: null },
-      ],
+      statusHistory: [{ status: "requested", at: now, by: null, note: null }],
       createdAt: now,
       updatedAt: now,
     };
 
     if (supabaseReady()) {
       const supa = getSupabase()!;
-      const { error, data } = await supa.from("certificates").insert({
-        student_id: it.studentId ?? null,
-        batch_id: it.batchId ?? null,
-        course_id: it.courseId ?? null,
-        certificate_type: it.certificateType ?? null,
-        requester_name: it.requesterName ?? null,
-        requester_email: it.requesterEmail ?? null,
-        requested_at: it.requestedAt,
-        status: it.status,
-        notes: it.notes ?? null,
-        metadata: it.metadata ?? null,
-        status_history: it.statusHistory ?? null,
-      }).select("*").limit(1);
+      const { error, data } = await supa
+        .from("certificates")
+        .insert({
+          student_id: it.studentId ?? null,
+          batch_id: it.batchId ?? null,
+          course_id: it.courseId ?? null,
+          certificate_type: it.certificateType ?? null,
+          requester_name: it.requesterName ?? null,
+          requester_email: it.requesterEmail ?? null,
+          requested_at: it.requestedAt,
+          status: it.status,
+          notes: it.notes ?? null,
+          metadata: it.metadata ?? null,
+          status_history: it.statusHistory ?? null,
+        })
+        .select("*")
+        .limit(1);
 
       if (error) throw new Error(error.message);
       const inserted = (data && data[0]) || null;
@@ -144,7 +149,8 @@ export const listCertificates: RequestHandler = async (_req, res) => {
         certificateType: d.certificate_type || null,
         requesterName: d.requester_name || null,
         requesterEmail: d.requester_email || null,
-        requestedAt: d.requested_at || d.requestedAt || new Date().toISOString(),
+        requestedAt:
+          d.requested_at || d.requestedAt || new Date().toISOString(),
         status: d.status || "requested",
         approvedBy: d.approved_by || null,
         approvedAt: d.approved_at || null,
@@ -175,9 +181,14 @@ export const getCertificate: RequestHandler = async (req, res) => {
 
     if (supabaseReady()) {
       const supa = getSupabase()!;
-      const { data, error } = await supa.from("certificates").select("*").eq("id", id).limit(1);
+      const { data, error } = await supa
+        .from("certificates")
+        .select("*")
+        .eq("id", id)
+        .limit(1);
       if (error) throw new Error(error.message);
-      if (!data || data.length === 0) return res.status(404).json({ error: "Not found" });
+      if (!data || data.length === 0)
+        return res.status(404).json({ error: "Not found" });
       return res.json({ ok: true, item: data[0] });
     }
 
@@ -193,11 +204,13 @@ export const getCertificate: RequestHandler = async (req, res) => {
 export const updateCertificateStatus: RequestHandler = async (req, res) => {
   try {
     const id = (req.params?.id as string) || (req.body?.id as string) || "";
-    const status = (req.body?.status as string) || (req.query?.status as string) || "";
+    const status =
+      (req.body?.status as string) || (req.query?.status as string) || "";
     const adminId = (req.body?.adminId as string) || null;
     const note = (req.body?.note as string) || null;
 
-    if (!id || !status) return res.status(400).json({ error: "id and status are required" });
+    if (!id || !status)
+      return res.status(400).json({ error: "id and status are required" });
 
     const now = new Date().toISOString();
     const historyEntry = { status, at: now, by: adminId ?? null, note };
@@ -236,7 +249,8 @@ export const updateCertificateStatus: RequestHandler = async (req, res) => {
         .limit(1);
 
       if (error) throw new Error(error.message);
-      if (!data || data.length === 0) return res.status(404).json({ error: "Not found" });
+      if (!data || data.length === 0)
+        return res.status(404).json({ error: "Not found" });
 
       // Append to status_history via separate rpc to avoid complex expression if needed
       // For simplicity, update status_history client-side: fetch then update with appended history
@@ -249,7 +263,11 @@ export const updateCertificateStatus: RequestHandler = async (req, res) => {
         .eq("id", id);
       if (err2) throw new Error(err2.message);
 
-      const { data: final } = await supa.from("certificates").select("*").eq("id", id).limit(1);
+      const { data: final } = await supa
+        .from("certificates")
+        .select("*")
+        .eq("id", id)
+        .limit(1);
       return res.json({ ok: true, item: final ? final[0] : null });
     }
 
@@ -284,21 +302,31 @@ export const updateCertificateStatus: RequestHandler = async (req, res) => {
 
 export const deleteCertificate: RequestHandler = async (req, res) => {
   try {
-    const rawId = (req.body?.id ?? req.params?.id ?? req.query?.id) as string | undefined;
+    const rawId = (req.body?.id ?? req.params?.id ?? req.query?.id) as
+      | string
+      | undefined;
     const targetId = rawId ? String(rawId) : "";
-    if (!targetId.trim()) return res.status(400).json({ error: "id is required" });
+    if (!targetId.trim())
+      return res.status(400).json({ error: "id is required" });
 
     if (supabaseReady()) {
       const supa = getSupabase()!;
-      const { data, error } = await supa.from("certificates").delete().eq("id", targetId).select("id").limit(1);
+      const { data, error } = await supa
+        .from("certificates")
+        .delete()
+        .eq("id", targetId)
+        .select("id")
+        .limit(1);
       if (error) throw new Error(error.message);
-      if (!data || data.length === 0) return res.status(404).json({ error: "Not found" });
+      if (!data || data.length === 0)
+        return res.status(404).json({ error: "Not found" });
       return res.json({ ok: true, removedId: targetId });
     }
 
     const items = await readAllFs<CertItem>(fsFile);
     const next = items.filter((item) => String(item.id) !== targetId);
-    if (next.length === items.length) return res.status(404).json({ error: "Not found" });
+    if (next.length === items.length)
+      return res.status(404).json({ error: "Not found" });
     await writeAllFs(fsFile, next);
     res.json({ ok: true, removedId: targetId });
   } catch (e: any) {

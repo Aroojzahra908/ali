@@ -24,7 +24,9 @@ export class ErrorBoundary extends React.Component<Props, State> {
       return (
         <div className="p-6">
           <h2 className="text-lg font-semibold">Something went wrong</h2>
-          <p className="text-sm text-muted-foreground">{String(this.state.error)}</p>
+          <p className="text-sm text-muted-foreground">
+            {String(this.state.error)}
+          </p>
           <div className="mt-4">
             <button
               className="px-3 py-1 rounded border"

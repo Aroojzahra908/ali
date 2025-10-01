@@ -4,7 +4,10 @@ function onUnhandledRejection(event: PromiseRejectionEvent) {
   try {
     const reason = event.reason;
     const msg = String(reason?.message || reason || "Unknown error");
-    if (msg.toLowerCase().includes("failed to fetch") || msg.toLowerCase().includes("network")) {
+    if (
+      msg.toLowerCase().includes("failed to fetch") ||
+      msg.toLowerCase().includes("network")
+    ) {
       toast({
         title: "Network request failed",
         description:
@@ -17,7 +20,10 @@ function onUnhandledRejection(event: PromiseRejectionEvent) {
 function onError(evt: ErrorEvent) {
   try {
     const msg = String(evt.message || "");
-    if (msg.toLowerCase().includes("failed to fetch") || msg.toLowerCase().includes("network")) {
+    if (
+      msg.toLowerCase().includes("failed to fetch") ||
+      msg.toLowerCase().includes("network")
+    ) {
       toast({
         title: "Network request failed",
         description:
@@ -39,7 +45,8 @@ if (typeof window !== "undefined") {
     window.fetch = (input: RequestInfo | URL, init?: RequestInit) => {
       return originalFetch(input as any, init).catch((err: any) => {
         try {
-          const url = typeof input === "string" ? input : (input as Request).url;
+          const url =
+            typeof input === "string" ? input : (input as Request).url;
           toast({
             title: "Network request failed",
             description: `Request to ${String(url)} failed. Check network and Supabase configuration.`,

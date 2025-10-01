@@ -256,12 +256,16 @@ export function Details({
           <Badge>{rec.status}</Badge>
         </div>
       </div>
-    
+
       <div className="flex flex-wrap gap-3 items-center">
         <Button onClick={confirmAdmission} className="rounded-full px-6 py-2">
           Approve & Move to Students
         </Button>
-        <Button variant="outline" onClick={markAllPaid} className="rounded-full px-6 py-2">
+        <Button
+          variant="outline"
+          onClick={markAllPaid}
+          className="rounded-full px-6 py-2"
+        >
           Mark as Paid
         </Button>
       </div>

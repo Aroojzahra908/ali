@@ -269,7 +269,10 @@ export default function Batches() {
         )
         .single();
       if (res.error) {
-        toast({ title: "Create failed", description: res.error.message || String(res.error) });
+        toast({
+          title: "Create failed",
+          description: res.error.message || String(res.error),
+        });
         return;
       }
       const r: any = res.data;
