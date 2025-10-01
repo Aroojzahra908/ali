@@ -249,6 +249,11 @@ export default function Users() {
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-semibold">User Management</h1>
+      {!isSupabaseConfigured && (
+        <div className="text-sm text-destructive">
+          Supabase is not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY, then refresh.
+        </div>
+      )}
 
       <Tabs defaultValue="create">
         <TabsList className="flex flex-wrap gap-1">
