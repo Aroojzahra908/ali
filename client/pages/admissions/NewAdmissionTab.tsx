@@ -337,14 +337,12 @@ export function NewAdmissionTab({ onCreated }: Props) {
         setPhone("");
         setNotes("");
         setStartDate("");
-      } catch (error) {
-        console.error("Admission submission failed", error);
+      } catch (error: any) {
+        const msg = error?.message || error?.hint || error?.details || String(error);
+        console.error("Admission submission failed:", error);
         toast({
           title: "Submission failed",
-          description:
-            error instanceof Error
-              ? error.message
-              : "Please try again shortly.",
+          description: msg,
           variant: "destructive",
         });
       } finally {
