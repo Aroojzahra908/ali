@@ -43,6 +43,8 @@ export function RequestsTab({
 
   const [batchOptions, setBatchOptions] = useState<string[]>(fallbackBatches);
   const [courseOptions, setCourseOptions] = useState<string[]>(fallbackCourses);
+  const campusOptions = useCampuses();
+  const [selectedCampus, setSelectedCampus] = useState<string>(campusOptions[0] || "");
 
   useEffect(() => {
     (async () => {
