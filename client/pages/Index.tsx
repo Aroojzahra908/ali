@@ -39,6 +39,8 @@ import { supabase } from "@/lib/supabaseClient";
 import { getStudents } from "@/lib/studentStore";
 import { getLocalEnquiries } from "@/lib/enquiryStore";
 import { studentsMock } from "./students/data";
+import { Link } from "react-router-dom";
+import { useAuth } from "@/contexts/auth";
 
 type Course = {
   name: string;
@@ -591,8 +593,6 @@ export default function Index() {
   );
 }
 
-import { Link } from "react-router-dom";
-import { useAuth } from "@/contexts/auth";
 function FeatureCard({
   to,
   title,
