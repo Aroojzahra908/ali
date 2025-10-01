@@ -93,12 +93,12 @@ export default function CourseCatalog() {
     loc.pathname.endsWith("/featured")
       ? "featured"
       : loc.pathname.endsWith("/upcoming")
-      ? "upcoming"
-      : loc.pathname.endsWith("/latest")
-      ? "latest"
-      : /\/courses\/category\//.test(loc.pathname)
-      ? "category"
-      : "all";
+        ? "upcoming"
+        : loc.pathname.endsWith("/latest")
+          ? "latest"
+          : /\/courses\/category\//.test(loc.pathname)
+            ? "category"
+            : "all";
 
   useEffect(() => {
     if (routeView === "category") {
@@ -159,7 +159,9 @@ export default function CourseCatalog() {
   const featuredUnique = takeUnique(featured);
   const upcomingUnique = takeUnique(upcoming);
   const latestUnique = takeUnique(latest);
-  const byCategoryUnique = byCategory.map(([k, list]) => [k, takeUnique(list)] as [string, Course[]]).filter(([, list]) => list.length);
+  const byCategoryUnique = byCategory
+    .map(([k, list]) => [k, takeUnique(list)] as [string, Course[]])
+    .filter(([, list]) => list.length);
 
   return (
     <div className="space-y-10">
@@ -170,31 +172,79 @@ export default function CourseCatalog() {
           <div className="flex items-start justify-between gap-6">
             <div>
               <div className="flex items-center gap-2 text-sm/6 font-medium text-white/90">
-                <GraduationCap className="h-4 w-4" /> Explore Career-Focused Programs
+                <GraduationCap className="h-4 w-4" /> Explore Career-Focused
+                Programs
               </div>
-              <h1 className="mt-2 text-3xl font-bold leading-tight sm:text-4xl">Build real skills with our courses</h1>
-              <p className="mt-2 max-w-2xl text-white/80">Hands-on training, expert mentors, and flexible schedules. Start today and fast‑track your growth.</p>
+              <h1 className="mt-2 text-3xl font-bold leading-tight sm:text-4xl">
+                Build real skills with our courses
+              </h1>
+              <p className="mt-2 max-w-2xl text-white/80">
+                Hands-on training, expert mentors, and flexible schedules. Start
+                today and fast‑track your growth.
+              </p>
               <div className="mt-5 flex flex-wrap gap-3">
-                <Button asChild className="bg-white text-black hover:bg-white hover:text-black">
+                <Button
+                  asChild
+                  className="bg-white text-black hover:bg-white hover:text-black"
+                >
                   <Link to="/admission-form">Get Admission</Link>
                 </Button>
-                <Button asChild className="bg-white text-black hover:bg-white/90">
+                <Button
+                  asChild
+                  className="bg-white text-black hover:bg-white/90"
+                >
                   <Link to="/contact">Contact Us</Link>
                 </Button>
               </div>
             </div>
             <div className="hidden sm:block">
               <div className="rounded-xl bg-white/10 px-4 py-3 text-sm backdrop-blur">
-                <div className="flex items-center gap-2"><Sparkles className="h-4 w-4" /> Featured: <span className="font-semibold">{featured[0]?.name || "TBA"}</span></div>
-                <div className="mt-1 flex items-center gap-2 text-white/80"><CalendarDays className="h-4 w-4" /> Upcoming: <span>{upcoming[0]?.name || "TBA"}</span></div>
+                <div className="flex items-center gap-2">
+                  <Sparkles className="h-4 w-4" /> Featured:{" "}
+                  <span className="font-semibold">
+                    {featured[0]?.name || "TBA"}
+                  </span>
+                </div>
+                <div className="mt-1 flex items-center gap-2 text-white/80">
+                  <CalendarDays className="h-4 w-4" /> Upcoming:{" "}
+                  <span>{upcoming[0]?.name || "TBA"}</span>
+                </div>
               </div>
             </div>
           </div>
           <div className="mt-6 flex flex-wrap items-center gap-2 text-sm">
-            <NavLink to="/courses" className={({ isActive }) => `rounded-full border px-3 py-1.5 ${isActive && routeView === 'all' ? 'bg-white text-foreground' : 'bg-white/10 text-white hover:bg-white/20'}`}>All</NavLink>
-            <NavLink to="/courses/featured" className={({ isActive }) => `rounded-full border px-3 py-1.5 ${isActive ? 'bg-white text-foreground' : 'bg-white/10 text-white hover:bg-white/20'}`}>Featured</NavLink>
-            <NavLink to="/courses/upcoming" className={({ isActive }) => `rounded-full border px-3 py-1.5 ${isActive ? 'bg-white text-foreground' : 'bg-white/10 text-white hover:bg-white/20'}`}>Upcoming</NavLink>
-            <NavLink to="/courses/latest" className={({ isActive }) => `rounded-full border px-3 py-1.5 ${isActive ? 'bg-white text-foreground' : 'bg-white/10 text-white hover:bg-white/20'}`}>Latest</NavLink>
+            <NavLink
+              to="/courses"
+              className={({ isActive }) =>
+                `rounded-full border px-3 py-1.5 ${isActive && routeView === "all" ? "bg-white text-foreground" : "bg-white/10 text-white hover:bg-white/20"}`
+              }
+            >
+              All
+            </NavLink>
+            <NavLink
+              to="/courses/featured"
+              className={({ isActive }) =>
+                `rounded-full border px-3 py-1.5 ${isActive ? "bg-white text-foreground" : "bg-white/10 text-white hover:bg-white/20"}`
+              }
+            >
+              Featured
+            </NavLink>
+            <NavLink
+              to="/courses/upcoming"
+              className={({ isActive }) =>
+                `rounded-full border px-3 py-1.5 ${isActive ? "bg-white text-foreground" : "bg-white/10 text-white hover:bg-white/20"}`
+              }
+            >
+              Upcoming
+            </NavLink>
+            <NavLink
+              to="/courses/latest"
+              className={({ isActive }) =>
+                `rounded-full border px-3 py-1.5 ${isActive ? "bg-white text-foreground" : "bg-white/10 text-white hover:bg-white/20"}`
+              }
+            >
+              Latest
+            </NavLink>
           </div>
         </div>
       </section>
@@ -204,7 +254,9 @@ export default function CourseCatalog() {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-xl font-semibold">Browse Courses</h2>
-            <p className="text-sm text-muted-foreground">Filter by category or search by name.</p>
+            <p className="text-sm text-muted-foreground">
+              Filter by category or search by name.
+            </p>
           </div>
           <div className="flex flex-wrap gap-2">
             <Input
@@ -224,7 +276,10 @@ export default function CourseCatalog() {
                 </button>
               ))}
             </div>
-            <Button asChild className="h-9 bg-white text-black hover:bg-white/90">
+            <Button
+              asChild
+              className="h-9 bg-white text-black hover:bg-white/90"
+            >
               <Link to="/contact">Contact Us</Link>
             </Button>
           </div>
@@ -263,7 +318,9 @@ export default function CourseCatalog() {
       {/* Combined sections with de-duplication */}
       {routeView === "all" && featuredUnique.length > 0 && (
         <section>
-          <h3 className="mb-3 text-xl font-semibold flex items-center gap-2"><Sparkles className="h-5 w-5 text-primary" /> Featured Courses</h3>
+          <h3 className="mb-3 text-xl font-semibold flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-primary" /> Featured Courses
+          </h3>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {featuredUnique.map((c) => (
               <CourseCard key={c.id} course={c} />
@@ -274,7 +331,9 @@ export default function CourseCatalog() {
 
       {routeView === "all" && upcomingUnique.length > 0 && (
         <section>
-          <h3 className="mb-3 text-xl font-semibold flex items-center gap-2"><CalendarDays className="h-5 w-5 text-primary" /> Upcoming Courses</h3>
+          <h3 className="mb-3 text-xl font-semibold flex items-center gap-2">
+            <CalendarDays className="h-5 w-5 text-primary" /> Upcoming Courses
+          </h3>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {upcomingUnique.map((c) => (
               <CourseCard key={c.id} course={c} />
@@ -285,7 +344,9 @@ export default function CourseCatalog() {
 
       {routeView === "all" && latestUnique.length > 0 && (
         <section>
-          <h3 className="mb-3 text-xl font-semibold flex items-center gap-2"><Clock className="h-5 w-5 text-primary" /> Latest Courses</h3>
+          <h3 className="mb-3 text-xl font-semibold flex items-center gap-2">
+            <Clock className="h-5 w-5 text-primary" /> Latest Courses
+          </h3>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {latestUnique.map((c) => (
               <CourseCard key={c.id} course={c} />
@@ -296,14 +357,20 @@ export default function CourseCatalog() {
 
       {routeView === "all" && byCategoryUnique.length > 0 && (
         <section>
-          <h3 className="mb-3 text-xl font-semibold">All Courses (Category Wise)</h3>
+          <h3 className="mb-3 text-xl font-semibold">
+            All Courses (Category Wise)
+          </h3>
           <div className="space-y-6">
             {byCategoryUnique.map(([catKey, list]) => (
               <div key={catKey} className="space-y-3">
                 <div className="flex items-center justify-between">
                   <h4 className="text-lg font-medium">{catKey}</h4>
                   <Button asChild variant="link" className="h-auto p-0">
-                    <Link to={`/courses/category/${encodeURIComponent(catKey)}`}>View all</Link>
+                    <Link
+                      to={`/courses/category/${encodeURIComponent(catKey)}`}
+                    >
+                      View all
+                    </Link>
                   </Button>
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -327,29 +394,43 @@ function CourseCard({ course: c }: { course: Course }) {
       <div className="h-2 bg-gradient-to-r from-primary/70 via-fuchsia-500/70 to-indigo-500/70" />
       <CardHeader>
         <div className="flex items-start justify-between gap-2">
-          <CardTitle className="text-base leading-tight line-clamp-2">{c.name}</CardTitle>
+          <CardTitle className="text-base leading-tight line-clamp-2">
+            {c.name}
+          </CardTitle>
           <div className="flex flex-col items-end gap-1">
             {c.featured ? (
-              <Badge className="gap-1"><Sparkles className="h-3.5 w-3.5" /> Featured</Badge>
+              <Badge className="gap-1">
+                <Sparkles className="h-3.5 w-3.5" /> Featured
+              </Badge>
             ) : null}
             {isUpcoming ? (
-              <Badge variant="secondary" className="gap-1"><CalendarDays className="h-3.5 w-3.5" /> Upcoming</Badge>
+              <Badge variant="secondary" className="gap-1">
+                <CalendarDays className="h-3.5 w-3.5" /> Upcoming
+              </Badge>
             ) : null}
           </div>
         </div>
-        <div className="mt-1 text-xs text-muted-foreground">{c.category || "General"}</div>
+        <div className="mt-1 text-xs text-muted-foreground">
+          {c.category || "General"}
+        </div>
       </CardHeader>
       <CardContent className="space-y-2">
         <div className="flex items-center justify-between text-sm">
           <div>
-            Duration: <span className="text-muted-foreground">{c.duration || "—"}</span>
+            Duration:{" "}
+            <span className="text-muted-foreground">{c.duration || "—"}</span>
           </div>
           <div>
-            Fees: <span className="font-semibold">₨ {Number(c.fees || 0).toLocaleString()}</span>
+            Fees:{" "}
+            <span className="font-semibold">
+              ₨ {Number(c.fees || 0).toLocaleString()}
+            </span>
           </div>
         </div>
         {c.description ? (
-          <p className="text-sm text-muted-foreground line-clamp-2">{c.description}</p>
+          <p className="text-sm text-muted-foreground line-clamp-2">
+            {c.description}
+          </p>
         ) : null}
         <Button asChild className="mt-2 w-full">
           <Link to={`/admission-form?course=${encodeURIComponent(c.name)}`}>

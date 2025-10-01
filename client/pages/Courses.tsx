@@ -600,8 +600,18 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/components/ui/use-toast";
-import { mergeSupabaseCourses, addStoredCourse, getStoredCourses } from "@/lib/courseStore";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  mergeSupabaseCourses,
+  addStoredCourse,
+  getStoredCourses,
+} from "@/lib/courseStore";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 
 // Full course type
@@ -957,7 +967,9 @@ function CreateCourseForm({ onSubmit }: { onSubmit: (data: any) => void }) {
           onSubmit={(e) => {
             e.preventDefault();
             const form = e.target as HTMLFormElement;
-            const data = Object.fromEntries(new FormData(form).entries()) as any;
+            const data = Object.fromEntries(
+              new FormData(form).entries(),
+            ) as any;
             data.featured = featured;
             data.status = status;
             data.category = category;
@@ -986,7 +998,11 @@ function CreateCourseForm({ onSubmit }: { onSubmit: (data: any) => void }) {
           </div>
           <div className="space-y-1.5">
             <Label>Category</Label>
-            <Select value={category} onValueChange={setCategory} name="category">
+            <Select
+              value={category}
+              onValueChange={setCategory}
+              name="category"
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select category" />
               </SelectTrigger>
@@ -1000,7 +1016,11 @@ function CreateCourseForm({ onSubmit }: { onSubmit: (data: any) => void }) {
           </div>
           <div className="space-y-1.5">
             <Label>Status</Label>
-            <Select value={status} onValueChange={(v) => setStatus(v as any)} name="status">
+            <Select
+              value={status}
+              onValueChange={(v) => setStatus(v as any)}
+              name="status"
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select status" />
               </SelectTrigger>

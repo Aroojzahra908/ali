@@ -77,7 +77,10 @@ const App = () => (
                 <Route path="/courses/featured" element={<CourseCatalog />} />
                 <Route path="/courses/upcoming" element={<CourseCatalog />} />
                 <Route path="/courses/latest" element={<CourseCatalog />} />
-                <Route path="/courses/category/:cat" element={<CourseCatalog />} />
+                <Route
+                  path="/courses/category/:cat"
+                  element={<CourseCatalog />}
+                />
                 <Route path="/admission-form" element={<AdmissionForm />} />
                 <Route path="/contact" element={<Contact />} />
               </Route>
