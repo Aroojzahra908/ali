@@ -1,6 +1,7 @@
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useMemo, useState } from "react";
+import DatePicker from "@/components/ui/date-picker";
 import type { StudentRecord } from "./types";
 import { paymentStatus } from "./types";
 
