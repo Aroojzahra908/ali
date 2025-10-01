@@ -19,6 +19,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Input } from "@/components/ui/input";
 import { useCampuses } from "@/lib/campusStore";
 import { getAllCourseNames } from "@/lib/courseStore";
+import { COURSES } from "@/data/courses";
 import { VoucherCard, type VoucherDetails } from "@/components/admissions/VoucherCard";
 import { buildVoucherId, printVoucher } from "@/components/admissions/printVoucher";
 
