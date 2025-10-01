@@ -707,6 +707,7 @@ export default function Admissions() {
             data={filterItems("today")}
             onUpdate={upsert}
             onDeleted={handleDeleted}
+            onCreated={handleCreated}
             title="Today’s admissions"
             subtitle="Review today’s intake by course and campus."
             filters={renderFilters()}
@@ -718,6 +719,7 @@ export default function Admissions() {
             data={filterItems("month")}
             onUpdate={upsert}
             onDeleted={handleDeleted}
+            onCreated={handleCreated}
             title="Current month admissions"
             subtitle="Compare month-to-date progress across courses and campuses."
             filters={renderFilters()}
@@ -729,6 +731,7 @@ export default function Admissions() {
             data={filterItems("year")}
             onUpdate={upsert}
             onDeleted={handleDeleted}
+            onCreated={handleCreated}
             title="Current year admissions"
             subtitle="Track annual performance with unified filters."
             filters={renderFilters()}
@@ -740,6 +743,7 @@ export default function Admissions() {
             data={filterItems("all")}
             onUpdate={upsert}
             onDeleted={handleDeleted}
+            onCreated={handleCreated}
             title="All admissions"
             subtitle="Full admissions history with course and campus filtering."
             filters={renderFilters()}
