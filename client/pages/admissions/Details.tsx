@@ -456,7 +456,6 @@ export function Details({
         <Button variant="destructive" onClick={() => onDelete?.(rec)}>
           Delete
         </Button>
-        <Button onClick={quickEnrollAndVoucher}>Enroll & Print Voucher</Button>
       </div>
     </div>
   );
