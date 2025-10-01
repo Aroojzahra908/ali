@@ -1190,7 +1190,7 @@ function CreateEnquiry({
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="join">Possible Joining Date</Label>
-            <Input id="join" name="join" type="date" />
+            <DatePicker id="join" name="join" />
           </div>
           <div className="space-y-1.5 md:col-span-2">
             <Label>Marketing Source (select one or more)</Label>
