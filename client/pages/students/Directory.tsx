@@ -17,6 +17,19 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+  DropdownMenuGroup,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+} from "@/components/ui/dropdown-menu";
+import { MoreHorizontal, Phone, Mail, MessageCircle } from "lucide-react";
+import {
   Sheet,
   SheetContent,
   SheetHeader,
@@ -25,7 +38,8 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import type { StudentRecord, StudentStatus } from "./types";
 import { paymentStatus } from "./types";
-import { Profile } from "./Profile";
+import { useToast } from "@/hooks/use-toast";
+import { ProfileSimple } from "./ProfileSimple";
 import { getAllCourseNames } from "@/lib/courseStore";
 
 const statuses: StudentStatus[] = [
@@ -48,6 +62,7 @@ export function Directory({
   initialStatus?: StudentStatus;
   lockedStatus?: StudentStatus;
 }) {
+  const { toast } = useToast();
   const [q, setQ] = useState("");
   const [status, setStatus] = useState<string>(initialStatus ?? "");
   const [course, setCourse] = useState<string>("");
@@ -235,9 +250,276 @@ export function Directory({
                 </Badge>
               </TableCell>
               <TableCell className="text-right">
-                <Button size="sm" onClick={() => setOpenId(s.id)}>
-                  View
-                </Button>
+                <div className="inline-flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setOpenId(s.id)}
+                  >
+                    View
+                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button size="sm" variant="ghost" aria-label="Actions">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-56">
+                      <DropdownMenuLabel>Quick Actions</DropdownMenuLabel>
+                      <DropdownMenuGroup>
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setOpenId(s.id);
+                          }}
+                        >
+                          View Profile…
+                        </DropdownMenuItem>
+                      </DropdownMenuGroup>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuGroup>
+                        <DropdownMenuSub>
+                          <DropdownMenuSubTrigger>
+                            Communicate
+                          </DropdownMenuSubTrigger>
+                          <DropdownMenuSubContent>
+                            <DropdownMenuItem
+                              onClick={() => {
+                                onChange({
+                                  ...s,
+                                  communications: [
+                                    {
+                                      id: `call-${Date.now()}`,
+                                      channel: "Call",
+                                      message: "Admin initiated voice call",
+                                      at: new Date().toISOString(),
+                                    },
+                                    ...s.communications,
+                                  ],
+                                });
+                                toast({ title: "Voice call logged" });
+                              }}
+                            >
+                              <Phone className="mr-2 h-4 w-4" /> Voice Call
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => {
+                                onChange({
+                                  ...s,
+                                  communications: [
+                                    {
+                                      id: `email-${Date.now()}`,
+                                      channel: "Email",
+                                      message: "Admin email sent",
+                                      at: new Date().toISOString(),
+                                    },
+                                    ...s.communications,
+                                  ],
+                                });
+                                toast({ title: "Email sent" });
+                              }}
+                            >
+                              <Mail className="mr-2 h-4 w-4" /> Email
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => {
+                                onChange({
+                                  ...s,
+                                  communications: [
+                                    {
+                                      id: `wa-${Date.now()}`,
+                                      channel: "WhatsApp",
+                                      message: "Admin WhatsApp message",
+                                      at: new Date().toISOString(),
+                                    },
+                                    ...s.communications,
+                                  ],
+                                });
+                                toast({ title: "WhatsApp sent" });
+                              }}
+                            >
+                              <MessageCircle className="mr-2 h-4 w-4" />{" "}
+                              WhatsApp
+                            </DropdownMenuItem>
+                          </DropdownMenuSubContent>
+                        </DropdownMenuSub>
+                      </DropdownMenuGroup>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuGroup>
+                        <DropdownMenuSub>
+                          <DropdownMenuSubTrigger>
+                            Transfers
+                          </DropdownMenuSubTrigger>
+                          <DropdownMenuSubContent>
+                            <DropdownMenuSub>
+                              <DropdownMenuSubTrigger>
+                                Batch Transfer
+                              </DropdownMenuSubTrigger>
+                              <DropdownMenuSubContent>
+                                {batches.map((b) => (
+                                  <DropdownMenuItem
+                                    key={b}
+                                    onClick={() => {
+                                      onChange({
+                                        ...s,
+                                        admission: { ...s.admission, batch: b },
+                                      });
+                                      toast({
+                                        title: `Batch transferred to ${b}`,
+                                      });
+                                    }}
+                                  >
+                                    {b}
+                                  </DropdownMenuItem>
+                                ))}
+                              </DropdownMenuSubContent>
+                            </DropdownMenuSub>
+                            <DropdownMenuSub>
+                              <DropdownMenuSubTrigger>
+                                Campus Transfer
+                              </DropdownMenuSubTrigger>
+                              <DropdownMenuSubContent>
+                                {[
+                                  "Main Campus",
+                                  "Sub Campus",
+                                  "FSD",
+                                  "Other",
+                                ].map((c) => (
+                                  <DropdownMenuItem
+                                    key={c}
+                                    onClick={() => {
+                                      onChange({
+                                        ...s,
+                                        admission: {
+                                          ...s.admission,
+                                          campus: c,
+                                        },
+                                      });
+                                      toast({
+                                        title: `Campus transferred to ${c}`,
+                                      });
+                                    }}
+                                  >
+                                    {c}
+                                  </DropdownMenuItem>
+                                ))}
+                              </DropdownMenuSubContent>
+                            </DropdownMenuSub>
+                          </DropdownMenuSubContent>
+                        </DropdownMenuSub>
+                      </DropdownMenuGroup>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuGroup>
+                        <DropdownMenuSub>
+                          <DropdownMenuSubTrigger>
+                            Attendance
+                          </DropdownMenuSubTrigger>
+                          <DropdownMenuSubContent>
+                            <DropdownMenuItem
+                              onClick={() => {
+                                const today = new Date()
+                                  .toISOString()
+                                  .slice(0, 10);
+                                onChange({
+                                  ...s,
+                                  attendance: (() => {
+                                    const idx = s.attendance.findIndex(
+                                      (a) => a.date === today,
+                                    );
+                                    if (idx >= 0) {
+                                      const copy = [...s.attendance];
+                                      copy[idx] = {
+                                        date: today,
+                                        present: true,
+                                      };
+                                      return copy;
+                                    }
+                                    return [
+                                      ...s.attendance,
+                                      { date: today, present: true },
+                                    ];
+                                  })(),
+                                });
+                                toast({ title: "Marked Present (today)" });
+                              }}
+                            >
+                              Mark Present (Today)
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => {
+                                const today = new Date()
+                                  .toISOString()
+                                  .slice(0, 10);
+                                onChange({
+                                  ...s,
+                                  attendance: (() => {
+                                    const idx = s.attendance.findIndex(
+                                      (a) => a.date === today,
+                                    );
+                                    if (idx >= 0) {
+                                      const copy = [...s.attendance];
+                                      copy[idx] = {
+                                        date: today,
+                                        present: false,
+                                      };
+                                      return copy;
+                                    }
+                                    return [
+                                      ...s.attendance,
+                                      { date: today, present: false },
+                                    ];
+                                  })(),
+                                });
+                                toast({ title: "Marked Absent (today)" });
+                              }}
+                            >
+                              Mark Absent (Today)
+                            </DropdownMenuItem>
+                          </DropdownMenuSubContent>
+                        </DropdownMenuSub>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          onClick={() => {
+                            onChange({ ...s, status: "Alumni" });
+                            toast({ title: "Course concluded" });
+                          }}
+                        >
+                          Conclude Course
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => {
+                            onChange({ ...s, status: "Not Completed" });
+                            toast({ title: "Marked as Not Completed" });
+                          }}
+                        >
+                          Not Completed
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => {
+                            onChange({ ...s, status: "Suspended" });
+                            toast({ title: "Course suspended" });
+                          }}
+                        >
+                          Suspend Course
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => {
+                            onChange({ ...s, status: "Freeze" });
+                            toast({ title: "Course frozen" });
+                          }}
+                        >
+                          Freeze
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => {
+                            toast({ title: "Certificate request submitted" });
+                          }}
+                        >
+                          Request Certificate
+                        </DropdownMenuItem>
+                      </DropdownMenuGroup>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               </TableCell>
             </TableRow>
           ))}
@@ -249,7 +531,7 @@ export function Directory({
           <SheetHeader>
             <SheetTitle>Student Profile</SheetTitle>
           </SheetHeader>
-          {rec && <Profile student={rec} onChange={onChange} />}
+          {rec && <ProfileSimple student={rec} />}
         </SheetContent>
       </Sheet>
     </div>

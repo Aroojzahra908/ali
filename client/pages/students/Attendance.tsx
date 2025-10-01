@@ -1,6 +1,4 @@
 import { Button } from "@/components/ui/button";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -17,7 +15,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useToast } from "@/hooks/use-toast";
 import { useEffect, useMemo, useState } from "react";
 import type { StudentRecord } from "./types";
 import { ensureAttendance } from "./types";
@@ -29,7 +26,6 @@ export function AttendanceTab({
   data: StudentRecord[];
   onChange: (rec: StudentRecord) => void;
 }) {
-  const { toast } = useToast();
   const batches = Array.from(
     new Set(data.map((d) => d.admission.batch)),
   ).sort();
@@ -56,74 +52,16 @@ export function AttendanceTab({
     return m;
   }, [roster, date]);
 
+  const presentCount = useMemo(
+    () => roster.reduce((sum, s) => sum + (presentMap.get(s.id) ? 1 : 0), 0),
+    [roster, presentMap],
+  );
+  const absentCount = roster.length - presentCount;
+
   const toggle = (id: string, value: boolean) => {
     const stu = data.find((d) => d.id === id);
     if (!stu) return;
     onChange(ensureAttendance(stu, date, value));
-  };
-
-  const exportCSV = () => {
-    const headers = ["Student ID", "Name", "Batch", "Date", "Present"];
-    const rows = roster.map((s) => [
-      s.id,
-      s.name,
-      s.admission.batch,
-      date,
-      String(presentMap.get(s.id) || false),
-    ]);
-    const csv = [headers, ...rows].map((r) => r.join(",")).join("\n");
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `attendance-${batch}-${date}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const importCSV = async (file: File) => {
-    const text = await file.text();
-    const lines = text.trim().split(/\r?\n/);
-    for (let i = 1; i < lines.length; i++) {
-      const [sid, _name, _batch, d, pres] = lines[i].split(",");
-      const stu = data.find((x) => x.id === sid);
-      if (stu && d)
-        onChange(
-          ensureAttendance(stu, d, pres.trim().toLowerCase() === "true"),
-        );
-    }
-  };
-
-  const notifyAbsentees = () => {
-    const absentees = roster.filter((s) => !presentMap.get(s.id));
-    if (absentees.length === 0) {
-      toast({
-        title: "No absentees",
-        description: "Everyone is marked present.",
-      });
-      return;
-    }
-
-    const timestamp = new Date().toISOString();
-    for (const student of absentees) {
-      onChange({
-        ...student,
-        communications: [
-          {
-            id: `sms-${student.id}-${Date.now()}`,
-            channel: "SMS",
-            message: `Absent on ${date}`,
-            at: timestamp,
-          },
-          ...(student.communications || []),
-        ],
-      });
-    }
-
-    toast({
-      title: "SMS reminders queued",
-      description: `${absentees.length} absentees notified via SMS.`,
-    });
   };
 
   return (
@@ -146,31 +84,17 @@ export function AttendanceTab({
           value={date}
           onChange={(e) => setDate(e.target.value)}
         />
-        <div className="flex flex-wrap items-center gap-2">
-          <Button variant="outline" onClick={exportCSV}>
-            Export
-          </Button>
-          <label className="inline-flex items-center gap-2 text-sm">
-            <span>Import</span>
-            <input
-              type="file"
-              accept=".csv"
-              onChange={(e) =>
-                e.target.files &&
-                e.target.files[0] &&
-                importCSV(e.target.files[0])
-              }
-            />
-          </label>
-          <Button onClick={notifyAbsentees}>Notify absentees via SMS</Button>
-        </div>
+      </div>
+
+      <div className="text-sm text-muted-foreground">
+        Present: {presentCount} • Absent: {absentCount}
       </div>
 
       <Table>
         <TableHeader>
           <TableRow>
             <TableHead>Student</TableHead>
-            <TableHead className="text-right">Present</TableHead>
+            <TableHead className="text-right">Status</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -181,10 +105,25 @@ export function AttendanceTab({
                 <div className="text-xs text-muted-foreground">{s.id}</div>
               </TableCell>
               <TableCell className="text-right">
-                <Checkbox
-                  checked={!!presentMap.get(s.id)}
-                  onCheckedChange={(v) => toggle(s.id, !!v)}
-                />
+                <div className="flex items-center justify-end gap-2">
+                  <span className="text-xs">
+                    {presentMap.get(s.id) ? "Present" : "Absent"}
+                  </span>
+                  <Button
+                    size="sm"
+                    variant={presentMap.get(s.id) ? "default" : "outline"}
+                    onClick={() => toggle(s.id, true)}
+                  >
+                    Present
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={!presentMap.get(s.id) ? "default" : "outline"}
+                    onClick={() => toggle(s.id, false)}
+                  >
+                    Absent
+                  </Button>
+                </div>
               </TableCell>
             </TableRow>
           ))}
