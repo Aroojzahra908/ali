@@ -1070,11 +1070,12 @@ function CreateEnquiry({
               });
 
               try {
+                const phoneDigits = (payload.contact || "").replace(/\D+/g, "");
                 await supabase.from("applications").insert([
                   {
                     name: payload.name,
                     email: payload.email,
-                    phone: payload.contact,
+                    phone: phoneDigits.length > 0 ? phoneDigits : null,
                     course: payload.course,
                     status: "Pending",
                   },
