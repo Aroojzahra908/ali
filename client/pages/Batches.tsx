@@ -57,7 +57,8 @@ export interface TimeSlot {
 }
 
 // Courses now come from admin-added list via courseStore
-const CAMPUSES = ["Main Campus", "North Campus", "City Campus"];
+import { useCampuses } from "@/lib/campusStore";
+
 const INSTRUCTORS = [
   "Zara Khan",
   "Bilal Ahmad",
