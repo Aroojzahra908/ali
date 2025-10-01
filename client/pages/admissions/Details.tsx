@@ -1,15 +1,13 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
-import { genStudentId, paymentStatus } from "./types";
+import { useEffect, useState } from "react";
+import { genStudentId } from "./types";
 import type { AdmissionRecord } from "./types";
 import { upsertStudent } from "@/lib/studentStore";
 import type { StudentRecord } from "@/pages/students/types";
-import { useNavigate } from "react-router-dom";
 import {
   Select,
   SelectContent,
@@ -17,7 +15,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { COURSES } from "@/data/courses";
 
 export function Details({
   rec,
@@ -30,19 +27,54 @@ export function Details({
 }) {
   const { toast } = useToast();
   const [batch, setBatch] = useState(rec.batch);
-  const [campus, setCampus] = useState(rec.campus);
-  const navigate = useNavigate();
+  const [campus] = useState(rec.campus);
+  const [batchOptions, setBatchOptions] = useState<string[]>([]);
 
-  // Quick Enroll (no form) state
-  const [qCourseId, setQCourseId] = useState<string>(COURSES[0]?.id || "");
-  const [qCourseName, setQCourseName] = useState<string>(
-    COURSES[0]?.name || rec.course,
-  );
-  const [qAmount, setQAmount] = useState<number>(
-    Number(COURSES[0]?.fees || rec.fee.total || 0),
-  );
-  const [qBatch, setQBatch] = useState<string>(rec.batch);
-  const [qCampus, setQCampus] = useState<string>(rec.campus);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const set = new Set<string>();
+      try {
+        const { supabase } = await import("@/lib/supabaseClient");
+        if (supabase) {
+          const { data } = await supabase
+            .from("batches")
+            .select("batch_code")
+            .order("created_at", { ascending: false });
+          if (Array.isArray(data)) {
+            for (const r of data as any[])
+              if (r.batch_code) set.add(String(r.batch_code));
+          }
+        }
+      } catch {}
+      if (set.size === 0) {
+        try {
+          const res = await fetch("/api/batches");
+          if (res.ok) {
+            const p = await res.json();
+            const items = Array.isArray(p?.items) ? p.items : [];
+            for (const it of items)
+              if (it?.batch_code) set.add(String(it.batch_code));
+          }
+        } catch {}
+      }
+      if (set.size === 0) {
+        try {
+          const { studentsMock } = await import("@/pages/students/data");
+          for (const s of studentsMock)
+            if (s.admission?.batch) set.add(String(s.admission.batch));
+        } catch {}
+      }
+      const list = Array.from(set).sort();
+      if (!cancelled) {
+        setBatchOptions(list);
+        if (list.length && !list.includes(batch)) setBatch(list[0]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const approve = () => {
     if (rec.status === "Verified") return;
@@ -100,9 +132,8 @@ export function Details({
     } catch {
       upsertStudent(student);
     }
-    navigate("/dashboard/students");
     toast({
-      title: "Admission confirmed",
+      title: "Enrolled",
       description: `Student added: ${student.name}`,
     });
   };
@@ -146,156 +177,6 @@ export function Details({
   const notify = (kind: "sms" | "email") => {
     toast({ title: kind === "sms" ? "SMS sent" : "Email sent" });
   };
-
-  async function quickEnrollAndVoucher() {
-    const id = rec.studentId || genStudentId(rec.student.name);
-
-    let base: StudentRecord | null = null;
-    try {
-      const { supabase } = await import("@/lib/supabaseClient");
-      if (supabase) {
-        const { data } = await supabase
-          .from("students")
-          .select("record")
-          .eq("id", id)
-          .limit(1)
-          .maybeSingle();
-        if (data && (data as any).record)
-          base = (data as any).record as StudentRecord;
-      }
-    } catch {}
-
-    const student: StudentRecord = base ?? {
-      id,
-      name: rec.student.name,
-      email: rec.student.email,
-      phone: rec.student.phone,
-      status: "Current",
-      admission: {
-        course: qCourseName,
-        batch: qBatch,
-        campus: qCampus,
-        date: new Date().toISOString(),
-      },
-      fee: {
-        total: Number(qAmount) || 0,
-        installments: [
-          {
-            id: "FULL",
-            amount: Number(qAmount) || 0,
-            dueDate: new Date().toISOString(),
-          },
-        ],
-      },
-      attendance: [],
-      documents: [],
-      communications: [],
-      enrolledCourses: [],
-    };
-
-    const merged: StudentRecord = {
-      ...student,
-      enrolledCourses: Array.from(
-        new Set([...(student.enrolledCourses || []), qCourseName]),
-      ),
-    };
-
-    try {
-      const { supabase } = await import("@/lib/supabaseClient");
-      if (supabase) {
-        const { error } = await supabase
-          .from("students")
-          .upsert({ id: merged.id, record: merged }, { onConflict: "id" });
-        if (error) throw error;
-      } else {
-        upsertStudent(merged);
-      }
-    } catch {
-      upsertStudent(merged);
-    }
-
-    printVoucher({
-      studentName: merged.name,
-      studentEmail: merged.email,
-      studentPhone: merged.phone,
-      studentId: merged.id,
-      course: qCourseName,
-      campus: qCampus,
-      batch: qBatch,
-      amount: Number(qAmount) || 0,
-    });
-  }
-
-  function printVoucher(opts: {
-    studentName: string;
-    studentEmail: string;
-    studentPhone: string;
-    studentId: string;
-    course: string;
-    campus: string;
-    batch: string;
-    amount: number;
-  }) {
-    const w = window.open("", "_blank");
-    if (!w) return;
-    const html = `<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8" />
-  <title>Fee Voucher - ${escapeHtml(opts.studentName)}</title>
-  <style>
-    body{font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; padding:24px; color:#111827}
-    h1{font-size:20px;margin:0 0 8px}
-    .muted{color:#6b7280;font-size:12px}
-    .section{border:1px solid #e5e7eb;border-radius:8px;margin-top:16px}
-    .sec-h{background:#f9fafb;padding:8px 12px;font-weight:600}
-    .sec-b{padding:12px}
-    table{width:100%;border-collapse:collapse}
-    th,td{border:1px solid #e5e7eb;padding:6px 8px;text-align:left;font-size:12px}
-    th{background:#f3f4f6}
-  </style>
-</head>
-<body>
-  <h1>Fee Voucher</h1>
-  <div class="muted">Student ID: ${escapeHtml(opts.studentId)} • Date: ${new Date().toLocaleDateString()}</div>
-
-  <div class="section">
-    <div class="sec-h">Student</div>
-    <div class="sec-b">
-      <div><b>Name:</b> ${escapeHtml(opts.studentName)}</div>
-      <div><b>Email:</b> ${escapeHtml(opts.studentEmail)}</div>
-      <div><b>Phone:</b> ${escapeHtml(opts.studentPhone)}</div>
-    </div>
-  </div>
-
-  <div class="section">
-    <div class="sec-h">Enrollment</div>
-    <div class="sec-b">
-      <div><b>Course:</b> ${escapeHtml(opts.course)}</div>
-      <div><b>Batch:</b> ${escapeHtml(opts.batch)}</div>
-      <div><b>Campus:</b> ${escapeHtml(opts.campus)}</div>
-    </div>
-  </div>
-
-  <div class="section">
-    <div class="sec-h">Payment</div>
-    <div class="sec-b">
-      <table>
-        <thead><tr><th>#</th><th>Description</th><th>Amount</th></tr></thead>
-        <tbody>
-          <tr><td>1</td><td>Course Fee (Full)</td><td>₨${opts.amount.toLocaleString()}</td></tr>
-          <tr><td colspan="2" style="text-align:right"><b>Total</b></td><td><b>₨${opts.amount.toLocaleString()}</b></td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  <script>window.print()<\/script>
-</body>
-</html>`;
-    w.document.write(html);
-    w.document.close();
-  }
 
   const printForm = () => {
     const w = window.open("", "_blank");
@@ -377,151 +258,23 @@ export function Details({
       </div>
       <Separator />
 
-      <div className="grid gap-3 sm:grid-cols-2">
-        <div>
-          <div className="text-xs text-muted-foreground">
-            Assigned Course & Batch
-          </div>
-          <div className="font-medium">{rec.course}</div>
-          <div className="text-xs text-muted-foreground">
-            Batch: {rec.batch}
-          </div>
-        </div>
-        <div>
-          <div className="text-xs text-muted-foreground">Campus</div>
-          <div className="font-medium">{rec.campus}</div>
-        </div>
-      </div>
-
-      <div className="grid gap-3 sm:grid-cols-2">
-        <div className="space-y-2">
-          <div className="text-xs text-muted-foreground">Transfer</div>
-          <Label>Batch</Label>
-          <Input value={batch} onChange={(e) => setBatch(e.target.value)} />
-          <Label>Campus</Label>
-          <Input value={campus} onChange={(e) => setCampus(e.target.value)} />
-          <Button variant="outline" onClick={transfer}>
-            Transfer
-          </Button>
-        </div>
-        <div className="space-y-2">
-          <div className="text-xs text-muted-foreground">Payment Status</div>
-          <div className="font-medium">{paymentStatus(rec)}</div>
-          <div className="text-xs text-muted-foreground">
-            Total: ₨{rec.fee.total.toLocaleString()}
-          </div>
-          <div className="text-xs">Installments:</div>
-          <div className="rounded border p-2 text-xs space-y-1">
-            {rec.fee.installments.map((i) => (
-              <div key={i.id} className="flex justify-between">
-                <span>
-                  {i.id} • ₨{i.amount.toLocaleString()} • Due{" "}
-                  {new Date(i.dueDate).toLocaleDateString()}
-                </span>
-                <span className="text-muted-foreground">
-                  {i.paidAt
-                    ? `Paid ${new Date(i.paidAt).toLocaleDateString()}`
-                    : "Unpaid"}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <Separator />
-
       <div className="space-y-2">
-        <div className="text-xs text-muted-foreground">
-          Quick Enroll (No Admission Form)
-        </div>
-        <Label>Course</Label>
-        <Select
-          value={qCourseId}
-          onValueChange={(v) => {
-            setQCourseId(v);
-            const c = COURSES.find((x) => x.id === v);
-            setQCourseName(c?.name || v);
-            setQAmount(Number(c?.fees || 0));
-          }}
-        >
+        <div className="text-xs text-muted-foreground">Enroll Student</div>
+        <Label>Batch</Label>
+        <Select value={batch} onValueChange={setBatch}>
           <SelectTrigger>
-            <SelectValue placeholder="Select course" />
+            <SelectValue placeholder="Select batch" />
           </SelectTrigger>
           <SelectContent>
-            {COURSES.map((c) => (
-              <SelectItem key={c.id} value={c.id}>
-                {c.name}
+            {batchOptions.map((b) => (
+              <SelectItem key={b} value={b}>
+                {b}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
-        <div className="grid grid-cols-2 gap-2">
-          <div>
-            <Label>Amount (₨)</Label>
-            <Input
-              type="number"
-              value={Number.isFinite(qAmount) ? String(qAmount) : "0"}
-              onChange={(e) => setQAmount(Number(e.target.value || 0))}
-            />
-          </div>
-          <div>
-            <Label>Batch</Label>
-            <Input value={qBatch} onChange={(e) => setQBatch(e.target.value)} />
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-2">
-          <div>
-            <Label>Campus</Label>
-            <Input
-              value={qCampus}
-              onChange={(e) => setQCampus(e.target.value)}
-            />
-          </div>
-          <div className="flex items-end justify-end">
-            <Button onClick={quickEnrollAndVoucher}>
-              Enroll & Print Voucher
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      <div>
-        <div className="text-xs text-muted-foreground pb-1">
-          Uploaded Documents
-        </div>
-        <div className="space-y-1 text-sm">
-          {rec.documents.map((d, idx) => (
-            <div key={idx} className="flex items-center justify-between">
-              <a
-                href={d.url}
-                className="underline"
-                target="_blank"
-                rel="noreferrer"
-              >
-                {d.name}
-              </a>
-              <div className="space-x-2">
-                <Badge variant={d.verified ? "default" : "secondary"}>
-                  {d.verified ? "Verified" : "Pending"}
-                </Badge>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() =>
-                    onChange({
-                      ...rec,
-                      documents: rec.documents.map((x, i) =>
-                        i === idx ? { ...x, verified: !x.verified } : x,
-                      ),
-                    })
-                  }
-                >
-                  Toggle Verify
-                </Button>
-              </div>
-            </div>
-          ))}
+        <div className="flex justify-end pt-2">
+          <Button onClick={confirmAdmission}>Enroll</Button>
         </div>
       </div>
 
@@ -534,9 +287,6 @@ export function Details({
         </Button>
         <Button variant="destructive" onClick={() => onDelete?.(rec)}>
           Delete
-        </Button>
-        <Button variant="outline" onClick={printForm}>
-          Print Admission Form
         </Button>
       </div>
     </div>
