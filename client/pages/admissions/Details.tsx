@@ -449,62 +449,6 @@ export function Details({
 
       <Separator />
 
-      <div className="space-y-2">
-        <div className="text-xs text-muted-foreground">
-          Quick Enroll (No Admission Form)
-        </div>
-        <Label>Course</Label>
-        <Select
-          value={qCourseId}
-          onValueChange={(v) => {
-            setQCourseId(v);
-            const c = COURSES.find((x) => x.id === v);
-            setQCourseName(c?.name || v);
-            setQAmount(Number(c?.fees || 0));
-          }}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Select course" />
-          </SelectTrigger>
-          <SelectContent>
-            {COURSES.map((c) => (
-              <SelectItem key={c.id} value={c.id}>
-                {c.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <div className="grid grid-cols-2 gap-2">
-          <div>
-            <Label>Amount (₨)</Label>
-            <Input
-              type="number"
-              value={Number.isFinite(qAmount) ? String(qAmount) : "0"}
-              onChange={(e) => setQAmount(Number(e.target.value || 0))}
-            />
-          </div>
-          <div>
-            <Label>Batch</Label>
-            <Input value={qBatch} onChange={(e) => setQBatch(e.target.value)} />
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-2">
-          <div>
-            <Label>Campus</Label>
-            <Input
-              value={qCampus}
-              onChange={(e) => setQCampus(e.target.value)}
-            />
-          </div>
-          <div className="flex items-end justify-end">
-            <Button onClick={quickEnrollAndVoucher}>
-              Enroll & Print Voucher
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      <Separator />
 
       <div className="flex flex-wrap gap-2">
         <Button onClick={confirmAdmission}>Approve & Move to Students</Button>
