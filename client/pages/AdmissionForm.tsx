@@ -594,6 +594,21 @@ export default function AdmissionForm() {
                     Live batches only — additional options will appear soon.
                   </p>
                 </div>
+                <div className="space-y-2">
+                  <Label>Preferred Campus</Label>
+                  <Select value={selectedCampus} onValueChange={setSelectedCampus}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choose campus" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {campusOptions.map((c) => (
+                        <SelectItem key={c} value={c}>
+                          {c}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">
