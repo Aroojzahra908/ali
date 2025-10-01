@@ -24,6 +24,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "@/hooks/use-toast";
 import { getAllCourseNames } from "@/lib/courseStore";
+import { supabase, isSupabaseConfigured } from "@/lib/supabaseClient";
 
 export type BatchStatus =
   | "Upcoming"
@@ -94,12 +95,45 @@ export default function Batches() {
   const [slots, setSlots] = useState<TimeSlot[]>([]);
 
   useEffect(() => {
-    const fetchBatches = async () => {
-      try {
-        const res = await fetch("/api/batches");
-        const json = await res.json();
-        if (json && json.ok) {
-          const items: BatchItem[] = (json.items as any[]).map((r) => ({
+    if (!isSupabaseConfigured()) {
+      toast({ title: "Supabase not configured", description: "Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY" });
+      return;
+    }
+    const load = async () => {
+      const { data, error } = await supabase!
+        .from("batches")
+        .select(
+          "batch_id, course_name, campus_name, batch_code, start_date, end_date, instructor, max_students, current_students, status, created_at",
+        )
+        .order("created_at", { ascending: false });
+      if (error) {
+        toast({ title: "Failed to load", description: error.message });
+        return;
+      }
+      const items: BatchItem[] = (data || []).map((r: any) => ({
+        id: r.batch_id,
+        course: r.course_name,
+        code: r.batch_code,
+        campus: r.campus_name,
+        startDate: r.start_date,
+        endDate: r.end_date,
+        instructor: r.instructor,
+        maxStudents: r.max_students,
+        currentStudents: r.current_students,
+      }));
+      setBatches(items);
+      if (items[0]) setActiveBatchId(items[0].id);
+    };
+    load();
+
+    const channel = supabase!.channel("batches-rt")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "batches" },
+        (payload) => {
+          const r: any = payload.new ?? payload.old;
+          if (!r) return;
+          const b: BatchItem = {
             id: r.batch_id,
             course: r.course_name,
             code: r.batch_code,
@@ -109,17 +143,22 @@ export default function Batches() {
             instructor: r.instructor,
             maxStudents: r.max_students,
             currentStudents: r.current_students,
-          }));
-          setBatches(items);
-          if (items[0]) setActiveBatchId(items[0].id);
-        } else if (json && json.error) {
-          toast({ title: "Failed to load batches", description: json.error });
-        }
-      } catch (err: any) {
-        // Ignore in dev if backend not configured yet
-      }
+          };
+          setBatches((prev) => {
+            if (payload.eventType === "INSERT") return [b, ...prev];
+            if (payload.eventType === "UPDATE")
+              return prev.map((x) => (x.id === b.id ? b : x));
+            if (payload.eventType === "DELETE")
+              return prev.filter((x) => x.id !== b.id);
+            return prev;
+          });
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase!.removeChannel(channel);
     };
-    fetchBatches();
   }, []);
 
   // Create form defaults
@@ -184,11 +223,14 @@ export default function Batches() {
     current: number;
   }) => {
     const code = genCode(cCourse, cCampus);
+    if (!isSupabaseConfigured()) {
+      toast({ title: "Supabase not configured", description: "Set env vars first" });
+      return;
+    }
     try {
-      const res = await fetch("/api/batches", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      const { data: rows, error } = await supabase!
+        .from("batches")
+        .insert({
           course_name: cCourse,
           campus_name: cCampus,
           batch_code: code,
@@ -197,11 +239,13 @@ export default function Batches() {
           instructor: cInstructor,
           max_students: data.max,
           current_students: data.current,
-        }),
-      });
-      const json = await res.json();
-      if (!res.ok || !json.ok) throw new Error(json?.error || "Failed");
-      const r = json.item as any;
+        })
+        .select(
+          "batch_id, course_name, campus_name, batch_code, start_date, end_date, instructor, max_students, current_students, status, created_at",
+        )
+        .single();
+      if (error) throw error;
+      const r: any = rows;
       const b: BatchItem = {
         id: r.batch_id,
         course: r.course_name,
@@ -217,7 +261,8 @@ export default function Batches() {
       setActiveBatchId(b.id);
       toast({ title: "Batch created", description: `${code} (${cCourse})` });
     } catch (err: any) {
-      toast({ title: "Create failed", description: err?.message || String(err) });
+      const message = err?.code === "23505" ? "Batch code already exists" : err?.message || String(err);
+      toast({ title: "Create failed", description: message });
     }
   };
 
