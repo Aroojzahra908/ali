@@ -43,7 +43,11 @@ export function Details({
   const [newBatch, setNewBatch] = useState("");
   const [newCampus, setNewCampus] = useState("");
   const [newFee, setNewFee] = useState<string>("");
-  const courses = useMemo(() => getAllCourseNames(), []);
+  const courses = useMemo(() => {
+    const names = new Set<string>(getAllCourseNames());
+    for (const c of COURSES) if (c?.name) names.add(c.name);
+    return Array.from(names);
+  }, []);
   const [voucher, setVoucher] = useState<VoucherDetails | null>(null);
 
   useEffect(() => {
