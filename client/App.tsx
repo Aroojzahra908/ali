@@ -43,6 +43,7 @@ import Login from "./pages/Login";
 import { AppLayout } from "./components/layout/AppSidebar";
 import { AppHeader } from "./components/layout/AppHeader";
 import { PublicLayout } from "./components/layout/PublicLayout";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 
 const queryClient = new QueryClient();
 
@@ -69,7 +70,8 @@ const App = () => (
               <div className="p-6 text-sm text-muted-foreground">Loading…</div>
             }
           >
-            <Routes>
+            <ErrorBoundary>
+              <Routes>
               {/* Public site */}
               <Route element={<PublicLayout />}>
                 <Route path="/" element={<Home />} />
@@ -241,7 +243,8 @@ const App = () => (
               </Route>
 
               <Route path="*" element={<NotFound />} />
-            </Routes>
+              </Routes>
+            </ErrorBoundary>
           </Suspense>
         </AuthProvider>
       </BrowserRouter>
