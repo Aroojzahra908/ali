@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import DatePicker from "@/components/ui/date-picker";
 import {
   Select,
   SelectContent,
@@ -114,11 +115,7 @@ export function AttendanceTab({
             ))}
           </SelectContent>
         </Select>
-        <Input
-          type="date"
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-        />
+        <DatePicker value={date} onChange={(v) => setDate(v)} />
       </div>
 
       <div className="text-sm text-muted-foreground">

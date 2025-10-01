@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/table";
 import { toast } from "@/hooks/use-toast";
 import { useCampuses } from "@/lib/campusStore";
+import { supabase, isSupabaseConfigured } from "@/lib/supabaseClient";
 
 export type EmpStatus = "active" | "terminated" | "resigned" | "transferred";
 export interface Employee {
@@ -44,55 +45,124 @@ const ROLES = [
 
 export default function Employees() {
   const campusOptions = useCampuses();
-  const [employees, setEmployees] = useState<Employee[]>([
-    {
-      id: "e-1",
-      name: "Zara Khan",
-      role: "Instructor",
-      email: "zara@example.com",
-      campus: campusOptions[0] || "",
-      status: "active",
-    },
-    {
-      id: "e-2",
-      name: "Bilal Ahmad",
-      role: "Counselor",
-      email: "bilal@example.com",
-      campus: campusOptions[1] || "",
-      status: "transferred",
-    },
-  ]);
-  const [selectedId, setSelectedId] = useState<string>(employees[0]?.id || "");
+  const [employees, setEmployees] = useState<Employee[]>([]);
 
-  const selected = useMemo(
-    () => employees.find((e) => e.id === selectedId) || employees[0],
-    [employees, selectedId],
-  );
+  useEffect(() => {
+    const load = async () => {
+      if (!isSupabaseConfigured()) {
+        toast({
+          title: "Supabase not configured",
+          description: "Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY",
+        });
+        return;
+      }
+      const { data, error } = await supabase!
+        .from<Employee>("employees")
+        .select("id, name, role, email, campus, status")
+        .order("created_at", { ascending: false });
+      if (error) {
+        toast({
+          title: "Failed to load employees",
+          description: error.message,
+        });
+        return;
+      }
+      setEmployees(data || []);
+
+      try {
+        const channel = (supabase as any)?.channel?.("employees-rt");
+        if (channel) {
+          channel
+            .on(
+              "postgres_changes",
+              { event: "*", schema: "public", table: "employees" },
+              (payload: any) => {
+                if (payload.eventType === "INSERT") {
+                  setEmployees((prev) => [payload.new as Employee, ...prev]);
+                } else if (payload.eventType === "UPDATE") {
+                  setEmployees((prev) =>
+                    prev.map((e) =>
+                      e.id === payload.new.id ? (payload.new as Employee) : e,
+                    ),
+                  );
+                } else if (payload.eventType === "DELETE") {
+                  setEmployees((prev) =>
+                    prev.filter((e) => e.id !== payload.old.id),
+                  );
+                }
+              },
+            )
+            .subscribe();
+        }
+      } catch {
+        // ignore realtime setup issues
+      }
+    };
+    load();
+  }, []);
+
   const active = employees.filter((e) => e.status === "active");
   const terminated = employees.filter((e) => e.status === "terminated");
   const resigned = employees.filter((e) => e.status === "resigned");
   const transferred = employees.filter((e) => e.status === "transferred");
 
-  const addEmployee = (e: Omit<Employee, "id">) => {
-    const id = `e-${Date.now()}`;
-    setEmployees((prev) => [...prev, { ...e, id }]);
+  const addEmployee = async (e: Omit<Employee, "id">) => {
+    if (!isSupabaseConfigured()) {
+      toast({
+        title: "Supabase not configured",
+        description: "Cannot create employee.",
+      });
+      return;
+    }
+    const { data, error } = await supabase!
+      .from("employees")
+      .insert({ ...e })
+      .select("id, name, role, email, campus, status")
+      .single();
+    if (error) {
+      const msg =
+        (error as any)?.code === "42501"
+          ? "Blocked by RLS. Allow INSERT on employees for your role."
+          : error.message;
+      toast({ title: "Create failed", description: msg });
+      return;
+    }
+    setEmployees((prev) => [data as Employee, ...prev]);
     toast({
       title: "Employee added",
       description: `${e.name} (${e.role}) created.`,
     });
   };
 
-  const updateEmployee = (id: string, patch: Partial<Employee>) => {
+  const updateEmployee = async (id: string, patch: Partial<Employee>) => {
+    if (!isSupabaseConfigured()) {
+      toast({
+        title: "Supabase not configured",
+        description: "Cannot update employee.",
+      });
+      return;
+    }
+    const update: any = { ...patch };
+    const { error } = await supabase!
+      .from("employees")
+      .update(update)
+      .eq("id", id);
+    if (error) {
+      const msg =
+        (error as any)?.code === "42501"
+          ? "Blocked by RLS. Allow UPDATE on employees for your role."
+          : error.message;
+      toast({ title: "Update failed", description: msg });
+      return;
+    }
     setEmployees((prev) =>
       prev.map((e) => (e.id === id ? { ...e, ...patch } : e)),
     );
     toast({ title: "Employee updated" });
   };
 
-  const setStatus = (id: string, status: EmpStatus) => {
-    setEmployees((prev) =>
-      prev.map((e) => (e.id === id ? { ...e, status } : e)),
-    );
+  const setStatus = async (id: string, status: EmpStatus) => {
+    await updateEmployee(id, { status });
     if (status === "terminated") {
       toast({
         title: "Employee terminated",
@@ -232,9 +302,7 @@ export default function Employees() {
                         </Button>
                         <Button
                           size="sm"
-                          onClick={() =>
-                            updateEmployee(e.id, { status: "transferred" })
-                          }
+                          onClick={() => setStatus(e.id, "transferred")}
                         >
                           Transfer
                         </Button>

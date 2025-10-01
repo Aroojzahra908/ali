@@ -596,6 +596,7 @@ import { useEffect, useState } from "react";
 import { supabase, isSupabaseConfigured } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import DatePicker from "@/components/ui/date-picker";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -1032,7 +1033,7 @@ function CreateCourseForm({ onSubmit }: { onSubmit: (data: any) => void }) {
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="start_date">Start Date (if upcoming)</Label>
-            <Input id="start_date" name="start_date" type="date" />
+            <DatePicker id="start_date" name="start_date" />
           </div>
           <div className="flex items-center gap-2">
             <Switch checked={featured} onCheckedChange={setFeatured} />

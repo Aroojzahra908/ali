@@ -11,8 +11,10 @@ import {
 } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
+import DatePicker from "@/components/ui/date-picker";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { useCampuses } from "@/lib/campusStore";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabaseClient";
@@ -247,6 +249,10 @@ export default function AdmissionForm() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [showVoucher, setShowVoucher] = useState(false);
   const [voucher, setVoucher] = useState<VoucherDetails | null>(null);
+  const campusOptions = useCampuses();
+  const [selectedCampus, setSelectedCampus] = useState<string>(
+    campusOptions[0] || "",
+  );
 
   const selectedCourse = useMemo(
     () => courses.find((c) => c.id === course) ?? null,
@@ -347,7 +353,7 @@ export default function AdmissionForm() {
             course: trimmed.courseName,
             start_date: startDateVal,
             message: message ? message.trim() : null,
-            campus: "Main",
+            campus: selectedCampus || campusOptions[0] || "",
             batch: "TBD",
             status: "Pending",
             fee_total: trimmed.amount,
@@ -438,7 +444,7 @@ export default function AdmissionForm() {
           phone: trimmed.phone,
           issueDate: createdAt,
           dueDate: dueDateISO,
-          campus: "Main Campus",
+          campus: selectedCampus || campusOptions[0] || "",
         };
 
         setVoucher(voucherDetails);
@@ -590,17 +596,35 @@ export default function AdmissionForm() {
                     Live batches only — additional options will appear soon.
                   </p>
                 </div>
+                <div className="space-y-2">
+                  <Label>Preferred Campus</Label>
+                  <Select
+                    value={selectedCampus}
+                    onValueChange={setSelectedCampus}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choose campus" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {campusOptions.map((c) => (
+                        <SelectItem key={c} value={c}>
+                          {c}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="start">Preferred start date</Label>
-                  <Input
+                  <DatePicker
                     id="start"
-                    type="date"
-                    min={minStartDate}
                     value={startDate}
-                    onChange={(event) => setStartDate(event.target.value)}
+                    onChange={(v) => setStartDate(v)}
+                    min={minStartDate}
+                    required
                   />
                   <p className="text-xs text-muted-foreground">
                     Pick the date you would like to begin. We will try to align

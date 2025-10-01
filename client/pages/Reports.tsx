@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import DatePicker from "@/components/ui/date-picker";
 import {
   Select,
   SelectContent,
@@ -134,16 +135,14 @@ export default function Reports() {
               </SelectGroup>
             </SelectContent>
           </Select>
-          <Input
-            type="date"
+          <DatePicker
             value={from}
-            onChange={(e) => setFrom(e.target.value)}
+            onChange={(v) => setFrom(v)}
             className="h-9 w-40"
           />
-          <Input
-            type="date"
+          <DatePicker
             value={to}
-            onChange={(e) => setTo(e.target.value)}
+            onChange={(v) => setTo(v)}
             className="h-9 w-40"
           />
           <Button variant="outline">

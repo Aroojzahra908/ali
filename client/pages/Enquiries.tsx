@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import DatePicker from "@/components/ui/date-picker";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
@@ -607,11 +608,9 @@ export default function Enquiries() {
                                     />
                                   </TableCell>
                                   <TableCell>
-                                    <Input
-                                      type="date"
+                                    <DatePicker
                                       value={it.due || ""}
-                                      onChange={(e) => {
-                                        const v = e.target.value;
+                                      onChange={(v) => {
                                         const copy = [...installments];
                                         copy[idx] = { ...copy[idx], due: v };
                                         setInstallments(copy);
@@ -1071,17 +1070,15 @@ function CreateEnquiry({
               });
 
               try {
-                await supabase
-                  .from("applications")
-                  .insert([
-                    {
-                      name: payload.name,
-                      email: payload.email,
-                      phone: payload.contact,
-                      course: payload.course,
-                      status: "Pending",
-                    },
-                  ]);
+                await supabase.from("applications").insert([
+                  {
+                    name: payload.name,
+                    email: payload.email,
+                    phone: payload.contact,
+                    course: payload.course,
+                    status: "Pending",
+                  },
+                ]);
               } catch {}
 
               toast({
@@ -1189,7 +1186,7 @@ function CreateEnquiry({
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="join">Possible Joining Date</Label>
-            <Input id="join" name="join" type="date" />
+            <DatePicker id="join" name="join" />
           </div>
           <div className="space-y-1.5 md:col-span-2">
             <Label>Marketing Source (select one or more)</Label>
