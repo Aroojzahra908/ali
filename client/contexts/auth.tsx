@@ -7,7 +7,7 @@ import React, {
   useState,
 } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/lib/supabase";
+import supabase, { isSupabaseConfigured } from "@/lib/supabase";
 import { toast } from "@/hooks/use-toast";
 import type { RolePermissions } from "@/pages/roles/types";
 import { roles as seedRoles } from "@/pages/roles/data";
