@@ -110,7 +110,7 @@ export default function Batches() {
         toast({ title: "Failed to load", description: error.message });
         return;
       }
-      const items: BatchItem[] = (data || []).map((r: any) => ({
+      const mapped: BatchItem[] = (data || []).map((r: any) => ({
         id: r.batch_id,
         course: r.course_name,
         code: r.batch_code,
@@ -121,6 +121,8 @@ export default function Batches() {
         maxStudents: r.max_students,
         currentStudents: r.current_students,
       }));
+      const seen = new Set<string>();
+      const items = mapped.filter((b) => (seen.has(b.id) ? false : (seen.add(b.id), true)));
       setBatches(items);
       if (items[0]) setActiveBatchId(items[0].id);
     };
@@ -145,11 +147,18 @@ export default function Batches() {
             currentStudents: r.current_students,
           };
           setBatches((prev) => {
-            if (payload.eventType === "INSERT") return [b, ...prev];
-            if (payload.eventType === "UPDATE")
-              return prev.map((x) => (x.id === b.id ? b : x));
-            if (payload.eventType === "DELETE")
+            const idx = prev.findIndex((x) => x.id === b.id);
+            if (payload.eventType === "INSERT") {
+              if (idx !== -1) return prev; // already present via local insert/load
+              return [b, ...prev];
+            }
+            if (payload.eventType === "UPDATE") {
+              if (idx !== -1) return prev.map((x) => (x.id === b.id ? b : x));
+              return [b, ...prev];
+            }
+            if (payload.eventType === "DELETE") {
               return prev.filter((x) => x.id !== b.id);
+            }
             return prev;
           });
         },
@@ -257,7 +266,10 @@ export default function Batches() {
         maxStudents: r.max_students,
         currentStudents: r.current_students,
       };
-      setBatches((prev) => [b, ...prev]);
+      setBatches((prev) => {
+        if (prev.some((x) => x.id === b.id)) return prev;
+        return [b, ...prev];
+      });
       setActiveBatchId(b.id);
       toast({ title: "Batch created", description: `${code} (${cCourse})` });
     } catch (err: any) {
