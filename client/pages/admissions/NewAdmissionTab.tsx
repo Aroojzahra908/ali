@@ -141,7 +141,6 @@ export function NewAdmissionTab({ onCreated }: Props) {
         const { data, error } = await supabase
           .from<CourseRow>("courses")
           .select("id, name, fees, tuition, duration, status")
-          .eq("status", "live")
           .order("created_at", { ascending: false });
 
         if (!error && Array.isArray(data) && data.length > 0) {
