@@ -280,13 +280,12 @@ export function Details({
 
       <Separator />
 
-      <div className="flex flex-wrap gap-2">
-        <Button onClick={confirmAdmission}>Approve & Move to Students</Button>
-        <Button variant="outline" onClick={markAllPaid}>
-          Mark as Paid
+      <div className="flex flex-wrap gap-3 items-center">
+        <Button onClick={confirmAdmission} className="rounded-full px-6 py-2">
+          Approve & Move to Students
         </Button>
-        <Button variant="destructive" onClick={() => onDelete?.(rec)}>
-          Delete
+        <Button variant="outline" onClick={markAllPaid} className="rounded-full px-6 py-2">
+          Mark as Paid
         </Button>
       </div>
     </div>
