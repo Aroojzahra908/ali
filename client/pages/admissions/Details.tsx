@@ -10,7 +10,13 @@ import type { AdmissionRecord } from "./types";
 import { upsertStudent } from "@/lib/studentStore";
 import type { StudentRecord } from "@/pages/students/types";
 import { useNavigate } from "react-router-dom";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { COURSES } from "@/data/courses";
 
 export function Details({
@@ -29,8 +35,12 @@ export function Details({
 
   // Quick Enroll (no form) state
   const [qCourseId, setQCourseId] = useState<string>(COURSES[0]?.id || "");
-  const [qCourseName, setQCourseName] = useState<string>(COURSES[0]?.name || rec.course);
-  const [qAmount, setQAmount] = useState<number>(Number(COURSES[0]?.fees || rec.fee.total || 0));
+  const [qCourseName, setQCourseName] = useState<string>(
+    COURSES[0]?.name || rec.course,
+  );
+  const [qAmount, setQAmount] = useState<number>(
+    Number(COURSES[0]?.fees || rec.fee.total || 0),
+  );
   const [qBatch, setQBatch] = useState<string>(rec.batch);
   const [qCampus, setQCampus] = useState<string>(rec.campus);
 
@@ -150,7 +160,8 @@ export function Details({
           .eq("id", id)
           .limit(1)
           .maybeSingle();
-        if (data && (data as any).record) base = (data as any).record as StudentRecord;
+        if (data && (data as any).record)
+          base = (data as any).record as StudentRecord;
       }
     } catch {}
 
@@ -169,7 +180,11 @@ export function Details({
       fee: {
         total: Number(qAmount) || 0,
         installments: [
-          { id: "FULL", amount: Number(qAmount) || 0, dueDate: new Date().toISOString() },
+          {
+            id: "FULL",
+            amount: Number(qAmount) || 0,
+            dueDate: new Date().toISOString(),
+          },
         ],
       },
       attendance: [],
@@ -180,7 +195,9 @@ export function Details({
 
     const merged: StudentRecord = {
       ...student,
-      enrolledCourses: Array.from(new Set([...(student.enrolledCourses || []), qCourseName])),
+      enrolledCourses: Array.from(
+        new Set([...(student.enrolledCourses || []), qCourseName]),
+      ),
     };
 
     try {
@@ -415,7 +432,9 @@ export function Details({
       <Separator />
 
       <div className="space-y-2">
-        <div className="text-xs text-muted-foreground">Quick Enroll (No Admission Form)</div>
+        <div className="text-xs text-muted-foreground">
+          Quick Enroll (No Admission Form)
+        </div>
         <Label>Course</Label>
         <Select
           value={qCourseId}
@@ -454,10 +473,15 @@ export function Details({
         <div className="grid grid-cols-2 gap-2">
           <div>
             <Label>Campus</Label>
-            <Input value={qCampus} onChange={(e) => setQCampus(e.target.value)} />
+            <Input
+              value={qCampus}
+              onChange={(e) => setQCampus(e.target.value)}
+            />
           </div>
           <div className="flex items-end justify-end">
-            <Button onClick={quickEnrollAndVoucher}>Enroll & Print Voucher</Button>
+            <Button onClick={quickEnrollAndVoucher}>
+              Enroll & Print Voucher
+            </Button>
           </div>
         </div>
       </div>
