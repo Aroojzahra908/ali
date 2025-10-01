@@ -463,12 +463,18 @@ export function NewAdmissionTab({ onCreated }: Props) {
             </div>
             <div className="space-y-2">
               <Label htmlFor="campus">Campus</Label>
-              <Input
-                id="campus"
-                placeholder="Main"
-                value={campus}
-                onChange={(event) => setCampus(event.target.value)}
-              />
+              <Select value={campus} onValueChange={setCampus}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select campus" />
+                </SelectTrigger>
+                <SelectContent>
+                  {campusOptions.map((c) => (
+                    <SelectItem key={c} value={c}>
+                      {c}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
