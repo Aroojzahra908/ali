@@ -338,7 +338,12 @@ export function NewAdmissionTab({ onCreated }: Props) {
         setNotes("");
         setStartDate("");
       } catch (error: any) {
-        const msg = error?.message || error?.hint || error?.details || String(error);
+        const msg =
+          (typeof error?.message === "string" && error.message) ||
+          (typeof error?.hint === "string" && error.hint) ||
+          (typeof error?.details === "string" && error.details) ||
+          (typeof error?.code === "string" && `Error ${error.code}`) ||
+          (error && typeof error === "object" ? JSON.stringify(error) : String(error));
         console.error("Admission submission failed:", error);
         toast({
           title: "Submission failed",
