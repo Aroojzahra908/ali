@@ -110,6 +110,47 @@ export default function Admissions() {
   const [view, setView] = useState<AdmissionsView>("new");
   const [courseFilter, setCourseFilter] = useState<string>("__all");
   const [campusFilter, setCampusFilter] = useState<string>("__all");
+  const [dbCourseOptions, setDbCourseOptions] = useState<string[]>([]);
+  const [dbCampusOptions, setDbCampusOptions] = useState<string[]>([]);
+
+  const loadFilterOptions = useCallback(async () => {
+    if (!supabase) {
+      setDbCourseOptions([]);
+      setDbCampusOptions([]);
+      return;
+    }
+
+    try {
+      const [coursesResponse, campusesResponse] = await Promise.all([
+        supabase.from("courses").select("name").order("name"),
+        supabase.from("campuses").select("name").order("name"),
+      ]);
+
+      if (!coursesResponse.error && Array.isArray(coursesResponse.data)) {
+        const nextCourses = Array.from(
+          new Set(
+            coursesResponse.data
+              .map((row: any) => String(row?.name ?? "").trim())
+              .filter(Boolean),
+          ),
+        ).sort((a, b) => a.localeCompare(b));
+        setDbCourseOptions(nextCourses);
+      }
+
+      if (!campusesResponse.error && Array.isArray(campusesResponse.data)) {
+        const nextCampuses = Array.from(
+          new Set(
+            campusesResponse.data
+              .map((row: any) => String(row?.name ?? "").trim())
+              .filter(Boolean),
+          ),
+        ).sort((a, b) => a.localeCompare(b));
+        setDbCampusOptions(nextCampuses);
+      }
+    } catch (error) {
+      console.error("Error loading filter options from Supabase", error);
+    }
+  }, [supabase]);
 
   const fetchApplications = useCallback(async () => {
     const records = new Map<string, AdmissionRecord>();
@@ -451,6 +492,10 @@ export default function Admissions() {
     };
   }, [fetchApplications]);
 
+  useEffect(() => {
+    void loadFilterOptions();
+  }, [loadFilterOptions]);
+
   const upsert = async (next: AdmissionRecord) => {
     setItems((prev) => prev.map((r) => (r.id === next.id ? next : r)));
     if (!supabase) return;
@@ -513,20 +558,26 @@ export default function Admissions() {
   );
 
   const courseOptions = useMemo(() => {
+    if (dbCourseOptions.length > 0) return dbCourseOptions;
     const set = new Set<string>();
     for (const item of items) {
       if (item.course) set.add(item.course);
     }
-    return Array.from(set).sort();
-  }, [items]);
+    return Array.from(set)
+      .filter(Boolean)
+      .sort((a, b) => a.localeCompare(b));
+  }, [dbCourseOptions, items]);
 
   const campusOptions = useMemo(() => {
+    if (dbCampusOptions.length > 0) return dbCampusOptions;
     const set = new Set<string>();
     for (const item of items) {
       if (item.campus) set.add(item.campus);
     }
-    return Array.from(set).sort();
-  }, [items]);
+    return Array.from(set)
+      .filter(Boolean)
+      .sort((a, b) => a.localeCompare(b));
+  }, [dbCampusOptions, items]);
 
   const counts = useMemo(() => {
     const now = new Date();
@@ -707,6 +758,7 @@ export default function Admissions() {
             data={filterItems("today")}
             onUpdate={upsert}
             onDeleted={handleDeleted}
+            onCreated={handleCreated}
             title="Today’s admissions"
             subtitle="Review today’s intake by course and campus."
             filters={renderFilters()}
@@ -718,6 +770,7 @@ export default function Admissions() {
             data={filterItems("month")}
             onUpdate={upsert}
             onDeleted={handleDeleted}
+            onCreated={handleCreated}
             title="Current month admissions"
             subtitle="Compare month-to-date progress across courses and campuses."
             filters={renderFilters()}
@@ -729,6 +782,7 @@ export default function Admissions() {
             data={filterItems("year")}
             onUpdate={upsert}
             onDeleted={handleDeleted}
+            onCreated={handleCreated}
             title="Current year admissions"
             subtitle="Track annual performance with unified filters."
             filters={renderFilters()}
@@ -740,6 +794,7 @@ export default function Admissions() {
             data={filterItems("all")}
             onUpdate={upsert}
             onDeleted={handleDeleted}
+            onCreated={handleCreated}
             title="All admissions"
             subtitle="Full admissions history with course and campus filtering."
             filters={renderFilters()}
