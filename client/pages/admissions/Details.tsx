@@ -10,6 +10,14 @@ import type { AdmissionRecord } from "./types";
 import { upsertStudent } from "@/lib/studentStore";
 import type { StudentRecord } from "@/pages/students/types";
 import { useNavigate } from "react-router-dom";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { COURSES } from "@/data/courses";
 
 export function Details({
   rec,
@@ -24,6 +32,17 @@ export function Details({
   const [batch, setBatch] = useState(rec.batch);
   const [campus, setCampus] = useState(rec.campus);
   const navigate = useNavigate();
+
+  // Quick Enroll (no form) state
+  const [qCourseId, setQCourseId] = useState<string>(COURSES[0]?.id || "");
+  const [qCourseName, setQCourseName] = useState<string>(
+    COURSES[0]?.name || rec.course,
+  );
+  const [qAmount, setQAmount] = useState<number>(
+    Number(COURSES[0]?.fees || rec.fee.total || 0),
+  );
+  const [qBatch, setQBatch] = useState<string>(rec.batch);
+  const [qCampus, setQCampus] = useState<string>(rec.campus);
 
   const approve = () => {
     if (rec.status === "Verified") return;
@@ -127,6 +146,156 @@ export function Details({
   const notify = (kind: "sms" | "email") => {
     toast({ title: kind === "sms" ? "SMS sent" : "Email sent" });
   };
+
+  async function quickEnrollAndVoucher() {
+    const id = rec.studentId || genStudentId(rec.student.name);
+
+    let base: StudentRecord | null = null;
+    try {
+      const { supabase } = await import("@/lib/supabaseClient");
+      if (supabase) {
+        const { data } = await supabase
+          .from("students")
+          .select("record")
+          .eq("id", id)
+          .limit(1)
+          .maybeSingle();
+        if (data && (data as any).record)
+          base = (data as any).record as StudentRecord;
+      }
+    } catch {}
+
+    const student: StudentRecord = base ?? {
+      id,
+      name: rec.student.name,
+      email: rec.student.email,
+      phone: rec.student.phone,
+      status: "Current",
+      admission: {
+        course: qCourseName,
+        batch: qBatch,
+        campus: qCampus,
+        date: new Date().toISOString(),
+      },
+      fee: {
+        total: Number(qAmount) || 0,
+        installments: [
+          {
+            id: "FULL",
+            amount: Number(qAmount) || 0,
+            dueDate: new Date().toISOString(),
+          },
+        ],
+      },
+      attendance: [],
+      documents: [],
+      communications: [],
+      enrolledCourses: [],
+    };
+
+    const merged: StudentRecord = {
+      ...student,
+      enrolledCourses: Array.from(
+        new Set([...(student.enrolledCourses || []), qCourseName]),
+      ),
+    };
+
+    try {
+      const { supabase } = await import("@/lib/supabaseClient");
+      if (supabase) {
+        const { error } = await supabase
+          .from("students")
+          .upsert({ id: merged.id, record: merged }, { onConflict: "id" });
+        if (error) throw error;
+      } else {
+        upsertStudent(merged);
+      }
+    } catch {
+      upsertStudent(merged);
+    }
+
+    printVoucher({
+      studentName: merged.name,
+      studentEmail: merged.email,
+      studentPhone: merged.phone,
+      studentId: merged.id,
+      course: qCourseName,
+      campus: qCampus,
+      batch: qBatch,
+      amount: Number(qAmount) || 0,
+    });
+  }
+
+  function printVoucher(opts: {
+    studentName: string;
+    studentEmail: string;
+    studentPhone: string;
+    studentId: string;
+    course: string;
+    campus: string;
+    batch: string;
+    amount: number;
+  }) {
+    const w = window.open("", "_blank");
+    if (!w) return;
+    const html = `<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Fee Voucher - ${escapeHtml(opts.studentName)}</title>
+  <style>
+    body{font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; padding:24px; color:#111827}
+    h1{font-size:20px;margin:0 0 8px}
+    .muted{color:#6b7280;font-size:12px}
+    .section{border:1px solid #e5e7eb;border-radius:8px;margin-top:16px}
+    .sec-h{background:#f9fafb;padding:8px 12px;font-weight:600}
+    .sec-b{padding:12px}
+    table{width:100%;border-collapse:collapse}
+    th,td{border:1px solid #e5e7eb;padding:6px 8px;text-align:left;font-size:12px}
+    th{background:#f3f4f6}
+  </style>
+</head>
+<body>
+  <h1>Fee Voucher</h1>
+  <div class="muted">Student ID: ${escapeHtml(opts.studentId)} • Date: ${new Date().toLocaleDateString()}</div>
+
+  <div class="section">
+    <div class="sec-h">Student</div>
+    <div class="sec-b">
+      <div><b>Name:</b> ${escapeHtml(opts.studentName)}</div>
+      <div><b>Email:</b> ${escapeHtml(opts.studentEmail)}</div>
+      <div><b>Phone:</b> ${escapeHtml(opts.studentPhone)}</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="sec-h">Enrollment</div>
+    <div class="sec-b">
+      <div><b>Course:</b> ${escapeHtml(opts.course)}</div>
+      <div><b>Batch:</b> ${escapeHtml(opts.batch)}</div>
+      <div><b>Campus:</b> ${escapeHtml(opts.campus)}</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="sec-h">Payment</div>
+    <div class="sec-b">
+      <table>
+        <thead><tr><th>#</th><th>Description</th><th>Amount</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>Course Fee (Full)</td><td>₨${opts.amount.toLocaleString()}</td></tr>
+          <tr><td colspan="2" style="text-align:right"><b>Total</b></td><td><b>₨${opts.amount.toLocaleString()}</b></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>window.print()<\/script>
+</body>
+</html>`;
+    w.document.write(html);
+    w.document.close();
+  }
 
   const printForm = () => {
     const w = window.open("", "_blank");
@@ -256,6 +425,63 @@ export function Details({
                 </span>
               </div>
             ))}
+          </div>
+        </div>
+      </div>
+
+      <Separator />
+
+      <div className="space-y-2">
+        <div className="text-xs text-muted-foreground">
+          Quick Enroll (No Admission Form)
+        </div>
+        <Label>Course</Label>
+        <Select
+          value={qCourseId}
+          onValueChange={(v) => {
+            setQCourseId(v);
+            const c = COURSES.find((x) => x.id === v);
+            setQCourseName(c?.name || v);
+            setQAmount(Number(c?.fees || 0));
+          }}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Select course" />
+          </SelectTrigger>
+          <SelectContent>
+            {COURSES.map((c) => (
+              <SelectItem key={c.id} value={c.id}>
+                {c.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <Label>Amount (₨)</Label>
+            <Input
+              type="number"
+              value={Number.isFinite(qAmount) ? String(qAmount) : "0"}
+              onChange={(e) => setQAmount(Number(e.target.value || 0))}
+            />
+          </div>
+          <div>
+            <Label>Batch</Label>
+            <Input value={qBatch} onChange={(e) => setQBatch(e.target.value)} />
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <Label>Campus</Label>
+            <Input
+              value={qCampus}
+              onChange={(e) => setQCampus(e.target.value)}
+            />
+          </div>
+          <div className="flex items-end justify-end">
+            <Button onClick={quickEnrollAndVoucher}>
+              Enroll & Print Voucher
+            </Button>
           </div>
         </div>
       </div>
