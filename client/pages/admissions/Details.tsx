@@ -456,8 +456,11 @@ export function Details({
                   try {
                     const { supabase } = await import("@/lib/supabaseClient");
                     if (supabase) {
-                      const phoneDigits = (newRecord.student.phone || "").replace(/\D+/g, "");
-                      const phoneValue = phoneDigits.length > 0 ? phoneDigits : null;
+                      const phoneDigits = (
+                        newRecord.student.phone || ""
+                      ).replace(/\D+/g, "");
+                      const phoneValue =
+                        phoneDigits.length > 0 ? phoneDigits : null;
                       const { data, error } = await supabase
                         .from("applications")
                         .insert({
@@ -473,7 +476,10 @@ export function Details({
                           created_at: newRecord.createdAt,
                           notes: newRecord.notes,
                           start_date: newRecord.fee.installments[0]?.dueDate
-                            ? newRecord.fee.installments[0]?.dueDate.slice(0, 10)
+                            ? newRecord.fee.installments[0]?.dueDate.slice(
+                                0,
+                                10,
+                              )
                             : null,
                         })
                         .select("app_id")
