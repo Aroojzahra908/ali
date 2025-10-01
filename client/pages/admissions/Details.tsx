@@ -1,15 +1,13 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
-import { genStudentId, paymentStatus } from "./types";
+import { useEffect, useState } from "react";
+import { genStudentId } from "./types";
 import type { AdmissionRecord } from "./types";
 import { upsertStudent } from "@/lib/studentStore";
 import type { StudentRecord } from "@/pages/students/types";
-import { useNavigate } from "react-router-dom";
 import {
   Select,
   SelectContent,
@@ -17,8 +15,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { COURSES } from "@/data/courses";
-import { printVoucher as printVoucherUI, buildVoucherId } from "@/components/admissions/printVoucher";
 
 export function Details({
   rec,
