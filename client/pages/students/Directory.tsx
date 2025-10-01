@@ -421,12 +421,7 @@ export function Directory({
                                 Campus Transfer
                               </DropdownMenuSubTrigger>
                               <DropdownMenuSubContent>
-                                {[
-                                  "Main Campus",
-                                  "Sub Campus",
-                                  "FSD",
-                                  "Other",
-                                ].map((c) => (
+                                {campuses.map((c) => (
                                   <DropdownMenuItem
                                     key={c}
                                     onClick={() => {

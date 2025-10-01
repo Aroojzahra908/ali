@@ -16,6 +16,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import DatePicker from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -436,11 +437,10 @@ export function NewAdmissionTab({ onCreated }: Props) {
             </div>
             <div className="space-y-2">
               <Label htmlFor="preferred-start">Preferred start</Label>
-              <Input
+              <DatePicker
                 id="preferred-start"
-                type="date"
                 value={startDate}
-                onChange={(event) => setStartDate(event.target.value)}
+                onChange={(v) => setStartDate(v)}
               />
             </div>
           </div>

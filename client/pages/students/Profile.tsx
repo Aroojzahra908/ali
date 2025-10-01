@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import DatePicker from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
@@ -425,11 +426,7 @@ export function Profile({
             </div>
             <div>
               <div className="text-xs text-muted-foreground">Due Date</div>
-              <Input
-                type="date"
-                value={newDue}
-                onChange={(e) => setNewDue(e.target.value)}
-              />
+              <DatePicker value={newDue} onChange={(v) => setNewDue(v)} />
             </div>
             <div className="col-span-2">
               <Button size="sm" onClick={addInstallment}>
@@ -547,11 +544,7 @@ export function Profile({
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-2">
           <div className="text-xs text-muted-foreground">Mark Attendance</div>
-          <Input
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-          />
+          <DatePicker value={date} onChange={(v) => setDate(v)} />
           <div className="space-x-2">
             <Button size="sm" onClick={() => markAttendance(true)}>
               Present

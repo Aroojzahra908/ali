@@ -3,6 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import DatePicker from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -167,10 +168,10 @@ export default function Fees() {
     return Array.from(map.values());
   }, [version]);
 
-  const admittedStudents = useMemo(() =>
-    studentsDyn.filter((s) => s.batch && s.batch !== "UNASSIGNED"),
-  [studentsDyn]);
-
+  const admittedStudents = useMemo(
+    () => studentsDyn.filter((s) => s.batch && s.batch !== "UNASSIGNED"),
+    [studentsDyn],
+  );
 
   const coursesDyn = useMemo<string[]>(() => {
     try {
@@ -233,7 +234,10 @@ export default function Fees() {
   const combinedTotalAfterDiscount = (s: FeeStructure | undefined) => {
     if (!s) return 0;
     const tuition = courseTotalAfterDiscount(s);
-    const addOns = (s.registrationFee || 0) + (s.admissionFee || 0) + (s.securityDeposit || 0);
+    const addOns =
+      (s.registrationFee || 0) +
+      (s.admissionFee || 0) +
+      (s.securityDeposit || 0);
     return Math.max(0, tuition + addOns);
   };
 
@@ -265,7 +269,10 @@ export default function Fees() {
 
   const upsertStructure = (s: FeeStructure) => {
     if (!s.course || !s.course.trim()) {
-      toast({ title: "Select a course", description: "Choose a course from the list first." });
+      toast({
+        title: "Select a course",
+        description: "Choose a course from the list first.",
+      });
       return;
     }
     setStructures((prev) => {
@@ -375,8 +382,14 @@ export default function Fees() {
       <h1 className="text-2xl font-semibold">Fees & Installment Management</h1>
 
       <Tabs
-        value={(typeof window !== "undefined" && window.location.hash.slice(1)) || undefined}
-        defaultValue={(typeof window !== "undefined" && window.location.hash.slice(1)) || "setup"}
+        value={
+          (typeof window !== "undefined" && window.location.hash.slice(1)) ||
+          undefined
+        }
+        defaultValue={
+          (typeof window !== "undefined" && window.location.hash.slice(1)) ||
+          "setup"
+        }
         onValueChange={(v) => {
           try {
             if (typeof window !== "undefined") window.location.hash = v;
@@ -622,7 +635,9 @@ export default function Fees() {
                 <div>
                   Course Wise Fee (after discount):{" "}
                   <b>
-                    {combinedTotalAfterDiscount(courseStructure).toLocaleString()}
+                    {combinedTotalAfterDiscount(
+                      courseStructure,
+                    ).toLocaleString()}
                   </b>
                 </div>
               </div>
@@ -650,7 +665,9 @@ export default function Fees() {
                     return;
                   }
                   if (!s) {
-                    toast({ title: "Add fee structure for the selected course" });
+                    toast({
+                      title: "Add fee structure for the selected course",
+                    });
                     return;
                   }
                   const discountAbs = Number(f.get("discountAbs") || 0);
@@ -684,7 +701,9 @@ export default function Fees() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
-                        <SelectItem value="ALL">All ({studentsByCourse.length})</SelectItem>
+                        <SelectItem value="ALL">
+                          All ({studentsByCourse.length})
+                        </SelectItem>
                         {studentsByCourse.map((s) => (
                           <SelectItem key={s.id} value={s.id}>
                             {s.name}
@@ -717,7 +736,7 @@ export default function Fees() {
                 </div>
                 <div className="space-y-1.5">
                   <Label>Start Date</Label>
-                  <Input name="start" type="date" defaultValue={today()} />
+                  <DatePicker name="start" defaultValue={today()} />
                 </div>
                 <div className="space-y-1.5">
                   <Label>Total Fee Assigned</Label>
@@ -964,7 +983,9 @@ export default function Fees() {
                     {installments
                       .filter((i) => i.receiptNo)
                       .map((i) => {
-                        const s = studentsDyn.find((x) => x.id === i.studentId)!;
+                        const s = studentsDyn.find(
+                          (x) => x.id === i.studentId,
+                        )!;
                         return (
                           <TableRow key={i.id}>
                             <TableCell>{i.receiptNo}</TableCell>

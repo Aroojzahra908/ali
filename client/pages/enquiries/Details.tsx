@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import DatePicker from "@/components/ui/date-picker";
 import {
   DialogContent,
   DialogHeader,
@@ -49,30 +50,28 @@ export default function EnquiryDetailsPage() {
       // If only a local record exists, upsert it to Supabase to keep admin in sync
       if (!serverRow && foundLocal) {
         try {
-          await supabase
-            .from("enquiries")
-            .upsert(
-              {
-                id: String(foundLocal.id),
-                name: foundLocal.name,
-                course: foundLocal.course,
-                contact: foundLocal.contact,
-                email: foundLocal.email ?? null,
-                gender: foundLocal.gender ?? null,
-                cnic: (foundLocal as any).cnic ?? null,
-                city: foundLocal.city ?? null,
-                area: foundLocal.area ?? null,
-                campus: foundLocal.campus ?? null,
-                next_follow: foundLocal.next_follow ?? null,
-                probability: foundLocal.probability ?? 0,
-                sources: (foundLocal.sources ?? []) as any,
-                source: foundLocal.source ?? "Website",
-                remarks: foundLocal.remarks ?? null,
-                stage: foundLocal.stage ?? "Prospective",
-                status: foundLocal.status ?? "Pending",
-              },
-              { onConflict: "id" },
-            );
+          await supabase.from("enquiries").upsert(
+            {
+              id: String(foundLocal.id),
+              name: foundLocal.name,
+              course: foundLocal.course,
+              contact: foundLocal.contact,
+              email: foundLocal.email ?? null,
+              gender: foundLocal.gender ?? null,
+              cnic: (foundLocal as any).cnic ?? null,
+              city: foundLocal.city ?? null,
+              area: foundLocal.area ?? null,
+              campus: foundLocal.campus ?? null,
+              next_follow: foundLocal.next_follow ?? null,
+              probability: foundLocal.probability ?? 0,
+              sources: (foundLocal.sources ?? []) as any,
+              source: foundLocal.source ?? "Website",
+              remarks: foundLocal.remarks ?? null,
+              stage: foundLocal.stage ?? "Prospective",
+              status: foundLocal.status ?? "Pending",
+            },
+            { onConflict: "id" },
+          );
         } catch {}
       }
       const merged = serverRow || foundLocal || null;
@@ -245,211 +244,215 @@ export default function EnquiryDetailsPage() {
           </div>
 
           {false && (
-          <div className="mt-6">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-lg font-medium">Installments & Fees</h3>
-              <div className="text-sm text-muted-foreground">
-                Total: ₨{assignedTotal.toLocaleString()} • Paid: ₨
-                {totalPaid.toLocaleString()} • Pending: ₨
-                {pending.toLocaleString()}
+            <div className="mt-6">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-lg font-medium">Installments & Fees</h3>
+                <div className="text-sm text-muted-foreground">
+                  Total: ₨{assignedTotal.toLocaleString()} • Paid: ₨
+                  {totalPaid.toLocaleString()} • Pending: ₨
+                  {pending.toLocaleString()}
+                </div>
               </div>
-            </div>
 
-            <div className="rounded-md border overflow-x-auto mb-3">
-              <Table>
-                <TH>
-                  <TableRow>
-                    <TableHead>#</TableHead>
-                    <TableHead>Amount</TableHead>
-                    <TableHead>Due</TableHead>
-                    <TableHead>Paid</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TH>
-                <TableBody>
-                  {installments.map((it, idx) => (
-                    <TableRow key={idx}>
-                      <TableCell>{idx + 1}</TableCell>
-                      <TableCell>
-                        <Input
-                          value={String(it.amount || "")}
-                          onChange={(e) => {
-                            const v = e.target.value;
-                            const copy = [...installments];
-                            copy[idx] = {
-                              ...copy[idx],
-                              amount: Number(v || 0),
-                            };
-
-                            // if there are exactly 3 installments and we're editing first or second,
-                            // recompute the third as the remaining amount after discount
-                            if (copy.length === 3 && (idx === 0 || idx === 1)) {
-                              try {
-                                const assignedTotalLoc =
-                                  feeTotal != null
-                                    ? feeTotal
-                                    : copy.reduce(
-                                        (s: number, x: any) =>
-                                          s + Number(x.amount || 0),
-                                        0,
-                                      );
-                                const disc = Math.round(
-                                  assignedTotalLoc *
-                                    ((discountPercent || 0) / 100),
-                                );
-                                const totalAfterDisc = Math.max(
-                                  0,
-                                  assignedTotalLoc - disc,
-                                );
-                                const sumFirstTwo =
-                                  Number(copy[0].amount || 0) +
-                                  Number(copy[1].amount || 0);
-                                const remaining = Math.max(
-                                  0,
-                                  Math.round(totalAfterDisc - sumFirstTwo),
-                                );
-                                copy[2] = { ...copy[2], amount: remaining };
-                              } catch {}
-                            }
-
-                            setInstallments(copy);
-                          }}
-                          className="w-28"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Input
-                          type="date"
-                          value={it.due || ""}
-                          onChange={(e) => {
-                            const v = e.target.value;
-                            const copy = [...installments];
-                            copy[idx] = { ...copy[idx], due: v };
-                            setInstallments(copy);
-                          }}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        {it.paid ? it.paidAt || "Paid" : "Unpaid"}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            size="sm"
-                            variant={it.paid ? "outline" : "default"}
-                            onClick={() => {
+              <div className="rounded-md border overflow-x-auto mb-3">
+                <Table>
+                  <TH>
+                    <TableRow>
+                      <TableHead>#</TableHead>
+                      <TableHead>Amount</TableHead>
+                      <TableHead>Due</TableHead>
+                      <TableHead>Paid</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TH>
+                  <TableBody>
+                    {installments.map((it, idx) => (
+                      <TableRow key={idx}>
+                        <TableCell>{idx + 1}</TableCell>
+                        <TableCell>
+                          <Input
+                            value={String(it.amount || "")}
+                            onChange={(e) => {
+                              const v = e.target.value;
                               const copy = [...installments];
-                              const now = new Date().toISOString();
                               copy[idx] = {
                                 ...copy[idx],
-                                paid: !copy[idx].paid,
-                                paidAt: !copy[idx].paid ? now : undefined,
+                                amount: Number(v || 0),
                               };
-                              setInstallments(copy);
-                              saveInstallments(copy);
-                            }}
-                          >
-                            {it.paid ? "Mark Unpaid" : "Mark Paid"}
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => {
-                              const copy = installments.filter(
-                                (_, i) => i !== idx,
-                              );
-                              setInstallments(copy);
-                              saveInstallments(copy);
-                            }}
-                          >
-                            Remove
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
 
-                  {installments.length === 0 && (
-                    <TableRow>
-                      <TableCell colSpan={5} className="text-muted-foreground">
-                        No installments defined
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
+                              // if there are exactly 3 installments and we're editing first or second,
+                              // recompute the third as the remaining amount after discount
+                              if (
+                                copy.length === 3 &&
+                                (idx === 0 || idx === 1)
+                              ) {
+                                try {
+                                  const assignedTotalLoc =
+                                    feeTotal != null
+                                      ? feeTotal
+                                      : copy.reduce(
+                                          (s: number, x: any) =>
+                                            s + Number(x.amount || 0),
+                                          0,
+                                        );
+                                  const disc = Math.round(
+                                    assignedTotalLoc *
+                                      ((discountPercent || 0) / 100),
+                                  );
+                                  const totalAfterDisc = Math.max(
+                                    0,
+                                    assignedTotalLoc - disc,
+                                  );
+                                  const sumFirstTwo =
+                                    Number(copy[0].amount || 0) +
+                                    Number(copy[1].amount || 0);
+                                  const remaining = Math.max(
+                                    0,
+                                    Math.round(totalAfterDisc - sumFirstTwo),
+                                  );
+                                  copy[2] = { ...copy[2], amount: remaining };
+                                } catch {}
+                              }
 
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <Input
-                  className="w-40"
-                  value={feeTotal != null ? String(feeTotal) : ""}
-                  onChange={(e) => setFeeTotal(Number(e.target.value || 0))}
-                />
-                <div className="text-sm text-muted-foreground">
-                  Course Total Fees
+                              setInstallments(copy);
+                            }}
+                            className="w-28"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <DatePicker
+                            value={it.due || ""}
+                            onChange={(v) => {
+                              const copy = [...installments];
+                              copy[idx] = { ...copy[idx], due: v };
+                              setInstallments(copy);
+                            }}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          {it.paid ? it.paidAt || "Paid" : "Unpaid"}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              size="sm"
+                              variant={it.paid ? "outline" : "default"}
+                              onClick={() => {
+                                const copy = [...installments];
+                                const now = new Date().toISOString();
+                                copy[idx] = {
+                                  ...copy[idx],
+                                  paid: !copy[idx].paid,
+                                  paidAt: !copy[idx].paid ? now : undefined,
+                                };
+                                setInstallments(copy);
+                                saveInstallments(copy);
+                              }}
+                            >
+                              {it.paid ? "Mark Unpaid" : "Mark Paid"}
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => {
+                                const copy = installments.filter(
+                                  (_, i) => i !== idx,
+                                );
+                                setInstallments(copy);
+                                saveInstallments(copy);
+                              }}
+                            >
+                              Remove
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+
+                    {installments.length === 0 && (
+                      <TableRow>
+                        <TableCell
+                          colSpan={5}
+                          className="text-muted-foreground"
+                        >
+                          No installments defined
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <Input
+                    className="w-40"
+                    value={feeTotal != null ? String(feeTotal) : ""}
+                    onChange={(e) => setFeeTotal(Number(e.target.value || 0))}
+                  />
+                  <div className="text-sm text-muted-foreground">
+                    Course Total Fees
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4">
+                  <Input
+                    className="w-24"
+                    type="number"
+                    max={100}
+                    value={String(discountPercent)}
+                    onChange={(e) =>
+                      setDiscountPercent(Number(e.target.value || 0))
+                    }
+                  />
+                  <div className="text-sm text-muted-foreground">
+                    Discount (%)
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Button
+                    onClick={() => {
+                      const copy = [
+                        ...installments,
+                        { amount: 0, due: "", paid: false },
+                      ];
+                      setInstallments(copy);
+                    }}
+                  >
+                    Add Installment
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => saveInstallments(installments)}
+                  >
+                    Save
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      const rows = [
+                        ["amount", "due", "paid"].join(","),
+                        ...installments.map(
+                          (it) =>
+                            `${it.amount},${it.due},${it.paid ? "yes" : "no"}`,
+                        ),
+                      ];
+                      const blob = new Blob([rows.join("\n")], {
+                        type: "text/csv",
+                      });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement("a");
+                      a.href = url;
+                      a.download = `installments_${id}.csv`;
+                      a.click();
+                      URL.revokeObjectURL(url);
+                    }}
+                  >
+                    Export Report
+                  </Button>
                 </div>
               </div>
-
-              <div className="flex items-center gap-4">
-                <Input
-                  className="w-24"
-                  type="number"
-                  max={100}
-                  value={String(discountPercent)}
-                  onChange={(e) =>
-                    setDiscountPercent(Number(e.target.value || 0))
-                  }
-                />
-                <div className="text-sm text-muted-foreground">
-                  Discount (%)
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <Button
-                  onClick={() => {
-                    const copy = [
-                      ...installments,
-                      { amount: 0, due: "", paid: false },
-                    ];
-                    setInstallments(copy);
-                  }}
-                >
-                  Add Installment
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => saveInstallments(installments)}
-                >
-                  Save
-                </Button>
-                <Button
-                  onClick={() => {
-                    const rows = [
-                      ["amount", "due", "paid"].join(","),
-                      ...installments.map(
-                        (it) =>
-                          `${it.amount},${it.due},${it.paid ? "yes" : "no"}`,
-                      ),
-                    ];
-                    const blob = new Blob([rows.join("\n")], {
-                      type: "text/csv",
-                    });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement("a");
-                    a.href = url;
-                    a.download = `installments_${id}.csv`;
-                    a.click();
-                    URL.revokeObjectURL(url);
-                  }}
-                >
-                  Export Report
-                </Button>
-              </div>
             </div>
-          </div>
           )}
         </CardContent>
       </Card>
