@@ -194,7 +194,9 @@ export default function Users() {
         .select("id,name,email,phone,role,status")
         .single();
       if (error) {
-        toast({ title: "Failed to create user", description: String(error.message) });
+        const code = (error as any)?.code;
+        const desc = code === "42501" ? "Blocked by RLS: allow INSERT on app_users for your role in Supabase." : "Create failed. Check RLS and keys.";
+        toast({ title: "Failed to create user", description: desc });
         return;
       }
       const id = String((data as any).id);
@@ -216,7 +218,9 @@ export default function Users() {
       if (patch.status !== undefined) update.status = patch.status;
       const { error } = await supabase!.from("app_users").update(update).eq("id", id);
       if (error) {
-        toast({ title: "Update failed", description: String(error.message) });
+        const code = (error as any)?.code;
+        const desc = code === "42501" ? "Blocked by RLS: allow UPDATE on app_users for your role in Supabase." : "Update failed. Check RLS and keys.";
+        toast({ title: "Update failed", description: desc });
         return;
       }
     }
