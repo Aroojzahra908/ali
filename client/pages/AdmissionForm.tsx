@@ -445,7 +445,12 @@ export default function AdmissionForm() {
         setMessage("");
         setStartDate("");
       } catch (error: any) {
-        const msg = error?.message || error?.hint || error?.details || String(error);
+        const msg =
+          (typeof error?.message === "string" && error.message) ||
+          (typeof error?.hint === "string" && error.hint) ||
+          (typeof error?.details === "string" && error.details) ||
+          (typeof error?.code === "string" && `Error ${error.code}`) ||
+          (error && typeof error === "object" ? JSON.stringify(error) : String(error));
         toast({
           title: "Submission failed",
           description: msg,
