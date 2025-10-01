@@ -42,7 +42,8 @@ export function Details({
             .select("batch_code")
             .order("created_at", { ascending: false });
           if (Array.isArray(data)) {
-            for (const r of data as any[]) if (r.batch_code) set.add(String(r.batch_code));
+            for (const r of data as any[])
+              if (r.batch_code) set.add(String(r.batch_code));
           }
         }
       } catch {}
@@ -52,14 +53,16 @@ export function Details({
           if (res.ok) {
             const p = await res.json();
             const items = Array.isArray(p?.items) ? p.items : [];
-            for (const it of items) if (it?.batch_code) set.add(String(it.batch_code));
+            for (const it of items)
+              if (it?.batch_code) set.add(String(it.batch_code));
           }
         } catch {}
       }
       if (set.size === 0) {
         try {
           const { studentsMock } = await import("@/pages/students/data");
-          for (const s of studentsMock) if (s.admission?.batch) set.add(String(s.admission.batch));
+          for (const s of studentsMock)
+            if (s.admission?.batch) set.add(String(s.admission.batch));
         } catch {}
       }
       const list = Array.from(set).sort();
@@ -175,7 +178,6 @@ export function Details({
     toast({ title: kind === "sms" ? "SMS sent" : "Email sent" });
   };
 
-
   const printForm = () => {
     const w = window.open("", "_blank");
     if (!w) return;
@@ -256,7 +258,6 @@ export function Details({
       </div>
       <Separator />
 
-
       <div className="space-y-2">
         <div className="text-xs text-muted-foreground">Enroll Student</div>
         <Label>Batch</Label>
@@ -279,10 +280,11 @@ export function Details({
 
       <Separator />
 
-
       <div className="flex flex-wrap gap-2">
         <Button onClick={confirmAdmission}>Approve & Move to Students</Button>
-        <Button variant="outline" onClick={markAllPaid}>Mark as Paid</Button>
+        <Button variant="outline" onClick={markAllPaid}>
+          Mark as Paid
+        </Button>
         <Button variant="destructive" onClick={() => onDelete?.(rec)}>
           Delete
         </Button>
