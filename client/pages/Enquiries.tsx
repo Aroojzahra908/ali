@@ -647,12 +647,43 @@ function CreateEnquiry({ onCreated, openEnquiry }: { onCreated: (row: any) => vo
       toast({ title: "Courses unavailable", description: "Could not load from Supabase. Check credentials." });
     };
     load();
+
+    // Realtime: update dropdown when courses change anywhere
+    let unsub: (() => void) | undefined;
+    try {
+      const ch = (supabase as any)?.channel?.("courses_enquiries_dropdown");
+      if (ch) {
+        ch.on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "courses" },
+          (payload: any) => {
+            const rec = payload.new || payload.old;
+            if (!rec) return;
+            setCourses((prev) => {
+              const set = new Set(prev);
+              if (payload.eventType === "DELETE") {
+                set.delete(String(rec.name || ""));
+              } else {
+                const n = String(rec.name || "");
+                if (n) set.add(n);
+              }
+              return Array.from(set);
+            });
+          },
+        ).subscribe();
+        unsub = () => {
+          try { ch.unsubscribe(); } catch {}
+        };
+      }
+    } catch {}
+
     const refresh = () => load();
     window.addEventListener("courses:changed", refresh as EventListener);
     window.addEventListener("storage", refresh as EventListener);
     return () => {
       window.removeEventListener("courses:changed", refresh as EventListener);
       window.removeEventListener("storage", refresh as EventListener);
+      if (unsub) unsub();
     };
   }, []);
 
