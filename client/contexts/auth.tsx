@@ -143,6 +143,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (error) throw error;
         navigate("/dashboard", { replace: true });
       } catch (err: any) {
+        // If the error is a network/fetch failure, show clearer guidance
+        const msg = String(err?.message || err || "Authentication error");
+        if (msg.toLowerCase().includes("failed to fetch") || msg.toLowerCase().includes("network")) {
+          toast({
+            title: "Network error",
+            description:
+              "Unable to reach Supabase. Verify VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in project settings and ensure network access.",
+            variant: "destructive",
+          });
+          return;
+        }
+
         try {
           const { data, error } = await supabase.auth.signUp({
             email,
