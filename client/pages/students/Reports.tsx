@@ -1,5 +1,12 @@
 import { Input } from "@/components/ui/input";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { useMemo, useState } from "react";
 import DatePicker from "@/components/ui/date-picker";
 import type { StudentRecord } from "./types";
@@ -16,7 +23,10 @@ export function StudentsReports({ data }: { data: StudentRecord[] }) {
     return x >= f && x <= t;
   };
 
-  const filtered = useMemo(() => data.filter((d) => within(d.admission.date)), [data, from, to]);
+  const filtered = useMemo(
+    () => data.filter((d) => within(d.admission.date)),
+    [data, from, to],
+  );
 
   const byCourse = count(filtered.map((s) => s.admission.course));
   const byBatch = count(filtered.map((s) => s.admission.batch));
@@ -27,18 +37,20 @@ export function StudentsReports({ data }: { data: StudentRecord[] }) {
 
   const dropouts = filtered.filter((s) => s.status === "Not Completed");
   const alumni = filtered.filter((s) => s.status === "Alumni");
-  const suspendedFreeze = filtered.filter((s) => s.status === "Suspended" || s.status === "Freeze");
+  const suspendedFreeze = filtered.filter(
+    (s) => s.status === "Suspended" || s.status === "Freeze",
+  );
 
   return (
     <div className="space-y-6">
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <div>
           <div className="text-xs text-muted-foreground">From</div>
-          <DatePicker value={from} onChange={(v)=> setFrom(v)} />
+          <DatePicker value={from} onChange={(v) => setFrom(v)} />
         </div>
         <div>
           <div className="text-xs text-muted-foreground">To</div>
-          <DatePicker value={to} onChange={(v)=> setTo(v)} />
+          <DatePicker value={to} onChange={(v) => setTo(v)} />
         </div>
       </div>
 
@@ -73,7 +85,9 @@ export function StudentsReports({ data }: { data: StudentRecord[] }) {
           <SimpleTable rows={alumni} />
         </div>
         <div>
-          <div className="text-sm font-medium pb-2">Suspended/Freeze Report</div>
+          <div className="text-sm font-medium pb-2">
+            Suspended/Freeze Report
+          </div>
           <SimpleTable rows={suspendedFreeze} />
         </div>
       </div>
@@ -138,7 +152,11 @@ function SimpleTable({ rows }: { rows: StudentRecord[] }) {
 }
 
 function count(keys: string[]) {
-  return keys.reduce((acc, k) => {
-    acc[k] = (acc[k] || 0) + 1; return acc;
-  }, {} as Record<string, number>);
+  return keys.reduce(
+    (acc, k) => {
+      acc[k] = (acc[k] || 0) + 1;
+      return acc;
+    },
+    {} as Record<string, number>,
+  );
 }

@@ -437,7 +437,11 @@ export function NewAdmissionTab({ onCreated }: Props) {
             </div>
             <div className="space-y-2">
               <Label htmlFor="preferred-start">Preferred start</Label>
-              <DatePicker id="preferred-start" value={startDate} onChange={(v)=> setStartDate(v)} />
+              <DatePicker
+                id="preferred-start"
+                value={startDate}
+                onChange={(v) => setStartDate(v)}
+              />
             </div>
           </div>
 

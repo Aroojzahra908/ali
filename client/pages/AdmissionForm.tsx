@@ -250,7 +250,9 @@ export default function AdmissionForm() {
   const [showVoucher, setShowVoucher] = useState(false);
   const [voucher, setVoucher] = useState<VoucherDetails | null>(null);
   const campusOptions = useCampuses();
-  const [selectedCampus, setSelectedCampus] = useState<string>(campusOptions[0] || "");
+  const [selectedCampus, setSelectedCampus] = useState<string>(
+    campusOptions[0] || "",
+  );
 
   const selectedCourse = useMemo(
     () => courses.find((c) => c.id === course) ?? null,
@@ -351,7 +353,7 @@ export default function AdmissionForm() {
             course: trimmed.courseName,
             start_date: startDateVal,
             message: message ? message.trim() : null,
-            campus: selectedCampus || (campusOptions[0] || ""),
+            campus: selectedCampus || campusOptions[0] || "",
             batch: "TBD",
             status: "Pending",
             fee_total: trimmed.amount,
@@ -442,7 +444,7 @@ export default function AdmissionForm() {
           phone: trimmed.phone,
           issueDate: createdAt,
           dueDate: dueDateISO,
-          campus: selectedCampus || (campusOptions[0] || ""),
+          campus: selectedCampus || campusOptions[0] || "",
         };
 
         setVoucher(voucherDetails);
@@ -596,7 +598,10 @@ export default function AdmissionForm() {
                 </div>
                 <div className="space-y-2">
                   <Label>Preferred Campus</Label>
-                  <Select value={selectedCampus} onValueChange={setSelectedCampus}>
+                  <Select
+                    value={selectedCampus}
+                    onValueChange={setSelectedCampus}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Choose campus" />
                     </SelectTrigger>

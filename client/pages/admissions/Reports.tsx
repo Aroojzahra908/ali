@@ -1,6 +1,13 @@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { useMemo, useState } from "react";
 import DatePicker from "@/components/ui/date-picker";
 import type { AdmissionRecord } from "./types";
@@ -16,15 +23,26 @@ export function ReportsTab({ data }: { data: AdmissionRecord[] }) {
     return x >= f && x <= t;
   };
 
-  const filtered = useMemo(() => data.filter((d) => within(d.createdAt)), [data, from, to]);
+  const filtered = useMemo(
+    () => data.filter((d) => within(d.createdAt)),
+    [data, from, to],
+  );
 
-  const today = filtered.filter((r) => sameDay(new Date(r.createdAt), new Date()));
-  const month = filtered.filter((r) => sameMonth(new Date(r.createdAt), new Date()));
-  const year = filtered.filter((r) => sameYear(new Date(r.createdAt), new Date()));
+  const today = filtered.filter((r) =>
+    sameDay(new Date(r.createdAt), new Date()),
+  );
+  const month = filtered.filter((r) =>
+    sameMonth(new Date(r.createdAt), new Date()),
+  );
+  const year = filtered.filter((r) =>
+    sameYear(new Date(r.createdAt), new Date()),
+  );
 
   const byCourse = groupCount(filtered.map((r) => r.course));
   const byCampus = groupCount(filtered.map((r) => r.campus));
-  const blocked = filtered.filter((r) => r.status === "Cancelled" || r.status === "Suspended");
+  const blocked = filtered.filter(
+    (r) => r.status === "Cancelled" || r.status === "Suspended",
+  );
 
   const exportCSV = () => {
     const headers = [
@@ -48,7 +66,9 @@ export function ReportsTab({ data }: { data: AdmissionRecord[] }) {
       new Date(r.createdAt).toISOString(),
     ]);
     const csv = [headers, ...rows]
-      .map((line) => line.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","))
+      .map((line) =>
+        line.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","),
+      )
       .join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
@@ -96,7 +116,9 @@ export function ReportsTab({ data }: { data: AdmissionRecord[] }) {
         </tbody>
       </table>
     `;
-    w.document.write(`<html><head><title>Admissions Report</title><style>body{font-family:Inter,system-ui,Arial;padding:24px} table{width:100%;border-collapse:collapse} th,td{text-align:left}</style></head><body>${sum}${table}<script>window.print();<\/script></body></html>`);
+    w.document.write(
+      `<html><head><title>Admissions Report</title><style>body{font-family:Inter,system-ui,Arial;padding:24px} table{width:100%;border-collapse:collapse} th,td{text-align:left}</style></head><body>${sum}${table}<script>window.print();<\/script></body></html>`,
+    );
     w.document.close();
   };
 
@@ -105,18 +127,22 @@ export function ReportsTab({ data }: { data: AdmissionRecord[] }) {
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <div>
           <div className="text-xs text-muted-foreground">From</div>
-          <DatePicker value={from} onChange={(v)=> setFrom(v)} />
+          <DatePicker value={from} onChange={(v) => setFrom(v)} />
         </div>
         <div>
           <div className="text-xs text-muted-foreground">To</div>
-          <DatePicker value={to} onChange={(v)=> setTo(v)} />
+          <DatePicker value={to} onChange={(v) => setTo(v)} />
         </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
         <div className="ml-auto space-x-2">
-          <Button variant="outline" onClick={exportCSV}>Export CSV</Button>
-          <Button variant="outline" onClick={printReport}>Print</Button>
+          <Button variant="outline" onClick={exportCSV}>
+            Export CSV
+          </Button>
+          <Button variant="outline" onClick={printReport}>
+            Print
+          </Button>
         </div>
       </div>
 
@@ -128,17 +154,23 @@ export function ReportsTab({ data }: { data: AdmissionRecord[] }) {
 
       <div className="grid gap-6 sm:grid-cols-2">
         <div>
-          <div className="text-sm font-medium pb-2">Course Wise Admission Stats</div>
+          <div className="text-sm font-medium pb-2">
+            Course Wise Admission Stats
+          </div>
           <KeyValueTable rows={Object.entries(byCourse)} />
         </div>
         <div>
-          <div className="text-sm font-medium pb-2">Campus Wise Admission Stats</div>
+          <div className="text-sm font-medium pb-2">
+            Campus Wise Admission Stats
+          </div>
           <KeyValueTable rows={Object.entries(byCampus)} />
         </div>
       </div>
 
       <div>
-        <div className="text-sm font-medium pb-2">Cancelled / Suspended List</div>
+        <div className="text-sm font-medium pb-2">
+          Cancelled / Suspended List
+        </div>
         <Table>
           <TableHeader>
             <TableRow>
@@ -156,7 +188,9 @@ export function ReportsTab({ data }: { data: AdmissionRecord[] }) {
                 <TableCell>{r.student.name}</TableCell>
                 <TableCell>{r.course}</TableCell>
                 <TableCell>{r.status}</TableCell>
-                <TableCell className="text-right text-xs">{new Date(r.createdAt).toLocaleString()}</TableCell>
+                <TableCell className="text-right text-xs">
+                  {new Date(r.createdAt).toLocaleString()}
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -197,14 +231,21 @@ function KeyValueTable({ rows }: { rows: [string, number][] }) {
 }
 
 function groupCount(keys: string[]) {
-  return keys.reduce((acc, k) => {
-    acc[k] = (acc[k] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
+  return keys.reduce(
+    (acc, k) => {
+      acc[k] = (acc[k] || 0) + 1;
+      return acc;
+    },
+    {} as Record<string, number>,
+  );
 }
 
 function sameDay(a: Date, b: Date) {
-  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  );
 }
 function sameMonth(a: Date, b: Date) {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth();
@@ -214,5 +255,9 @@ function sameYear(a: Date, b: Date) {
 }
 
 function escapeHtml(s: string) {
-  return s.replace(/[&<>\"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c] as string));
+  return s.replace(
+    /[&<>\"]/g,
+    (c) =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c] as string,
+  );
 }

@@ -1070,17 +1070,15 @@ function CreateEnquiry({
               });
 
               try {
-                await supabase
-                  .from("applications")
-                  .insert([
-                    {
-                      name: payload.name,
-                      email: payload.email,
-                      phone: payload.contact,
-                      course: payload.course,
-                      status: "Pending",
-                    },
-                  ]);
+                await supabase.from("applications").insert([
+                  {
+                    name: payload.name,
+                    email: payload.email,
+                    phone: payload.contact,
+                    course: payload.course,
+                    status: "Pending",
+                  },
+                ]);
               } catch {}
 
               toast({

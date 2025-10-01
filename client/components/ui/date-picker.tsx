@@ -83,7 +83,11 @@ export default function DatePicker({
       />
       {/* hidden input so forms can pick up the value */}
       {name && (
-        <input type="hidden" name={name} value={selected ? fmt(selected) : ""} />
+        <input
+          type="hidden"
+          name={name}
+          value={selected ? fmt(selected) : ""}
+        />
       )}
       {open && (
         <div style={{ position: "absolute", zIndex: 40, marginTop: 6 }}>

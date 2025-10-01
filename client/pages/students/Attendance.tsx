@@ -115,7 +115,7 @@ export function AttendanceTab({
             ))}
           </SelectContent>
         </Select>
-        <DatePicker value={date} onChange={(v)=> setDate(v)} />
+        <DatePicker value={date} onChange={(v) => setDate(v)} />
       </div>
 
       <div className="text-sm text-muted-foreground">

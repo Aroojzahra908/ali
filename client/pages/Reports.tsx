@@ -135,8 +135,16 @@ export default function Reports() {
               </SelectGroup>
             </SelectContent>
           </Select>
-          <DatePicker value={from} onChange={(v)=> setFrom(v)} className="h-9 w-40" />
-          <DatePicker value={to} onChange={(v)=> setTo(v)} className="h-9 w-40" />
+          <DatePicker
+            value={from}
+            onChange={(v) => setFrom(v)}
+            className="h-9 w-40"
+          />
+          <DatePicker
+            value={to}
+            onChange={(v) => setTo(v)}
+            className="h-9 w-40"
+          />
           <Button variant="outline">
             <Download className="h-4 w-4 mr-2" />
             Export

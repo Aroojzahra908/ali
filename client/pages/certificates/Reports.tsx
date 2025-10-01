@@ -1,5 +1,12 @@
 import { Input } from "@/components/ui/input";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { useMemo, useState } from "react";
 import type { CertificateRequest } from "./types";
 import DatePicker from "@/components/ui/date-picker";
@@ -19,12 +26,17 @@ export function ReportsTab({ data }: { data: CertificateRequest[] }) {
 
   const filtered = useMemo(() => {
     return data.filter(
-      (r) => withinRange(r.requestedAt) && (!course || r.course.toLowerCase().includes(course.toLowerCase())) && (!campus || r.campus.toLowerCase().includes(campus.toLowerCase())),
+      (r) =>
+        withinRange(r.requestedAt) &&
+        (!course || r.course.toLowerCase().includes(course.toLowerCase())) &&
+        (!campus || r.campus.toLowerCase().includes(campus.toLowerCase())),
     );
   }, [data, from, to, course, campus]);
 
   const issued = filtered.filter((r) => r.status === "Delivered");
-  const pending = filtered.filter((r) => r.status !== "Delivered" && r.status !== "Rejected");
+  const pending = filtered.filter(
+    (r) => r.status !== "Delivered" && r.status !== "Rejected",
+  );
   const reprinted = filtered.filter((r) => r.status === "Reprinting");
 
   return (
@@ -40,25 +52,39 @@ export function ReportsTab({ data }: { data: CertificateRequest[] }) {
         </div>
         <div>
           <div className="text-xs text-muted-foreground">Course</div>
-          <Input placeholder="Course contains…" value={course} onChange={(e) => setCourse(e.target.value)} />
+          <Input
+            placeholder="Course contains…"
+            value={course}
+            onChange={(e) => setCourse(e.target.value)}
+          />
         </div>
         <div>
           <div className="text-xs text-muted-foreground">Campus</div>
-          <Input placeholder="Campus contains…" value={campus} onChange={(e) => setCampus(e.target.value)} />
+          <Input
+            placeholder="Campus contains…"
+            value={campus}
+            onChange={(e) => setCampus(e.target.value)}
+          />
         </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="rounded-lg border p-4">
-          <div className="text-xs text-muted-foreground">Certificates Issued</div>
+          <div className="text-xs text-muted-foreground">
+            Certificates Issued
+          </div>
           <div className="text-2xl font-semibold">{issued.length}</div>
         </div>
         <div className="rounded-lg border p-4">
-          <div className="text-xs text-muted-foreground">Pending Certificates</div>
+          <div className="text-xs text-muted-foreground">
+            Pending Certificates
+          </div>
           <div className="text-2xl font-semibold">{pending.length}</div>
         </div>
         <div className="rounded-lg border p-4">
-          <div className="text-xs text-muted-foreground">Reprinted Certificates</div>
+          <div className="text-xs text-muted-foreground">
+            Reprinted Certificates
+          </div>
           <div className="text-2xl font-semibold">{reprinted.length}</div>
         </div>
       </div>
@@ -105,7 +131,9 @@ function ReportTable({ rows }: { rows: CertificateRequest[] }) {
             <TableCell>{r.course}</TableCell>
             <TableCell>{r.type}</TableCell>
             <TableCell>{r.status}</TableCell>
-            <TableCell className="text-right text-xs">{new Date(r.requestedAt).toLocaleString()}</TableCell>
+            <TableCell className="text-right text-xs">
+              {new Date(r.requestedAt).toLocaleString()}
+            </TableCell>
           </TableRow>
         ))}
       </TableBody>

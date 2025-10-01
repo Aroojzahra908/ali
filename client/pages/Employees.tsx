@@ -61,7 +61,10 @@ export default function Employees() {
         .select("id, name, role, email, campus, status")
         .order("created_at", { ascending: false });
       if (error) {
-        toast({ title: "Failed to load employees", description: error.message });
+        toast({
+          title: "Failed to load employees",
+          description: error.message,
+        });
         return;
       }
       setEmployees(data || []);
@@ -78,10 +81,14 @@ export default function Employees() {
                   setEmployees((prev) => [payload.new as Employee, ...prev]);
                 } else if (payload.eventType === "UPDATE") {
                   setEmployees((prev) =>
-                    prev.map((e) => (e.id === payload.new.id ? (payload.new as Employee) : e)),
+                    prev.map((e) =>
+                      e.id === payload.new.id ? (payload.new as Employee) : e,
+                    ),
                   );
                 } else if (payload.eventType === "DELETE") {
-                  setEmployees((prev) => prev.filter((e) => e.id !== payload.old.id));
+                  setEmployees((prev) =>
+                    prev.filter((e) => e.id !== payload.old.id),
+                  );
                 }
               },
             )
@@ -101,7 +108,10 @@ export default function Employees() {
 
   const addEmployee = async (e: Omit<Employee, "id">) => {
     if (!isSupabaseConfigured()) {
-      toast({ title: "Supabase not configured", description: "Cannot create employee." });
+      toast({
+        title: "Supabase not configured",
+        description: "Cannot create employee.",
+      });
       return;
     }
     const { data, error } = await supabase!
@@ -110,17 +120,26 @@ export default function Employees() {
       .select("id, name, role, email, campus, status")
       .single();
     if (error) {
-      const msg = (error as any)?.code === "42501" ? "Blocked by RLS. Allow INSERT on employees for your role." : error.message;
+      const msg =
+        (error as any)?.code === "42501"
+          ? "Blocked by RLS. Allow INSERT on employees for your role."
+          : error.message;
       toast({ title: "Create failed", description: msg });
       return;
     }
     setEmployees((prev) => [data as Employee, ...prev]);
-    toast({ title: "Employee added", description: `${e.name} (${e.role}) created.` });
+    toast({
+      title: "Employee added",
+      description: `${e.name} (${e.role}) created.`,
+    });
   };
 
   const updateEmployee = async (id: string, patch: Partial<Employee>) => {
     if (!isSupabaseConfigured()) {
-      toast({ title: "Supabase not configured", description: "Cannot update employee." });
+      toast({
+        title: "Supabase not configured",
+        description: "Cannot update employee.",
+      });
       return;
     }
     const update: any = { ...patch };
@@ -129,18 +148,26 @@ export default function Employees() {
       .update(update)
       .eq("id", id);
     if (error) {
-      const msg = (error as any)?.code === "42501" ? "Blocked by RLS. Allow UPDATE on employees for your role." : error.message;
+      const msg =
+        (error as any)?.code === "42501"
+          ? "Blocked by RLS. Allow UPDATE on employees for your role."
+          : error.message;
       toast({ title: "Update failed", description: msg });
       return;
     }
-    setEmployees((prev) => prev.map((e) => (e.id === id ? { ...e, ...patch } : e)));
+    setEmployees((prev) =>
+      prev.map((e) => (e.id === id ? { ...e, ...patch } : e)),
+    );
     toast({ title: "Employee updated" });
   };
 
   const setStatus = async (id: string, status: EmpStatus) => {
     await updateEmployee(id, { status });
     if (status === "terminated") {
-      toast({ title: "Employee terminated", description: "Related user account suspended." });
+      toast({
+        title: "Employee terminated",
+        description: "Related user account suspended.",
+      });
     }
   };
 
@@ -167,7 +194,9 @@ export default function Employees() {
                 className="grid gap-4 sm:grid-cols-2"
                 onSubmit={(e) => {
                   e.preventDefault();
-                  const data = Object.fromEntries(new FormData(e.currentTarget).entries());
+                  const data = Object.fromEntries(
+                    new FormData(e.currentTarget).entries(),
+                  );
                   addEmployee({
                     name: String(data.name),
                     role: String(data.role),
@@ -271,7 +300,10 @@ export default function Employees() {
                         >
                           Mark Resigned
                         </Button>
-                        <Button size="sm" onClick={() => setStatus(e.id, "transferred")}>
+                        <Button
+                          size="sm"
+                          onClick={() => setStatus(e.id, "transferred")}
+                        >
                           Transfer
                         </Button>
                       </TableCell>
@@ -279,7 +311,10 @@ export default function Employees() {
                   ))}
                   {!active.length && (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center text-muted-foreground">
+                      <TableCell
+                        colSpan={5}
+                        className="text-center text-muted-foreground"
+                      >
                         No active employees.
                       </TableCell>
                     </TableRow>
@@ -291,13 +326,25 @@ export default function Employees() {
         </TabsContent>
 
         <TabsContent value="terminated" className="mt-4">
-          <StatusTable title="Terminated" rows={terminated} onReinstate={(id) => setStatus(id, "active")} />
+          <StatusTable
+            title="Terminated"
+            rows={terminated}
+            onReinstate={(id) => setStatus(id, "active")}
+          />
         </TabsContent>
         <TabsContent value="resigned" className="mt-4">
-          <StatusTable title="Resigned" rows={resigned} onReinstate={(id) => setStatus(id, "active")} />
+          <StatusTable
+            title="Resigned"
+            rows={resigned}
+            onReinstate={(id) => setStatus(id, "active")}
+          />
         </TabsContent>
         <TabsContent value="transferred" className="mt-4">
-          <StatusTable title="Transferred" rows={transferred} onReinstate={(id) => setStatus(id, "active")} />
+          <StatusTable
+            title="Transferred"
+            rows={transferred}
+            onReinstate={(id) => setStatus(id, "active")}
+          />
         </TabsContent>
       </Tabs>
     </div>
@@ -349,7 +396,10 @@ function StatusTable({
             ))}
             {!rows.length && (
               <TableRow>
-                <TableCell colSpan={5} className="text-center text-muted-foreground">
+                <TableCell
+                  colSpan={5}
+                  className="text-center text-muted-foreground"
+                >
                   No records.
                 </TableCell>
               </TableRow>

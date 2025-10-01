@@ -231,17 +231,23 @@ export default function Batches() {
             setSlots((prev) => [...prev, item]);
           } else if (payload.eventType === "UPDATE") {
             const r = payload.new;
-            setSlots((prev) => prev.map((p) => (p.id === r.id ? {
-              id: r.id,
-              batchId: r.batch_id,
-              day: r.day,
-              startTime: r.start_time,
-              endTime: r.end_time,
-              room: r.room,
-              faculty: r.faculty,
-              attendanceLink: r.attendance_link,
-              created_at: r.created_at,
-            } : p)));
+            setSlots((prev) =>
+              prev.map((p) =>
+                p.id === r.id
+                  ? {
+                      id: r.id,
+                      batchId: r.batch_id,
+                      day: r.day,
+                      startTime: r.start_time,
+                      endTime: r.end_time,
+                      room: r.room,
+                      faculty: r.faculty,
+                      attendanceLink: r.attendance_link,
+                      created_at: r.created_at,
+                    }
+                  : p,
+              ),
+            );
           } else if (payload.eventType === "DELETE") {
             const r = payload.old;
             setSlots((prev) => prev.filter((p) => p.id !== r.id));
@@ -381,7 +387,10 @@ export default function Batches() {
 
   const addSlot = async (payload: Omit<TimeSlot, "id">) => {
     if (!isSupabaseConfigured()) {
-      toast({ title: "Supabase not configured", description: "Cannot create slot." });
+      toast({
+        title: "Supabase not configured",
+        description: "Cannot create slot.",
+      });
       return;
     }
     try {
@@ -402,7 +411,10 @@ export default function Batches() {
         )
         .single();
       if (res.error) {
-        toast({ title: "Create failed", description: res.error.message || String(res.error) });
+        toast({
+          title: "Create failed",
+          description: res.error.message || String(res.error),
+        });
         return;
       }
       const r: any = res.data;
@@ -418,19 +430,31 @@ export default function Batches() {
         created_at: r.created_at,
       };
       setSlots((prev) => [...prev, item]);
-      toast({ title: "Slot added", description: `${payload.day} ${payload.startTime}-${payload.endTime}` });
+      toast({
+        title: "Slot added",
+        description: `${payload.day} ${payload.startTime}-${payload.endTime}`,
+      });
     } catch (err: any) {
-      toast({ title: "Create failed", description: err?.message || String(err) });
+      toast({
+        title: "Create failed",
+        description: err?.message || String(err),
+      });
     }
   };
 
   const removeSlot = async (id: string) => {
     if (!isSupabaseConfigured()) {
-      toast({ title: "Supabase not configured", description: "Cannot remove slot." });
+      toast({
+        title: "Supabase not configured",
+        description: "Cannot remove slot.",
+      });
       return;
     }
     try {
-      const { error } = await supabase!.from("time_slots").delete().eq("id", id);
+      const { error } = await supabase!
+        .from("time_slots")
+        .delete()
+        .eq("id", id);
       if (error) {
         toast({ title: "Remove failed", description: error.message });
         return;
@@ -438,7 +462,10 @@ export default function Batches() {
       setSlots((prev) => prev.filter((s) => s.id !== id));
       toast({ title: "Slot removed" });
     } catch (err: any) {
-      toast({ title: "Remove failed", description: err?.message || String(err) });
+      toast({
+        title: "Remove failed",
+        description: err?.message || String(err),
+      });
     }
   };
 
@@ -747,7 +774,12 @@ export default function Batches() {
               >
                 <div className="space-y-1.5">
                   <Label>Date</Label>
-                  <Input name="day" type="date" defaultValue={today()} required />
+                  <Input
+                    name="day"
+                    type="date"
+                    defaultValue={today()}
+                    required
+                  />
                 </div>
                 <div className="space-y-1.5">
                   <Label>Start</Label>
@@ -797,7 +829,12 @@ export default function Batches() {
                         <TableCell>{s.faculty}</TableCell>
                         <TableCell>
                           {s.attendanceLink ? (
-                            <a href={s.attendanceLink} target="_blank" rel="noreferrer" className="underline text-primary">
+                            <a
+                              href={s.attendanceLink}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="underline text-primary"
+                            >
                               Open
                             </a>
                           ) : (
