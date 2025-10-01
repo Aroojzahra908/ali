@@ -69,3 +69,16 @@ export function upsertStudent(rec: StudentRecord): StudentRecord {
   } catch {}
   return rec;
 }
+
+export function deleteStudent(id: string): void {
+  const list = getStudents();
+  const next = list.filter((s) => s.id !== id);
+  localStorage.setItem(KEY, JSON.stringify(next));
+  try {
+    window.dispatchEvent(
+      new CustomEvent("students:changed", {
+        detail: { type: "delete", id },
+      }),
+    );
+  } catch {}
+}

@@ -107,8 +107,6 @@
 //   );
 // }
 
-
-
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useEffect, useState } from "react";
 import type { StudentRecord } from "./students/types";
@@ -137,6 +135,19 @@ export default function Students() {
       try {
         const { upsertStudent } = await import("@/lib/studentStore");
         upsertStudent(next);
+      } catch {}
+    }
+  };
+
+  const remove = async (id: string) => {
+    setItems((prev) => prev.filter((s) => s.id !== id));
+    try {
+      const { error } = await supabase.from("students").delete().eq("id", id);
+      if (error) throw error;
+    } catch {
+      try {
+        const { deleteStudent } = await import("@/lib/studentStore");
+        deleteStudent(id);
       } catch {}
     }
   };
@@ -172,8 +183,7 @@ export default function Students() {
               attendance: base.attendance ?? r.attendance ?? [],
               documents: base.documents ?? r.documents ?? [],
               communications: base.communications ?? r.communications ?? [],
-              enrolledCourses:
-                base.enrolledCourses ?? r.enrolled_courses ?? [],
+              enrolledCourses: base.enrolledCourses ?? r.enrolled_courses ?? [],
               notes: base.notes ?? r.notes,
             };
           });
@@ -204,7 +214,7 @@ export default function Students() {
           <TabsTrigger value="reports">Reports</TabsTrigger>
         </TabsList>
         <TabsContent value="directory">
-          <Directory data={items} onChange={upsert} />
+          <Directory data={items} onChange={upsert} onDelete={remove} />
         </TabsContent>
         <TabsContent value="attendance">
           <AttendanceTab data={items} onChange={upsert} />
