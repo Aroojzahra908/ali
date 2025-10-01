@@ -38,7 +38,7 @@ export function StudentsReports({ data }: { data: StudentRecord[] }) {
         </div>
         <div>
           <div className="text-xs text-muted-foreground">To</div>
-          <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
+          <DatePicker value={to} onChange={(v)=> setTo(v)} />
         </div>
       </div>
 
