@@ -31,22 +31,10 @@ import {
 } from "@/components/ui/pagination";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "@/hooks/use-toast";
-import {
-  Pencil,
-  UserMinus,
-  RefreshCw,
-  UserCheck,
-  ShieldAlert,
-  Shield,
-} from "lucide-react";
+import { Pencil, UserMinus, RefreshCw, UserCheck, ShieldAlert, Shield } from "lucide-react";
 
 export type UserStatus = "active" | "suspended";
-export type Role =
-  | "Owner"
-  | "Admin"
-  | "Instructor"
-  | "Frontdesk"
-  | "Student";
+export type Role = "Owner" | "Admin" | "Instructor" | "Frontdesk" | "Student";
 
 export interface UserItem {
   id: string;
@@ -57,13 +45,7 @@ export interface UserItem {
   status: UserStatus;
 }
 
-const ROLES: Role[] = [
-  "Owner",
-  "Admin",
-  "Instructor",
-  "Frontdesk",
-  "Student",
-];
+const ROLES: Role[] = ["Owner", "Admin", "Instructor", "Frontdesk", "Student"];
 
 function getInitials(name: string) {
   return name
@@ -88,146 +70,62 @@ function RoleBadge({ role }: { role: Role }) {
   return <Badge className={className}>{role}</Badge>;
 }
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import supabase, { isSupabaseConfigured } from "@/lib/supabase";
-
 export default function Users() {
-  const qc = useQueryClient();
+  const [users, setUsers] = useState<UserItem[]>([
+    {
+      id: "u-1",
+      name: "System Admin",
+      email: "admin@example.com",
+      role: "Owner",
+      phone: "03100000000",
+      status: "active",
+    },
+    {
+      id: "u-2",
+      name: "Admissions Desk",
+      email: "frontdesk@example.com",
+      role: "Frontdesk",
+      phone: "03110000000",
+      status: "active",
+    },
+    {
+      id: "u-3",
+      name: "Suspended Instructor",
+      email: "instructor@example.com",
+      role: "Instructor",
+      phone: "03120000000",
+      status: "suspended",
+    },
+  ]);
 
-  // Create form state (Select values aren't part of FormData by default)
+  const [selectedId, setSelectedId] = useState<string>("u-1");
+  const selected = useMemo(() => users.find((u) => u.id === selectedId) || users[0], [users, selectedId]);
+
+  const active = users.filter((u) => u.status === "active");
+  const suspended = users.filter((u) => u.status === "suspended");
+
   const [createRole, setCreateRole] = useState<Role>(ROLES[1]);
   const [createStatus, setCreateStatus] = useState<UserStatus>("active");
+  const [manageRole, setManageRole] = useState<Role | undefined>(selected?.role);
 
-  // All Users filters/pagination
   const [query, setQuery] = useState("");
   const [filterRole, setFilterRole] = useState<Role | "All">("All");
   const [filterStatus, setFilterStatus] = useState<UserStatus | "All">("All");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
-  async function authHeaders() {
-    const { data } = await supabase.auth.getSession();
-    const token = data.session?.access_token;
-    if (!token) throw new Error("Not authenticated");
-    return { Authorization: `Bearer ${token}` } as Record<string, string>;
-  }
-
-  const usersQuery = useQuery({
-    queryKey: ["admin-users"],
-    enabled: isSupabaseConfigured,
-    queryFn: async () => {
-      const headers = await authHeaders();
-      const resp = await fetch("/api/admin/users", { headers });
-      if (!resp.ok) {
-        const j = await resp.json().catch(() => ({}));
-        throw new Error(j.error || `Failed to load users (${resp.status})`);
-      }
-      const j = (await resp.json()) as { items: any[] };
-      return j.items.map((it) => ({
-        id: it.id as string,
-        name: String(it.full_name || ""),
-        email: String(it.email || ""),
-        role: (String(it.role || "student").charAt(0).toUpperCase() + String(it.role || "student").slice(1)) as Role,
-        phone: it.phone ? String(it.phone) : "",
-        status: String(it.status || "active") as UserStatus,
-      })) as UserItem[];
-    },
-  });
-
-  const users = usersQuery.data || [];
-  const [selectedId, setSelectedId] = useState<string>("");
-  const selected = useMemo(() => users.find((u) => u.id === selectedId) || users[0], [users, selectedId]);
-  const [manageRole, setManageRole] = useState<Role | undefined>(selected?.role);
-
-  // Keep selection in sync when data changes
-  if (!selectedId && users[0]?.id) {
-    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-    selectedId || setSelectedId(users[0].id);
-  }
-
-  const active = users.filter((u) => u.status === "active");
-  const suspended = users.filter((u) => u.status === "suspended");
-
-  const createMut = useMutation({
-    mutationFn: async (payload: { name: string; email: string; phone?: string; role: Role; status: UserStatus }) => {
-      const headers = { ...(await authHeaders()), "content-type": "application/json" } as HeadersInit;
-      const resp = await fetch("/api/admin/users", {
-        method: "POST",
-        headers,
-        body: JSON.stringify({
-          email: payload.email,
-          full_name: payload.name,
-          phone: payload.phone || null,
-          role: payload.role.toLowerCase(),
-          status: payload.status.toLowerCase(),
-        }),
-      });
-      if (!resp.ok) {
-        const j = await resp.json().catch(() => ({}));
-        throw new Error(j.error || "Failed to create user");
-      }
-      return resp.json();
-    },
-    onSuccess: () => {
-      toast({ title: "User created" });
-      qc.invalidateQueries({ queryKey: ["admin-users"] });
-    },
-    onError: (e: any) => toast({ title: "Create failed", description: e?.message || String(e) }),
-  });
-
-  const updateMut = useMutation({
-    mutationFn: async (args: { id: string; patch: Partial<UserItem> }) => {
-      const headers = { ...(await authHeaders()), "content-type": "application/json" } as HeadersInit;
-      const body: any = {};
-      if (args.patch.name) body.full_name = args.patch.name;
-      if (args.patch.phone !== undefined) body.phone = args.patch.phone;
-      if (args.patch.role) body.role = String(args.patch.role).toLowerCase();
-      if (args.patch.status) body.status = String(args.patch.status).toLowerCase();
-      if (args.patch.email) body.email = args.patch.email; // optional
-      const resp = await fetch(`/api/admin/users/${args.id}`, {
-        method: "PATCH",
-        headers,
-        body: JSON.stringify(body),
-      });
-      if (!resp.ok) {
-        const j = await resp.json().catch(() => ({}));
-        throw new Error(j.error || "Failed to update user");
-      }
-      return resp.json();
-    },
-    onSuccess: () => {
-      toast({ title: "User updated" });
-      qc.invalidateQueries({ queryKey: ["admin-users"] });
-    },
-    onError: (e: any) => toast({ title: "Update failed", description: e?.message || String(e) }),
-  });
-
-  const resetPwdMut = useMutation({
-    mutationFn: async (id: string) => {
-      const headers = { ...(await authHeaders()) } as HeadersInit;
-      const resp = await fetch(`/api/admin/users/${id}/reset-password`, {
-        method: "POST",
-        headers,
-      });
-      if (!resp.ok) {
-        const j = await resp.json().catch(() => ({}));
-        throw new Error(j.error || "Failed to reset password");
-      }
-      return resp.json() as Promise<{ ok: boolean; password: string }>;
-    },
-    onSuccess: (data) => {
-      toast({ title: "Password reset", description: `Temporary password: ${data.password}` });
-    },
-    onError: (e: any) => toast({ title: "Reset failed", description: e?.message || String(e) }),
-  });
-
   function addUser(u: Omit<UserItem, "id">) {
-    createMut.mutate({ name: u.name, email: u.email, phone: u.phone, role: u.role as Role, status: u.status });
+    const id = `u-${Date.now()}`;
+    setUsers((prev) => [...prev, { ...u, id }]);
+    toast({ title: "User created", description: `${u.name} (${u.role}) added.` });
   }
 
   function updateUser(id: string, patch: Partial<UserItem>) {
-    updateMut.mutate({ id, patch });
+    setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, ...patch } : u)));
+    toast({ title: "User updated" });
   }
+
+  const setStatus = (id: string, status: UserStatus) => updateUser(id, { status });
 
   const filteredUsers = users.filter((u) => {
     const matchesQuery = [u.name, u.email, u.role, u.phone]
@@ -244,16 +142,9 @@ export default function Users() {
   const currentPage = Math.min(page, pageCount);
   const pageSlice = filteredUsers.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
-  const setStatus = (id: string, status: UserStatus) => updateUser(id, { status });
-
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-semibold">User Management</h1>
-      {!isSupabaseConfigured && (
-        <div className="text-sm text-destructive">
-          Supabase is not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY, then refresh.
-        </div>
-      )}
 
       <Tabs defaultValue="create">
         <TabsList className="flex flex-wrap gap-1">
@@ -264,7 +155,6 @@ export default function Users() {
           <TabsTrigger value="all">All Users</TabsTrigger>
         </TabsList>
 
-        {/* Create New User */}
         <TabsContent value="create" className="mt-4">
           <Card>
             <CardHeader>
@@ -275,9 +165,7 @@ export default function Users() {
                 className="grid gap-4 sm:grid-cols-2"
                 onSubmit={(e) => {
                   e.preventDefault();
-                  const data = Object.fromEntries(
-                    new FormData(e.currentTarget).entries(),
-                  );
+                  const data = Object.fromEntries(new FormData(e.currentTarget).entries());
                   addUser({
                     name: String(data.name),
                     email: String(data.email),
@@ -321,10 +209,7 @@ export default function Users() {
                 </div>
                 <div className="space-y-1.5">
                   <Label>Status</Label>
-                  <Select
-                    value={createStatus}
-                    onValueChange={(v) => setCreateStatus(v as UserStatus)}
-                  >
+                  <Select value={createStatus} onValueChange={(v) => setCreateStatus(v as UserStatus)}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select status" />
                     </SelectTrigger>
@@ -347,7 +232,6 @@ export default function Users() {
           </Card>
         </TabsContent>
 
-        {/* Manage Current User */}
         <TabsContent value="manage" className="mt-4">
           <Card>
             <CardHeader>
@@ -384,9 +268,7 @@ export default function Users() {
                   className="grid gap-4 sm:grid-cols-2"
                   onSubmit={(e) => {
                     e.preventDefault();
-                    const data = Object.fromEntries(
-                      new FormData(e.currentTarget).entries(),
-                    );
+                    const data = Object.fromEntries(new FormData(e.currentTarget).entries());
                     updateUser(selected.id, {
                       name: String(data.name),
                       email: String(data.email),
@@ -397,29 +279,15 @@ export default function Users() {
                 >
                   <div className="space-y-1.5">
                     <Label htmlFor="m-name">Full Name</Label>
-                    <Input
-                      id="m-name"
-                      name="name"
-                      defaultValue={selected.name}
-                      required
-                    />
+                    <Input id="m-name" name="name" defaultValue={selected.name} required />
                   </div>
                   <div className="space-y-1.5">
                     <Label htmlFor="m-email">Email</Label>
-                    <Input
-                      id="m-email"
-                      name="email"
-                      type="email"
-                      defaultValue={selected.email}
-                      required
-                    />
+                    <Input id="m-email" name="email" type="email" defaultValue={selected.email} required />
                   </div>
                   <div className="space-y-1.5">
                     <Label>Role</Label>
-                    <Select
-                      value={manageRole || selected.role}
-                      onValueChange={(v) => setManageRole(v as Role)}
-                    >
+                    <Select value={manageRole || selected.role} onValueChange={(v) => setManageRole(v as Role)}>
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
@@ -445,11 +313,7 @@ export default function Users() {
                     </Badge>
                     <div className="ml-auto flex flex-wrap gap-2">
                       {selected.status === "active" ? (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => setStatus(selected.id, "suspended")}
-                        >
+                        <Button type="button" variant="outline" onClick={() => setStatus(selected.id, "suspended")}>
                           <UserMinus className="mr-2 h-4 w-4" /> Suspend
                         </Button>
                       ) : (
@@ -460,7 +324,10 @@ export default function Users() {
                       <Button
                         type="button"
                         variant="outline"
-                        onClick={() => resetPwdMut.mutate(selected.id)}
+                        onClick={() => {
+                          const pwd = Math.random().toString(36).slice(2, 10);
+                          toast({ title: "Password reset", description: `Temporary password: ${pwd}` });
+                        }}
                       >
                         <RefreshCw className="mr-2 h-4 w-4" /> Reset Password
                       </Button>
@@ -475,7 +342,6 @@ export default function Users() {
           </Card>
         </TabsContent>
 
-        {/* Active Users */}
         <TabsContent value="active" className="mt-4">
           <Card>
             <CardHeader>
@@ -540,7 +406,6 @@ export default function Users() {
           </Card>
         </TabsContent>
 
-        {/* Suspended Users */}
         <TabsContent value="suspended" className="mt-4">
           <Card>
             <CardHeader>
@@ -594,7 +459,6 @@ export default function Users() {
           </Card>
         </TabsContent>
 
-        {/* All Users */}
         <TabsContent value="all" className="mt-4">
           <Card>
             <CardHeader>
@@ -710,11 +574,7 @@ export default function Users() {
                         <RoleBadge role={u.role} />
                       </TableCell>
                       <TableCell>
-                        {u.status === "active" ? (
-                          <Badge>Active</Badge>
-                        ) : (
-                          <Badge variant="secondary">Suspended</Badge>
-                        )}
+                        {u.status === "active" ? <Badge>Active</Badge> : <Badge variant="secondary">Suspended</Badge>}
                       </TableCell>
                     </TableRow>
                   ))}
