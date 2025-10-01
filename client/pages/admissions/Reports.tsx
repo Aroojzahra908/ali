@@ -2,6 +2,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useMemo, useState } from "react";
+import DatePicker from "@/components/ui/date-picker";
 import type { AdmissionRecord } from "./types";
 
 export function ReportsTab({ data }: { data: AdmissionRecord[] }) {
