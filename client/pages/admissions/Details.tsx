@@ -215,16 +215,33 @@ export function Details({
       upsertStudent(merged);
     }
 
-    printVoucher({
-      studentName: merged.name,
-      studentEmail: merged.email,
-      studentPhone: merged.phone,
-      studentId: merged.id,
+    onChange({
+      ...rec,
       course: qCourseName,
-      campus: qCampus,
       batch: qBatch,
-      amount: Number(qAmount) || 0,
+      campus: qCampus,
+      fee: {
+        total: Number(qAmount) || 0,
+        installments: [
+          { id: "due", amount: Number(qAmount) || 0, dueDate: new Date().toISOString() },
+        ],
+      },
     });
+
+    const reference = String(rec.id);
+    const voucher = {
+      id: buildVoucherId(reference),
+      reference,
+      amount: Number(qAmount) || 0,
+      courseName: qCourseName,
+      studentName: merged.name,
+      email: merged.email,
+      phone: merged.phone,
+      issueDate: new Date().toISOString(),
+      dueDate: new Date().toISOString(),
+      campus: qCampus || merged.admission?.campus || rec.campus,
+    } as const;
+    printVoucherUI(voucher);
   }
 
   function printVoucher(opts: {
