@@ -596,12 +596,12 @@ export default function AdmissionForm() {
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="start">Preferred start date</Label>
-                  <Input
+                  <DatePicker
                     id="start"
-                    type="date"
-                    min={minStartDate}
                     value={startDate}
-                    onChange={(event) => setStartDate(event.target.value)}
+                    onChange={(v) => setStartDate(v)}
+                    min={minStartDate}
+                    required
                   />
                   <p className="text-xs text-muted-foreground">
                     Pick the date you would like to begin. We will try to align
