@@ -12,6 +12,7 @@ import type { StudentRecord } from "@/pages/students/types";
 import { useNavigate } from "react-router-dom";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { COURSES } from "@/data/courses";
+import { Badge } from "@/components/ui/badge";
 
 export function Details({
   rec,
