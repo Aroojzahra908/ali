@@ -161,11 +161,14 @@ export default function Campuses() {
       if (patch.city !== undefined) update.city = patch.city;
       if (patch.address !== undefined) update.address = patch.address || null;
       if (patch.status !== undefined) update.status = patch.status;
-      const { error } = await supabase
+      const res = await supabase
         .from("campuses")
         .update(update)
         .eq("id", id);
-      if (error) throw error;
+      if (res.error) {
+        toast({ title: "Update failed", description: res.error.message || String(res.error) });
+        return;
+      }
       setCampuses((prev) =>
         prev.map((c) => (c.id === id ? { ...c, ...patch } : c)),
       );
@@ -173,7 +176,7 @@ export default function Campuses() {
     } catch (e: any) {
       toast({
         title: "Update failed",
-        description: e?.message || "Check policies",
+        description: e?.message || String(e) || "Check policies",
       });
     }
   };
