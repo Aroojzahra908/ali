@@ -31,7 +31,14 @@ import {
 } from "@/components/ui/pagination";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "@/hooks/use-toast";
-import { Pencil, UserMinus, RefreshCw, UserCheck, ShieldAlert, Shield } from "lucide-react";
+import {
+  Pencil,
+  UserMinus,
+  RefreshCw,
+  UserCheck,
+  ShieldAlert,
+  Shield,
+} from "lucide-react";
 
 export type UserStatus = "active" | "suspended";
 export type Role = "Owner" | "Admin" | "Instructor" | "Frontdesk" | "Student";
@@ -99,14 +106,19 @@ export default function Users() {
   ]);
 
   const [selectedId, setSelectedId] = useState<string>("u-1");
-  const selected = useMemo(() => users.find((u) => u.id === selectedId) || users[0], [users, selectedId]);
+  const selected = useMemo(
+    () => users.find((u) => u.id === selectedId) || users[0],
+    [users, selectedId],
+  );
 
   const active = users.filter((u) => u.status === "active");
   const suspended = users.filter((u) => u.status === "suspended");
 
   const [createRole, setCreateRole] = useState<Role>(ROLES[1]);
   const [createStatus, setCreateStatus] = useState<UserStatus>("active");
-  const [manageRole, setManageRole] = useState<Role | undefined>(selected?.role);
+  const [manageRole, setManageRole] = useState<Role | undefined>(
+    selected?.role,
+  );
 
   const [query, setQuery] = useState("");
   const [filterRole, setFilterRole] = useState<Role | "All">("All");
@@ -117,7 +129,10 @@ export default function Users() {
   function addUser(u: Omit<UserItem, "id">) {
     const id = `u-${Date.now()}`;
     setUsers((prev) => [...prev, { ...u, id }]);
-    toast({ title: "User created", description: `${u.name} (${u.role}) added.` });
+    toast({
+      title: "User created",
+      description: `${u.name} (${u.role}) added.`,
+    });
   }
 
   function updateUser(id: string, patch: Partial<UserItem>) {
@@ -125,7 +140,8 @@ export default function Users() {
     toast({ title: "User updated" });
   }
 
-  const setStatus = (id: string, status: UserStatus) => updateUser(id, { status });
+  const setStatus = (id: string, status: UserStatus) =>
+    updateUser(id, { status });
 
   const filteredUsers = users.filter((u) => {
     const matchesQuery = [u.name, u.email, u.role, u.phone]
@@ -140,7 +156,10 @@ export default function Users() {
 
   const pageCount = Math.max(1, Math.ceil(filteredUsers.length / pageSize));
   const currentPage = Math.min(page, pageCount);
-  const pageSlice = filteredUsers.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  const pageSlice = filteredUsers.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize,
+  );
 
   return (
     <div className="space-y-4">
@@ -165,7 +184,9 @@ export default function Users() {
                 className="grid gap-4 sm:grid-cols-2"
                 onSubmit={(e) => {
                   e.preventDefault();
-                  const data = Object.fromEntries(new FormData(e.currentTarget).entries());
+                  const data = Object.fromEntries(
+                    new FormData(e.currentTarget).entries(),
+                  );
                   addUser({
                     name: String(data.name),
                     email: String(data.email),
@@ -192,7 +213,10 @@ export default function Users() {
                 </div>
                 <div className="space-y-1.5">
                   <Label>Role</Label>
-                  <Select value={createRole} onValueChange={(v) => setCreateRole(v as Role)}>
+                  <Select
+                    value={createRole}
+                    onValueChange={(v) => setCreateRole(v as Role)}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select role" />
                     </SelectTrigger>
@@ -209,7 +233,10 @@ export default function Users() {
                 </div>
                 <div className="space-y-1.5">
                   <Label>Status</Label>
-                  <Select value={createStatus} onValueChange={(v) => setCreateStatus(v as UserStatus)}>
+                  <Select
+                    value={createStatus}
+                    onValueChange={(v) => setCreateStatus(v as UserStatus)}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select status" />
                     </SelectTrigger>
@@ -268,7 +295,9 @@ export default function Users() {
                   className="grid gap-4 sm:grid-cols-2"
                   onSubmit={(e) => {
                     e.preventDefault();
-                    const data = Object.fromEntries(new FormData(e.currentTarget).entries());
+                    const data = Object.fromEntries(
+                      new FormData(e.currentTarget).entries(),
+                    );
                     updateUser(selected.id, {
                       name: String(data.name),
                       email: String(data.email),
@@ -279,15 +308,29 @@ export default function Users() {
                 >
                   <div className="space-y-1.5">
                     <Label htmlFor="m-name">Full Name</Label>
-                    <Input id="m-name" name="name" defaultValue={selected.name} required />
+                    <Input
+                      id="m-name"
+                      name="name"
+                      defaultValue={selected.name}
+                      required
+                    />
                   </div>
                   <div className="space-y-1.5">
                     <Label htmlFor="m-email">Email</Label>
-                    <Input id="m-email" name="email" type="email" defaultValue={selected.email} required />
+                    <Input
+                      id="m-email"
+                      name="email"
+                      type="email"
+                      defaultValue={selected.email}
+                      required
+                    />
                   </div>
                   <div className="space-y-1.5">
                     <Label>Role</Label>
-                    <Select value={manageRole || selected.role} onValueChange={(v) => setManageRole(v as Role)}>
+                    <Select
+                      value={manageRole || selected.role}
+                      onValueChange={(v) => setManageRole(v as Role)}
+                    >
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
@@ -304,20 +347,35 @@ export default function Users() {
                   </div>
                   <div className="space-y-1.5">
                     <Label htmlFor="m-phone">Contact Number</Label>
-                    <Input id="m-phone" name="phone" defaultValue={selected.phone} />
+                    <Input
+                      id="m-phone"
+                      name="phone"
+                      defaultValue={selected.phone}
+                    />
                   </div>
 
                   <div className="sm:col-span-2 flex items-center gap-2">
-                    <Badge variant={selected.status === "active" ? "default" : "secondary"}>
+                    <Badge
+                      variant={
+                        selected.status === "active" ? "default" : "secondary"
+                      }
+                    >
                       {selected.status === "active" ? "Active" : "Suspended"}
                     </Badge>
                     <div className="ml-auto flex flex-wrap gap-2">
                       {selected.status === "active" ? (
-                        <Button type="button" variant="outline" onClick={() => setStatus(selected.id, "suspended")}>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setStatus(selected.id, "suspended")}
+                        >
                           <UserMinus className="mr-2 h-4 w-4" /> Suspend
                         </Button>
                       ) : (
-                        <Button type="button" onClick={() => setStatus(selected.id, "active")}>
+                        <Button
+                          type="button"
+                          onClick={() => setStatus(selected.id, "active")}
+                        >
                           <UserCheck className="mr-2 h-4 w-4" /> Activate
                         </Button>
                       )}
@@ -326,7 +384,10 @@ export default function Users() {
                         variant="outline"
                         onClick={() => {
                           const pwd = Math.random().toString(36).slice(2, 10);
-                          toast({ title: "Password reset", description: `Temporary password: ${pwd}` });
+                          toast({
+                            title: "Password reset",
+                            description: `Temporary password: ${pwd}`,
+                          });
                         }}
                       >
                         <RefreshCw className="mr-2 h-4 w-4" /> Reset Password
@@ -381,13 +442,18 @@ export default function Users() {
                           variant="outline"
                           onClick={() =>
                             updateUser(u.id, {
-                              role: ROLES[(ROLES.indexOf(u.role) + 1) % ROLES.length],
+                              role: ROLES[
+                                (ROLES.indexOf(u.role) + 1) % ROLES.length
+                              ],
                             })
                           }
                         >
                           <Shield className="mr-2 h-3.5 w-3.5" /> Edit Role
                         </Button>
-                        <Button size="sm" onClick={() => setStatus(u.id, "suspended")}>
+                        <Button
+                          size="sm"
+                          onClick={() => setStatus(u.id, "suspended")}
+                        >
                           <ShieldAlert className="mr-2 h-3.5 w-3.5" /> Suspend
                         </Button>
                       </TableCell>
@@ -395,7 +461,10 @@ export default function Users() {
                   ))}
                   {!active.length && (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center text-muted-foreground">
+                      <TableCell
+                        colSpan={6}
+                        className="text-center text-muted-foreground"
+                      >
                         No active users.
                       </TableCell>
                     </TableRow>
@@ -440,7 +509,10 @@ export default function Users() {
                         <Badge variant="secondary">Suspended</Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button size="sm" onClick={() => setStatus(u.id, "active")}>
+                        <Button
+                          size="sm"
+                          onClick={() => setStatus(u.id, "active")}
+                        >
                           <UserCheck className="mr-2 h-3.5 w-3.5" /> Reactivate
                         </Button>
                       </TableCell>
@@ -448,7 +520,10 @@ export default function Users() {
                   ))}
                   {!suspended.length && (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center text-muted-foreground">
+                      <TableCell
+                        colSpan={6}
+                        className="text-center text-muted-foreground"
+                      >
                         No suspended users.
                       </TableCell>
                     </TableRow>
@@ -574,13 +649,20 @@ export default function Users() {
                         <RoleBadge role={u.role} />
                       </TableCell>
                       <TableCell>
-                        {u.status === "active" ? <Badge>Active</Badge> : <Badge variant="secondary">Suspended</Badge>}
+                        {u.status === "active" ? (
+                          <Badge>Active</Badge>
+                        ) : (
+                          <Badge variant="secondary">Suspended</Badge>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}
                   {!pageSlice.length && (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center text-muted-foreground">
+                      <TableCell
+                        colSpan={5}
+                        className="text-center text-muted-foreground"
+                      >
                         No users found.
                       </TableCell>
                     </TableRow>

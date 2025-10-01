@@ -15,7 +15,8 @@ export const listUsers: RequestHandler = async (req, res) => {
     return res.status(401).json({ error: "Missing token" });
   const token = authz.substring("Bearer ".length);
   const { data: me, error: meErr } = await supa.auth.getUser(token);
-  if (meErr || !me?.user) return res.status(401).json({ error: "Invalid token" });
+  if (meErr || !me?.user)
+    return res.status(401).json({ error: "Invalid token" });
 
   // Fetch requester profile to confirm role
   const { data: myProfile } = await supa
@@ -29,14 +30,21 @@ export const listUsers: RequestHandler = async (req, res) => {
   // List profiles
   const { data: profiles, error } = await supa
     .from("profiles")
-    .select("id, full_name, phone, role, status, avatar_url, created_at, updated_at, suspended_at")
+    .select(
+      "id, full_name, phone, role, status, avatar_url, created_at, updated_at, suspended_at",
+    )
     .order("created_at", { ascending: false });
   if (error) return res.status(500).json({ error: error.message });
 
   // Fetch all auth users (first 1000)
-  const { data: list, error: listErr } = await supa.auth.admin.listUsers({ page: 1, perPage: 1000 });
+  const { data: list, error: listErr } = await supa.auth.admin.listUsers({
+    page: 1,
+    perPage: 1000,
+  });
   if (listErr) return res.status(500).json({ error: listErr.message });
-  const emailById = new Map(list.users.map((u) => [u.id, u.email || null] as const));
+  const emailById = new Map(
+    list.users.map((u) => [u.id, u.email || null] as const),
+  );
 
   const result = (profiles || []).map((p) => ({
     ...p,
@@ -64,8 +72,13 @@ export const createUser: RequestHandler = async (req, res) => {
 
   const { email, password, full_name, phone, role, status } = req.body || {};
   if (!email || !full_name || !role || !status)
-    return res.status(400).json({ error: "email, full_name, role, status are required" });
-  const pwd = typeof password === "string" && password.length >= 8 ? password : Math.random().toString(36).slice(2, 10) + "Aa1!";
+    return res
+      .status(400)
+      .json({ error: "email, full_name, role, status are required" });
+  const pwd =
+    typeof password === "string" && password.length >= 8
+      ? password
+      : Math.random().toString(36).slice(2, 10) + "Aa1!";
 
   const { data: created, error: cErr } = await supa.auth.admin.createUser({
     email: String(email),
@@ -74,7 +87,9 @@ export const createUser: RequestHandler = async (req, res) => {
     user_metadata: { role: String(role) },
   });
   if (cErr || !created.user)
-    return res.status(500).json({ error: cErr?.message || "Failed to create user" });
+    return res
+      .status(500)
+      .json({ error: cErr?.message || "Failed to create user" });
 
   const uid = created.user.id;
   const { error: iErr } = await supa.from("profiles").insert({

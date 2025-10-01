@@ -18,7 +18,12 @@ import {
 } from "./routes/public-submissions";
 import { getSupabase } from "./lib/supabase";
 import { listBatches, createBatch } from "./routes/batches";
-import { listUsers, createUser, updateUser, resetPassword } from "./routes/users";
+import {
+  listUsers,
+  createUser,
+  updateUser,
+  resetPassword,
+} from "./routes/users";
 
 export function createServer() {
   const app = express();
