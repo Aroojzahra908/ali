@@ -1,7 +1,6 @@
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
 import type { RolePermissions } from "@/pages/roles/types";
-import { Navigate, useLocation } from "react-router-dom";
 
 export function RequirePermission({
   module,
