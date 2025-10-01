@@ -476,15 +476,11 @@ export function Details({
 
       <div className="flex flex-wrap gap-2">
         <Button onClick={confirmAdmission}>Approve & Move to Students</Button>
-        <Button variant="outline" onClick={markAllPaid}>
-          Mark as Paid
-        </Button>
+        <Button variant="outline" onClick={markAllPaid}>Mark as Paid</Button>
         <Button variant="destructive" onClick={() => onDelete?.(rec)}>
           Delete
         </Button>
-        <Button variant="outline" onClick={printForm}>
-          Print Admission Form
-        </Button>
+        <Button onClick={quickEnrollAndVoucher}>Enroll & Print Voucher</Button>
       </div>
     </div>
   );
