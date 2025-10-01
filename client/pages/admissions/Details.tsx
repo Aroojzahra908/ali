@@ -457,7 +457,7 @@ export function Details({
                     const { supabase } = await import("@/lib/supabaseClient");
                     if (supabase) {
                       const phoneDigits = (newRecord.student.phone || "").replace(/\D+/g, "");
-                      const phoneValue = phoneDigits.length > 0 ? Number(phoneDigits) : null;
+                      const phoneValue = phoneDigits.length > 0 ? phoneDigits : null;
                       await supabase.from("applications").insert({
                         app_id: Number(newRecord.id) || newRecord.id,
                         name: newRecord.student.name,
