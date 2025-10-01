@@ -88,6 +88,15 @@ export function createServer() {
   app.get("/api/public/applications", listPublicApplications);
   app.post("/api/public/applications/delete", deletePublicApplication);
 
+  // Admin: Users management
+  {
+    const users = require("./routes/users");
+    app.get("/api/admin/users", users.listUsers);
+    app.post("/api/admin/users", users.createUser);
+    app.patch("/api/admin/users/:id", users.updateUser);
+    app.post("/api/admin/users/:id/reset-password", users.resetPassword);
+  }
+
   // Role permissions persistence (read open, write requires ADMIN_API_TOKEN)
   app.get("/api/role-perms", getRolePerms);
   app.get("/api/role-perms/:roleId", getRolePerms);
