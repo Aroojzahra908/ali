@@ -442,7 +442,7 @@ export default function AdmissionForm() {
           phone: trimmed.phone,
           issueDate: createdAt,
           dueDate: dueDateISO,
-          campus: "Main Campus",
+          campus: selectedCampus || (campusOptions[0] || ""),
         };
 
         setVoucher(voucherDetails);
