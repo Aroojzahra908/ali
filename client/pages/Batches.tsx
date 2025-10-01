@@ -782,6 +782,7 @@ export default function Batches() {
                       <TableHead>Time</TableHead>
                       <TableHead>Room</TableHead>
                       <TableHead>Faculty</TableHead>
+                      <TableHead>Attendance</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
