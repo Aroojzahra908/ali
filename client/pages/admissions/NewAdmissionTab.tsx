@@ -231,7 +231,10 @@ export function NewAdmissionTab({ onCreated }: Props) {
         let record = fallbackRecord;
 
         if (supabase) {
-          const payload = {
+          const startDateVal =
+            (startDate && startDate.trim()) ||
+            new Date().toISOString().slice(0, 10);
+          const fullPayload = {
             name: trimmedName,
             email: trimmedEmail,
             phone: trimmedPhone,
@@ -243,16 +246,61 @@ export function NewAdmissionTab({ onCreated }: Props) {
             fee_installments: fallbackRecord.fee.installments,
             documents: [],
             notes: trimmedNotes || null,
-            preferred_start: startDate || null,
-          };
+            start_date: startDateVal,
+          } as const;
 
-          const { data, error } = await supabase
-            .from("applications")
-            .insert(payload)
-            .select("*")
-            .single();
+          // Try applications with full payload, then minimal, then public_applications
+          const minimalPayload = {
+            name: fullPayload.name,
+            email: fullPayload.email,
+            phone: fullPayload.phone,
+            course: fullPayload.course,
+            start_date: startDateVal,
+            status: "Pending",
+          } as const;
 
-          if (error) throw error;
+          const publicMinimal = {
+            name: fullPayload.name,
+            email: fullPayload.email,
+            phone: fullPayload.phone,
+            course: fullPayload.course,
+            preferred_start: startDateVal,
+            status: "Pending",
+          } as const;
+
+          let data: any | null = null;
+          let lastErr: any = null;
+
+          try {
+            const r1 = await supabase
+              .from("applications")
+              .insert(fullPayload as any)
+              .select("*")
+              .single();
+            if (r1.error) throw r1.error;
+            data = r1.data;
+          } catch (e1) {
+            lastErr = e1;
+            try {
+              const r2 = await supabase
+                .from("applications")
+                .insert(minimalPayload as any)
+                .select("*")
+                .single();
+              if (r2.error) throw r2.error;
+              data = r2.data;
+            } catch (e2) {
+              lastErr = e2;
+              const r3 = await supabase
+                .from("public_applications")
+                .insert(publicMinimal as any)
+                .select("*")
+                .single();
+              if (r3.error) throw r3.error;
+              data = r3.data;
+            }
+          }
+
           record = normalizeRecord(data, fallbackRecord);
         } else {
           const response = await fetch("/api/public/applications", {
@@ -301,14 +349,19 @@ export function NewAdmissionTab({ onCreated }: Props) {
         setPhone("");
         setNotes("");
         setStartDate("");
-      } catch (error) {
-        console.error("Admission submission failed", error);
+      } catch (error: any) {
+        const msg =
+          (typeof error?.message === "string" && error.message) ||
+          (typeof error?.hint === "string" && error.hint) ||
+          (typeof error?.details === "string" && error.details) ||
+          (typeof error?.code === "string" && `Error ${error.code}`) ||
+          (error && typeof error === "object"
+            ? JSON.stringify(error)
+            : String(error));
+        console.error("Admission submission failed:", msg, error);
         toast({
           title: "Submission failed",
-          description:
-            error instanceof Error
-              ? error.message
-              : "Please try again shortly.",
+          description: msg,
           variant: "destructive",
         });
       } finally {

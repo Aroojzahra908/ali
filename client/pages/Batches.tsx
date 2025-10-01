@@ -24,6 +24,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "@/hooks/use-toast";
 import { getAllCourseNames } from "@/lib/courseStore";
+import { supabase, isSupabaseConfigured } from "@/lib/supabaseClient";
 
 export type BatchStatus =
   | "Upcoming"
@@ -93,6 +94,88 @@ export default function Batches() {
   const [batches, setBatches] = useState<BatchItem[]>([]);
   const [slots, setSlots] = useState<TimeSlot[]>([]);
 
+  useEffect(() => {
+    if (!isSupabaseConfigured()) {
+      toast({
+        title: "Supabase not configured",
+        description: "Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY",
+      });
+      return;
+    }
+    const load = async () => {
+      const { data, error } = await supabase!
+        .from("batches")
+        .select(
+          "batch_id, course_name, campus_name, batch_code, start_date, end_date, instructor, max_students, current_students, status, created_at",
+        )
+        .order("created_at", { ascending: false });
+      if (error) {
+        toast({ title: "Failed to load", description: error.message });
+        return;
+      }
+      const mapped: BatchItem[] = (data || []).map((r: any) => ({
+        id: r.batch_id,
+        course: r.course_name,
+        code: r.batch_code,
+        campus: r.campus_name,
+        startDate: r.start_date,
+        endDate: r.end_date,
+        instructor: r.instructor,
+        maxStudents: r.max_students,
+        currentStudents: r.current_students,
+      }));
+      const seen = new Set<string>();
+      const items = mapped.filter((b) =>
+        seen.has(b.id) ? false : (seen.add(b.id), true),
+      );
+      setBatches(items);
+      if (items[0]) setActiveBatchId(items[0].id);
+    };
+    load();
+
+    const channel = supabase!
+      .channel("batches-rt")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "batches" },
+        (payload) => {
+          const r: any = payload.new ?? payload.old;
+          if (!r) return;
+          const b: BatchItem = {
+            id: r.batch_id,
+            course: r.course_name,
+            code: r.batch_code,
+            campus: r.campus_name,
+            startDate: r.start_date,
+            endDate: r.end_date,
+            instructor: r.instructor,
+            maxStudents: r.max_students,
+            currentStudents: r.current_students,
+          };
+          setBatches((prev) => {
+            const idx = prev.findIndex((x) => x.id === b.id);
+            if (payload.eventType === "INSERT") {
+              if (idx !== -1) return prev; // already present via local insert/load
+              return [b, ...prev];
+            }
+            if (payload.eventType === "UPDATE") {
+              if (idx !== -1) return prev.map((x) => (x.id === b.id ? b : x));
+              return [b, ...prev];
+            }
+            if (payload.eventType === "DELETE") {
+              return prev.filter((x) => x.id !== b.id);
+            }
+            return prev;
+          });
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase!.removeChannel(channel);
+    };
+  }, []);
+
   // Create form defaults
   const [cCourse, setCCourse] = useState("");
   const [cCampus, setCCampus] = useState(CAMPUSES[0]);
@@ -148,28 +231,63 @@ export default function Batches() {
     return `${c}-${k}-${seq}`;
   };
 
-  const createBatch = (data: {
+  const createBatch = async (data: {
     start: string;
     end: string;
     max: number;
     current: number;
   }) => {
-    const id = `b-${Date.now()}`;
     const code = genCode(cCourse, cCampus);
-    const b: BatchItem = {
-      id,
-      course: cCourse,
-      code,
-      campus: cCampus,
-      startDate: data.start,
-      endDate: data.end,
-      instructor: cInstructor,
-      maxStudents: data.max,
-      currentStudents: data.current,
-    };
-    setBatches((prev) => [b, ...prev]);
-    setActiveBatchId(id);
-    toast({ title: "Batch created", description: `${code} (${cCourse})` });
+    if (!isSupabaseConfigured()) {
+      toast({
+        title: "Supabase not configured",
+        description: "Set env vars first",
+      });
+      return;
+    }
+    try {
+      const { data: rows, error } = await supabase!
+        .from("batches")
+        .insert({
+          course_name: cCourse,
+          campus_name: cCampus,
+          batch_code: code,
+          start_date: data.start,
+          end_date: data.end,
+          instructor: cInstructor,
+          max_students: data.max,
+          current_students: data.current,
+        })
+        .select(
+          "batch_id, course_name, campus_name, batch_code, start_date, end_date, instructor, max_students, current_students, status, created_at",
+        )
+        .single();
+      if (error) throw error;
+      const r: any = rows;
+      const b: BatchItem = {
+        id: r.batch_id,
+        course: r.course_name,
+        code: r.batch_code,
+        campus: r.campus_name,
+        startDate: r.start_date,
+        endDate: r.end_date,
+        instructor: r.instructor,
+        maxStudents: r.max_students,
+        currentStudents: r.current_students,
+      };
+      setBatches((prev) => {
+        if (prev.some((x) => x.id === b.id)) return prev;
+        return [b, ...prev];
+      });
+      setActiveBatchId(b.id);
+      toast({ title: "Batch created", description: `${code} (${cCourse})` });
+    } catch (err: any) {
+      const message =
+        err?.code === "23505"
+          ? "Batch code already exists"
+          : err?.message || String(err);
+      toast({ title: "Create failed", description: message });
+    }
   };
 
   const addSlot = (payload: Omit<TimeSlot, "id">) => {
@@ -327,6 +445,7 @@ export default function Batches() {
                     value={cInstructor}
                     onChange={(e) => setCInstructor(e.target.value)}
                     placeholder="Enter instructor name"
+                    required
                   />
                 </div>
                 <div className="space-y-1.5">
