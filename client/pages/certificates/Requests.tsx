@@ -27,6 +27,52 @@ export function RequestsTab({
   const [type, setType] = useState(CERTIFICATE_TYPES[0]);
   const [query, setQuery] = useState("");
 
+  const [batchOptions, setBatchOptions] = useState<string[]>(fallbackBatches);
+  const [courseOptions, setCourseOptions] = useState<string[]>(fallbackCourses);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        if (!supabase) {
+          setBatchOptions(fallbackBatches);
+          setCourseOptions(fallbackCourses);
+          return;
+        }
+
+        // Fetch batches
+        try {
+          const { data: bData, error: bErr } = await supabase
+            .from("batches")
+            .select("batch_code")
+            .order("batch_code", { ascending: true });
+          if (!bErr && Array.isArray(bData)) {
+            const codes = Array.from(new Set(bData.map((b: any) => String(b.batch_code || "")).filter(Boolean)));
+            if (codes.length) setBatchOptions(codes);
+          }
+        } catch (e) {
+          // ignore
+        }
+
+        // Fetch courses
+        try {
+          const { data: cData, error: cErr } = await supabase
+            .from("courses")
+            .select("name")
+            .order("name", { ascending: true });
+          if (!cErr && Array.isArray(cData)) {
+            const names = Array.from(new Set(cData.map((c: any) => String(c.name || "")).filter(Boolean)));
+            if (names.length) setCourseOptions(names);
+          }
+        } catch (e) {
+          // ignore
+        }
+      } catch (err) {
+        setBatchOptions(fallbackBatches);
+        setCourseOptions(fallbackCourses);
+      }
+    })();
+  }, []);
+
   const filtered = useMemo(() => {
     if (!query.trim()) return data;
     const q = query.toLowerCase();
@@ -137,11 +183,31 @@ export function RequestsTab({
           </div>
           <div>
             <Label>Batch</Label>
-            <Input placeholder="e.g., FSWD-2024A" value={batch} onChange={(e) => setBatch(e.target.value)} />
+            <Select value={batch} onValueChange={(v) => setBatch(v)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select batch" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">-- None --</SelectItem>
+                {batchOptions.map((b) => (
+                  <SelectItem key={b} value={b}>{b}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div>
             <Label>Course</Label>
-            <Input placeholder="e.g., Data Science" value={course} onChange={(e) => setCourse(e.target.value)} />
+            <Select value={course} onValueChange={(v) => setCourse(v)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select course" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">-- None --</SelectItem>
+                {courseOptions.map((c) => (
+                  <SelectItem key={c} value={c}>{c}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           {kind === "student" || kind === "online" ? (
             <>
