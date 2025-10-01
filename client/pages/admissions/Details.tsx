@@ -472,45 +472,6 @@ export function Details({
         </div>
       </div>
 
-      <div>
-        <div className="text-xs text-muted-foreground pb-1">
-          Uploaded Documents
-        </div>
-        <div className="space-y-1 text-sm">
-          {rec.documents.map((d, idx) => (
-            <div key={idx} className="flex items-center justify-between">
-              <a
-                href={d.url}
-                className="underline"
-                target="_blank"
-                rel="noreferrer"
-              >
-                {d.name}
-              </a>
-              <div className="space-x-2">
-                <Badge variant={d.verified ? "default" : "secondary"}>
-                  {d.verified ? "Verified" : "Pending"}
-                </Badge>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() =>
-                    onChange({
-                      ...rec,
-                      documents: rec.documents.map((x, i) =>
-                        i === idx ? { ...x, verified: !x.verified } : x,
-                      ),
-                    })
-                  }
-                >
-                  Toggle Verify
-                </Button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
       <Separator />
 
       <div className="flex flex-wrap gap-2">
