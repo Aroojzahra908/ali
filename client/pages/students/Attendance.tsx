@@ -18,6 +18,7 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import type { StudentRecord } from "./types";
 import { ensureAttendance } from "./types";
+import { supabase, isSupabaseConfigured } from "@/lib/supabaseClient";
 
 export function AttendanceTab({
   data,
@@ -26,9 +27,12 @@ export function AttendanceTab({
   data: StudentRecord[];
   onChange: (rec: StudentRecord) => void;
 }) {
+  const [batchesDb, setBatchesDb] = useState<string[]>([]);
   const batches = Array.from(
-    new Set(data.map((d) => d.admission.batch)),
-  ).sort();
+    new Set([...(batchesDb || []), ...data.map((d) => d.admission.batch)]),
+  )
+    .filter(Boolean)
+    .sort();
   const [batch, setBatch] = useState<string>(batches[0] || "");
   const [date, setDate] = useState<string>(
     new Date().toISOString().slice(0, 10),
@@ -37,6 +41,36 @@ export function AttendanceTab({
   useEffect(() => {
     if (!batch && batches.length) setBatch(batches[0]);
   }, [batches, batch]);
+
+  useEffect(() => {
+    if (!isSupabaseConfigured()) return;
+    (async () => {
+      const { data, error } = await supabase!
+        .from("batches")
+        .select("batch_code")
+        .order("created_at", { ascending: false });
+      if (!error && data) setBatchesDb((data as any[]).map((r) => r.batch_code));
+    })();
+
+    const ch = supabase!
+      .channel("attendance-batches")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "batches" },
+        (payload) => {
+          const r: any = payload.new ?? payload.old;
+          if (!r) return;
+          setBatchesDb((prev) => {
+            const set = new Set(prev);
+            if (payload.eventType === "DELETE") set.delete(r.batch_code);
+            else if (r.batch_code) set.add(r.batch_code);
+            return Array.from(set);
+          });
+        },
+      )
+      .subscribe();
+    return () => supabase!.removeChannel(ch);
+  }, []);
 
   const roster = useMemo(
     () => data.filter((d) => d.admission.batch === batch),
