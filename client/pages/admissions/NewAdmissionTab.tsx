@@ -231,6 +231,7 @@ export function NewAdmissionTab({ onCreated }: Props) {
         let record = fallbackRecord;
 
         if (supabase) {
+          const startDateVal = (startDate && startDate.trim()) || new Date().toISOString().slice(0, 10);
           const fullPayload = {
             name: trimmedName,
             email: trimmedEmail,
@@ -243,7 +244,7 @@ export function NewAdmissionTab({ onCreated }: Props) {
             fee_installments: fallbackRecord.fee.installments,
             documents: [],
             notes: trimmedNotes || null,
-            preferred_start: startDate || null,
+            start_date: startDateVal,
           } as const;
 
           // Try applications with full payload, then minimal, then public_applications
@@ -252,7 +253,16 @@ export function NewAdmissionTab({ onCreated }: Props) {
             email: fullPayload.email,
             phone: fullPayload.phone,
             course: fullPayload.course,
-            preferred_start: fullPayload.preferred_start,
+            start_date: startDateVal,
+            status: "Pending",
+          } as const;
+
+          const publicMinimal = {
+            name: fullPayload.name,
+            email: fullPayload.email,
+            phone: fullPayload.phone,
+            course: fullPayload.course,
+            preferred_start: startDateVal,
             status: "Pending",
           } as const;
 
@@ -281,7 +291,7 @@ export function NewAdmissionTab({ onCreated }: Props) {
               lastErr = e2;
               const r3 = await supabase
                 .from("public_applications")
-                .insert(minimalPayload as any)
+                .insert(publicMinimal as any)
                 .select("*")
                 .single();
               if (r3.error) throw r3.error;
@@ -344,7 +354,7 @@ export function NewAdmissionTab({ onCreated }: Props) {
           (typeof error?.details === "string" && error.details) ||
           (typeof error?.code === "string" && `Error ${error.code}`) ||
           (error && typeof error === "object" ? JSON.stringify(error) : String(error));
-        console.error("Admission submission failed:", error);
+        console.error("Admission submission failed:", msg, error);
         toast({
           title: "Submission failed",
           description: msg,
