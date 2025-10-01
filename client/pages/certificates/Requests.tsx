@@ -188,7 +188,6 @@ export function RequestsTab({
                 <SelectValue placeholder="Select batch" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">-- None --</SelectItem>
                 {batchOptions.map((b) => (
                   <SelectItem key={b} value={b}>{b}</SelectItem>
                 ))}
