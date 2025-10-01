@@ -37,10 +37,12 @@ export function Details({
   rec,
   onChange,
   onDelete,
+  onCreated,
 }: {
   rec: AdmissionRecord;
   onChange: (next: AdmissionRecord) => void;
   onDelete?: (rec: AdmissionRecord) => void;
+  onCreated?: (rec: AdmissionRecord) => void;
 }) {
   const { toast } = useToast();
   const [batch, setBatch] = useState(rec.batch);
@@ -417,8 +419,9 @@ export function Details({
             )}
           </div>
           <DialogFooter className="pt-2">
-            <Button
-              onClick={async () => {
+            {!createdApp && (
+              <Button
+                onClick={async () => {
                 const fee = Math.max(0, Number(newFee || 0) || 0);
                 if (!newCourse || !newBatch || !newCampus || !fee) {
                   toast({ title: "Please fill all fields" });
@@ -471,11 +474,13 @@ export function Details({
                 } catch {}
 
                 setCreatedApp(newRecord);
+                onCreated?.(newRecord);
                 toast({ title: "Application created" });
               }}
             >
               Submit application
             </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
