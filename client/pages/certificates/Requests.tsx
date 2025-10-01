@@ -201,7 +201,6 @@ export function RequestsTab({
                 <SelectValue placeholder="Select course" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">-- None --</SelectItem>
                 {courseOptions.map((c) => (
                   <SelectItem key={c} value={c}>{c}</SelectItem>
                 ))}
