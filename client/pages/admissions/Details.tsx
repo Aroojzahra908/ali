@@ -428,9 +428,9 @@ export function Details({
                     return;
                   }
                   const now = new Date().toISOString();
-                  const newId = `${rec.id}-${Date.now().toString().slice(-4)}`;
-                  const newRecord: AdmissionRecord = {
-                    id: newId,
+                  const newId = Date.now().toString();
+                const newRecord: AdmissionRecord = {
+                  id: newId,
                     createdAt: now,
                     status: "Pending",
                     student: { ...rec.student },
@@ -456,11 +456,13 @@ export function Details({
                   try {
                     const { supabase } = await import("@/lib/supabaseClient");
                     if (supabase) {
+                      const phoneDigits = (newRecord.student.phone || "").replace(/\D+/g, "");
+                      const phoneValue = phoneDigits.length > 0 ? Number(phoneDigits) : null;
                       await supabase.from("applications").insert({
-                        app_id: newRecord.id,
+                        app_id: Number(newRecord.id) || newRecord.id,
                         name: newRecord.student.name,
                         email: newRecord.student.email,
-                        phone: newRecord.student.phone,
+                        phone: phoneValue,
                         course: newRecord.course,
                         batch: newRecord.batch,
                         campus: newRecord.campus,
