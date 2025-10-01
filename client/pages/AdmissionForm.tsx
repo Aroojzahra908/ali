@@ -249,6 +249,8 @@ export default function AdmissionForm() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [showVoucher, setShowVoucher] = useState(false);
   const [voucher, setVoucher] = useState<VoucherDetails | null>(null);
+  const campusOptions = useCampuses();
+  const [selectedCampus, setSelectedCampus] = useState<string>(campusOptions[0] || "");
 
   const selectedCourse = useMemo(
     () => courses.find((c) => c.id === course) ?? null,
