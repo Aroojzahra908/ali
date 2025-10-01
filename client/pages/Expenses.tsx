@@ -177,7 +177,7 @@ export default function Expenses() {
               >
                 <div className="space-y-1.5">
                   <Label htmlFor="date">Date</Label>
-                  <Input id="date" name="date" type="date" defaultValue={new Date().toISOString().slice(0,10)} required />
+                  <DatePicker id="date" name="date" defaultValue={new Date().toISOString().slice(0,10)} required />
                 </div>
                 <div className="space-y-1.5">
                   <Label>Type</Label>
