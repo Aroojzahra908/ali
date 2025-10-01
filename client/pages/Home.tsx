@@ -30,28 +30,34 @@ export default function Home() {
   useEffect(() => {
     const fetchCourses = async () => {
       setLoading(true);
-      if (isSupabaseConfigured()) {
-        const { data, error } = await supabase!
-          .from("courses")
-          .select("*")
-          .order("created_at", { ascending: false })
-          .limit(12);
-        if (!error && Array.isArray(data)) {
-          setCourses(data as any);
-          try {
-            mergeSupabaseCourses(
-              (data || []).map((c: any) => ({
-                id: c.id,
-                name: c.name,
-                duration: c.duration,
-                fees: Number(c.fees) || 0,
-                description: c.description || "",
-              })),
-            );
-          } catch {}
+      try {
+        if (isSupabaseConfigured()) {
+          const { data, error } = await supabase!
+            .from("courses")
+            .select("*")
+            .order("created_at", { ascending: false })
+            .limit(12);
+          if (!error && Array.isArray(data)) {
+            setCourses(data as any);
+            try {
+              mergeSupabaseCourses(
+                (data || []).map((c: any) => ({
+                  id: c.id,
+                  name: c.name,
+                  duration: c.duration,
+                  fees: Number(c.fees) || 0,
+                  description: c.description || "",
+                })),
+              );
+            } catch {}
+          } else fallbackToLocal();
         } else fallbackToLocal();
-      } else fallbackToLocal();
-      setLoading(false);
+      } catch (err) {
+        console.warn("Home courses fetch failed, using local fallback", err);
+        fallbackToLocal();
+      } finally {
+        setLoading(false);
+      }
     };
     function fallbackToLocal() {
       try {
