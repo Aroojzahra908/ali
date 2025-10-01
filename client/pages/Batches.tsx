@@ -218,6 +218,10 @@ export default function Batches() {
     if (!cCourse && coursesDyn.length) setCCourse(coursesDyn[0]);
   }, [coursesDyn, cCourse]);
 
+  useEffect(() => {
+    if (!cCampus && campusOptions.length) setCCampus(campusOptions[0]);
+  }, [campusOptions, cCampus]);
+
   const genCode = (course: string, campus: string) => {
     const c = course
       .split(" ")
