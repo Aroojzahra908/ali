@@ -90,13 +90,10 @@ export function createServer() {
 
   // Admin: Users management
   // Registered only if service role env vars are present (checked inside handlers)
-  app.get("/api/admin/users", (await import("./routes/users")).listUsers);
-  app.post("/api/admin/users", (await import("./routes/users")).createUser);
-  app.patch("/api/admin/users/:id", (await import("./routes/users")).updateUser);
-  app.post(
-    "/api/admin/users/:id/reset-password",
-    (await import("./routes/users")).resetPassword,
-  );
+  app.get("/api/admin/users", listUsers);
+  app.post("/api/admin/users", createUser);
+  app.patch("/api/admin/users/:id", updateUser);
+  app.post("/api/admin/users/:id/reset-password", resetPassword);
 
   // Role permissions persistence (read open, write requires ADMIN_API_TOKEN)
   app.get("/api/role-perms", getRolePerms);
