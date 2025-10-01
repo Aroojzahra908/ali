@@ -218,6 +218,9 @@ export default function CourseCatalog() {
                 </button>
               ))}
             </div>
+            <Button asChild className="h-9">
+              <Link to="/contact">Contact Us</Link>
+            </Button>
           </div>
         </div>
         {/* Only show big grid on dedicated pages; not on the combined 'all' view */}
