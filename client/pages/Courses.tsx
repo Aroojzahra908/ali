@@ -521,7 +521,7 @@
 //                   </TableCell>
 //                   <TableCell>{c.category}</TableCell>
 //                   <TableCell>{c.duration}</TableCell>
-//                   <TableCell>₨ {c.fees.toLocaleString()}</TableCell>
+//                   <TableCell>��� {c.fees.toLocaleString()}</TableCell>
 //                   <TableCell className="text-right">{c.createdAt}</TableCell>
 //                 </TableRow>
 //               ))}
@@ -593,14 +593,16 @@
 //   );
 // }
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
+import { supabase, isSupabaseConfigured } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/components/ui/use-toast";
-import { mergeSupabaseCourses } from "@/lib/courseStore";
+import { mergeSupabaseCourses, addStoredCourse, getStoredCourses } from "@/lib/courseStore";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 
 // Full course type
 type Course = {
@@ -627,24 +629,42 @@ export default function CoursesAdmin() {
   // Fetch courses from Supabase
   const fetchCourses = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from("courses")
-      .select("*")
-      .order("created_at", { ascending: false });
-    if (error) console.error(error);
-    else {
-      setCourses(data || []);
-      try {
-        mergeSupabaseCourses(
-          (data || []).map((c: any) => ({
-            id: c.id,
-            name: c.name,
-            duration: c.duration,
-            fees: Number(c.fees) || 0,
-            description: c.description || "",
-          })),
-        );
-      } catch {}
+    if (isSupabaseConfigured()) {
+      const { data, error } = await supabase!
+        .from("courses")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) console.error(error);
+      else {
+        setCourses((data as any) || []);
+        try {
+          mergeSupabaseCourses(
+            (data || []).map((c: any) => ({
+              id: c.id,
+              name: c.name,
+              duration: c.duration,
+              fees: Number(c.fees) || 0,
+              description: c.description || "",
+            })),
+          );
+        } catch {}
+      }
+    } else {
+      const local = getStoredCourses();
+      setCourses(
+        local.map((c) => ({
+          id: c.id,
+          name: c.name,
+          category: "Development",
+          duration: c.duration,
+          fees: c.fees,
+          description: c.description,
+          featured: false,
+          status: "live",
+          start_date: null,
+          created_at: c.createdAt,
+        })) as any,
+      );
     }
     setLoading(false);
   };
@@ -656,17 +676,43 @@ export default function CoursesAdmin() {
   // Add new course
   const handleAddCourse = async (data: any) => {
     const newCourse: NewCourse = {
-      name: data.name,
-      duration: data.duration,
-      fees: Number(data.fees),
-      description: data.description,
-      category: data.category || "Development",
-      featured: false,
-      status: data.status || "live",
-      start_date: data.start_date || null,
+      name: String(data.name || "").trim(),
+      duration: String(data.duration || "").trim(),
+      fees: Number(data.fees || 0),
+      description: String(data.description || ""),
+      category: (data.category as any) || "Development",
+      featured: Boolean(data.featured),
+      status: (data.status as any) || "live",
+      start_date: data.start_date ? String(data.start_date) : null,
     };
 
-    const { data: inserted, error } = await supabase
+    if (!isSupabaseConfigured()) {
+      const added = addStoredCourse({
+        name: newCourse.name,
+        duration: newCourse.duration,
+        fees: newCourse.fees,
+        description: newCourse.description,
+      });
+      setCourses((prev) => [
+        {
+          id: added.id,
+          name: added.name,
+          category: newCourse.category,
+          duration: added.duration,
+          fees: added.fees,
+          description: added.description,
+          featured: newCourse.featured,
+          status: newCourse.status,
+          start_date: newCourse.start_date,
+          created_at: added.createdAt,
+        } as any,
+        ...prev,
+      ]);
+      toast({ title: "Course added locally", description: added.name });
+      return;
+    }
+
+    const { data: inserted, error } = await supabase!
       .from("courses")
       .insert([newCourse])
       .select()
@@ -876,6 +922,10 @@ export default function CoursesAdmin() {
 
 // Course creation form
 function CreateCourseForm({ onSubmit }: { onSubmit: (data: any) => void }) {
+  const [featured, setFeatured] = useState(false);
+  const [status, setStatus] = useState<"live" | "upcoming">("live");
+  const [category, setCategory] = useState("Development");
+
   return (
     <Card>
       <CardHeader>
@@ -887,9 +937,15 @@ function CreateCourseForm({ onSubmit }: { onSubmit: (data: any) => void }) {
           onSubmit={(e) => {
             e.preventDefault();
             const form = e.target as HTMLFormElement;
-            const data = Object.fromEntries(new FormData(form).entries());
+            const data = Object.fromEntries(new FormData(form).entries()) as any;
+            data.featured = featured;
+            data.status = status;
+            data.category = category;
             onSubmit(data);
             form.reset();
+            setFeatured(false);
+            setStatus("live");
+            setCategory("Development");
           }}
         >
           <div className="space-y-1.5">
@@ -907,6 +963,40 @@ function CreateCourseForm({ onSubmit }: { onSubmit: (data: any) => void }) {
           <div className="sm:col-span-2 space-y-1.5">
             <Label htmlFor="description">Description</Label>
             <Textarea id="description" name="description" />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Category</Label>
+            <Select value={category} onValueChange={setCategory} name="category">
+              <SelectTrigger>
+                <SelectValue placeholder="Select category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Development">Development</SelectItem>
+                <SelectItem value="Design">Design</SelectItem>
+                <SelectItem value="Data">Data</SelectItem>
+                <SelectItem value="Marketing">Marketing</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Status</Label>
+            <Select value={status} onValueChange={(v) => setStatus(v as any)} name="status">
+              <SelectTrigger>
+                <SelectValue placeholder="Select status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="live">Live</SelectItem>
+                <SelectItem value="upcoming">Upcoming</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="start_date">Start Date (if upcoming)</Label>
+            <Input id="start_date" name="start_date" type="date" />
+          </div>
+          <div className="flex items-center gap-2">
+            <Switch checked={featured} onCheckedChange={setFeatured} />
+            <Label>Featured</Label>
           </div>
           <div className="sm:col-span-2 flex justify-end gap-2">
             <Button type="reset" variant="outline">
