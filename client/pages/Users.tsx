@@ -460,13 +460,7 @@ export default function Users() {
                       <Button
                         type="button"
                         variant="outline"
-                        onClick={() => {
-                          const pwd = Math.random().toString(36).slice(2, 10);
-                          toast({
-                            title: "Password reset",
-                            description: `Temporary password: ${pwd}`,
-                          });
-                        }}
+                        onClick={() => resetPwdMut.mutate(selected.id)}
                       >
                         <RefreshCw className="mr-2 h-4 w-4" /> Reset Password
                       </Button>
