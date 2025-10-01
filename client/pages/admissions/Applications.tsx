@@ -139,6 +139,7 @@ export function ApplicationsTab({
   data,
   onUpdate,
   onDeleted,
+  onCreated,
   title = "Admission Applications",
   subtitle,
   filters = null,
@@ -146,6 +147,7 @@ export function ApplicationsTab({
   data: AdmissionRecord[];
   onUpdate: (rec: AdmissionRecord) => void;
   onDeleted?: (id: string) => void;
+  onCreated?: (rec: AdmissionRecord) => void;
   title?: string;
   subtitle?: string;
   filters?: ReactNode;
@@ -357,6 +359,7 @@ export function ApplicationsTab({
               rec={record}
               onChange={onUpdate}
               onDelete={(r) => void handleDelete(r)}
+              onCreated={onCreated}
             />
           )}
         </SheetContent>
