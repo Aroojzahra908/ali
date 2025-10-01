@@ -1033,7 +1033,7 @@ function CreateCourseForm({ onSubmit }: { onSubmit: (data: any) => void }) {
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="start_date">Start Date (if upcoming)</Label>
-            <Input id="start_date" name="start_date" type="date" />
+            <DatePicker id="start_date" name="start_date" />
           </div>
           <div className="flex items-center gap-2">
             <Switch checked={featured} onCheckedChange={setFeatured} />
