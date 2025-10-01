@@ -422,62 +422,62 @@ export function Details({
             {!createdApp && (
               <Button
                 onClick={async () => {
-                const fee = Math.max(0, Number(newFee || 0) || 0);
-                if (!newCourse || !newBatch || !newCampus || !fee) {
-                  toast({ title: "Please fill all fields" });
-                  return;
-                }
-                const now = new Date().toISOString();
-                const newId = `${rec.id}-${Date.now().toString().slice(-4)}`;
-                const newRecord: AdmissionRecord = {
-                  id: newId,
-                  createdAt: now,
-                  status: "Pending",
-                  student: { ...rec.student },
-                  course: newCourse,
-                  batch: newBatch,
-                  campus: newCampus,
-                  fee: {
-                    total: fee,
-                    installments: [
-                      {
-                        id: "due",
-                        amount: fee,
-                        dueDate: new Date(
-                          Date.now() + 7 * 24 * 60 * 60 * 1000,
-                        ).toISOString(),
-                      },
-                    ],
-                  },
-                  documents: [],
-                  notes: `Linked to ${rec.id}`,
-                };
-
-                try {
-                  const { supabase } = await import("@/lib/supabaseClient");
-                  if (supabase) {
-                    await supabase.from("applications").insert({
-                      app_id: newRecord.id,
-                      name: newRecord.student.name,
-                      email: newRecord.student.email,
-                      phone: newRecord.student.phone,
-                      course: newRecord.course,
-                      batch: newRecord.batch,
-                      campus: newRecord.campus,
-                      fee_total: newRecord.fee.total,
-                      fee_installments: newRecord.fee.installments,
-                      status: newRecord.status,
-                      created_at: newRecord.createdAt,
-                      notes: newRecord.notes,
-                    });
+                  const fee = Math.max(0, Number(newFee || 0) || 0);
+                  if (!newCourse || !newBatch || !newCampus || !fee) {
+                    toast({ title: "Please fill all fields" });
+                    return;
                   }
-                } catch {}
+                  const now = new Date().toISOString();
+                  const newId = `${rec.id}-${Date.now().toString().slice(-4)}`;
+                  const newRecord: AdmissionRecord = {
+                    id: newId,
+                    createdAt: now,
+                    status: "Pending",
+                    student: { ...rec.student },
+                    course: newCourse,
+                    batch: newBatch,
+                    campus: newCampus,
+                    fee: {
+                      total: fee,
+                      installments: [
+                        {
+                          id: "due",
+                          amount: fee,
+                          dueDate: new Date(
+                            Date.now() + 7 * 24 * 60 * 60 * 1000,
+                          ).toISOString(),
+                        },
+                      ],
+                    },
+                    documents: [],
+                    notes: `Linked to ${rec.id}`,
+                  };
 
-                setCreatedApp(newRecord);
-                onCreated?.(newRecord);
-                toast({ title: "Application created" });
-              }}
-            >
+                  try {
+                    const { supabase } = await import("@/lib/supabaseClient");
+                    if (supabase) {
+                      await supabase.from("applications").insert({
+                        app_id: newRecord.id,
+                        name: newRecord.student.name,
+                        email: newRecord.student.email,
+                        phone: newRecord.student.phone,
+                        course: newRecord.course,
+                        batch: newRecord.batch,
+                        campus: newRecord.campus,
+                        fee_total: newRecord.fee.total,
+                        fee_installments: newRecord.fee.installments,
+                        status: newRecord.status,
+                        created_at: newRecord.createdAt,
+                        notes: newRecord.notes,
+                      });
+                    }
+                  } catch {}
+
+                  setCreatedApp(newRecord);
+                  onCreated?.(newRecord);
+                  toast({ title: "Application created" });
+                }}
+              >
               Submit application
             </Button>
             )}
