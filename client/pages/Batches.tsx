@@ -93,6 +93,35 @@ export default function Batches() {
   const [batches, setBatches] = useState<BatchItem[]>([]);
   const [slots, setSlots] = useState<TimeSlot[]>([]);
 
+  useEffect(() => {
+    const fetchBatches = async () => {
+      try {
+        const res = await fetch("/api/batches");
+        const json = await res.json();
+        if (json && json.ok) {
+          const items: BatchItem[] = (json.items as any[]).map((r) => ({
+            id: r.batch_id,
+            course: r.course_name,
+            code: r.batch_code,
+            campus: r.campus_name,
+            startDate: r.start_date,
+            endDate: r.end_date,
+            instructor: r.instructor,
+            maxStudents: r.max_students,
+            currentStudents: r.current_students,
+          }));
+          setBatches(items);
+          if (items[0]) setActiveBatchId(items[0].id);
+        } else if (json && json.error) {
+          toast({ title: "Failed to load batches", description: json.error });
+        }
+      } catch (err: any) {
+        // Ignore in dev if backend not configured yet
+      }
+    };
+    fetchBatches();
+  }, []);
+
   // Create form defaults
   const [cCourse, setCCourse] = useState("");
   const [cCampus, setCCampus] = useState(CAMPUSES[0]);
@@ -148,28 +177,48 @@ export default function Batches() {
     return `${c}-${k}-${seq}`;
   };
 
-  const createBatch = (data: {
+  const createBatch = async (data: {
     start: string;
     end: string;
     max: number;
     current: number;
   }) => {
-    const id = `b-${Date.now()}`;
     const code = genCode(cCourse, cCampus);
-    const b: BatchItem = {
-      id,
-      course: cCourse,
-      code,
-      campus: cCampus,
-      startDate: data.start,
-      endDate: data.end,
-      instructor: cInstructor,
-      maxStudents: data.max,
-      currentStudents: data.current,
-    };
-    setBatches((prev) => [b, ...prev]);
-    setActiveBatchId(id);
-    toast({ title: "Batch created", description: `${code} (${cCourse})` });
+    try {
+      const res = await fetch("/api/batches", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          course_name: cCourse,
+          campus_name: cCampus,
+          batch_code: code,
+          start_date: data.start,
+          end_date: data.end,
+          instructor: cInstructor,
+          max_students: data.max,
+          current_students: data.current,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.ok) throw new Error(json?.error || "Failed");
+      const r = json.item as any;
+      const b: BatchItem = {
+        id: r.batch_id,
+        course: r.course_name,
+        code: r.batch_code,
+        campus: r.campus_name,
+        startDate: r.start_date,
+        endDate: r.end_date,
+        instructor: r.instructor,
+        maxStudents: r.max_students,
+        currentStudents: r.current_students,
+      };
+      setBatches((prev) => [b, ...prev]);
+      setActiveBatchId(b.id);
+      toast({ title: "Batch created", description: `${code} (${cCourse})` });
+    } catch (err: any) {
+      toast({ title: "Create failed", description: err?.message || String(err) });
+    }
   };
 
   const addSlot = (payload: Omit<TimeSlot, "id">) => {
@@ -327,6 +376,7 @@ export default function Batches() {
                     value={cInstructor}
                     onChange={(e) => setCInstructor(e.target.value)}
                     placeholder="Enter instructor name"
+                    required
                   />
                 </div>
                 <div className="space-y-1.5">
