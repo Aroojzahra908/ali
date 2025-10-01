@@ -635,15 +635,17 @@ function CreateEnquiry({ onCreated, openEnquiry }: { onCreated: (row: any) => vo
           .select("name,status,created_at")
           .eq("status", "live")
           .order("created_at", { ascending: false });
-        if (!error && data) {
-          const names = data
-            .map((d: any) => String(d.name || ""))
-            .filter(Boolean);
+        if (!error && Array.isArray(data)) {
+          const names = data.map((d: any) => String(d.name || "")).filter(Boolean);
           setCourses(Array.from(new Set(names)));
+          if (data.length === 0) {
+            toast({ title: "No courses in database", description: "Add courses in Supabase 'courses' table (status=live)." });
+          }
           return;
         }
       } catch {}
-      setCourses(getAllCourseNames());
+      setCourses([]);
+      toast({ title: "Courses unavailable", description: "Could not load from Supabase. Check credentials." });
     };
     load();
     const refresh = () => load();
@@ -789,6 +791,15 @@ function CreateEnquiry({ onCreated, openEnquiry }: { onCreated: (row: any) => vo
                 stage: payload.stage,
                 status: payload.status,
               });
+
+              try {
+                await supabase
+                  .from("applications")
+                  .insert([
+                    { name: payload.name, email: payload.email, phone: payload.contact, course: payload.course, status: "Pending" },
+                  ]);
+              } catch {}
+
               toast({
                 title: "Enquiry created",
                 description: `${payload.name} (${payload.course}) saved.`,
