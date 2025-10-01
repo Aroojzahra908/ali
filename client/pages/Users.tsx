@@ -38,7 +38,6 @@ import {
   UserCheck,
   ShieldAlert,
   Shield,
-  UserRound,
 } from "lucide-react";
 
 export type UserStatus = "active" | "suspended";
