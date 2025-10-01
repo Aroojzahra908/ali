@@ -3,6 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import DatePicker from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -590,19 +591,19 @@ export default function Batches() {
                 </div>
                 <div className="space-y-1.5">
                   <Label>Starting Date</Label>
-                  <Input
+                  <DatePicker
                     name="start"
-                    type="date"
                     defaultValue={today()}
+                    placeholder="YYYY-MM-DD"
                     required
                   />
                 </div>
                 <div className="space-y-1.5">
                   <Label>Ending Date</Label>
-                  <Input
+                  <DatePicker
                     name="end"
-                    type="date"
                     defaultValue={today()}
+                    placeholder="YYYY-MM-DD"
                     required
                   />
                 </div>
@@ -774,10 +775,10 @@ export default function Batches() {
               >
                 <div className="space-y-1.5">
                   <Label>Date</Label>
-                  <Input
+                  <DatePicker
                     name="day"
-                    type="date"
                     defaultValue={today()}
+                    placeholder="YYYY-MM-DD"
                     required
                   />
                 </div>
