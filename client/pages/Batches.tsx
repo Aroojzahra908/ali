@@ -795,6 +795,15 @@ export default function Batches() {
                         </TableCell>
                         <TableCell>{s.room}</TableCell>
                         <TableCell>{s.faculty}</TableCell>
+                        <TableCell>
+                          {s.attendanceLink ? (
+                            <a href={s.attendanceLink} target="_blank" rel="noreferrer" className="underline text-primary">
+                              Open
+                            </a>
+                          ) : (
+                            "-"
+                          )}
+                        </TableCell>
                         <TableCell className="text-right">
                           <Button
                             size="sm"
