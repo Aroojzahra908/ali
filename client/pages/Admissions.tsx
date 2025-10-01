@@ -110,6 +110,47 @@ export default function Admissions() {
   const [view, setView] = useState<AdmissionsView>("new");
   const [courseFilter, setCourseFilter] = useState<string>("__all");
   const [campusFilter, setCampusFilter] = useState<string>("__all");
+  const [dbCourseOptions, setDbCourseOptions] = useState<string[]>([]);
+  const [dbCampusOptions, setDbCampusOptions] = useState<string[]>([]);
+
+  const loadFilterOptions = useCallback(async () => {
+    if (!supabase) {
+      setDbCourseOptions([]);
+      setDbCampusOptions([]);
+      return;
+    }
+
+    try {
+      const [coursesResponse, campusesResponse] = await Promise.all([
+        supabase.from("courses").select("name").order("name"),
+        supabase.from("campuses").select("name").order("name"),
+      ]);
+
+      if (!coursesResponse.error && Array.isArray(coursesResponse.data)) {
+        const nextCourses = Array.from(
+          new Set(
+            coursesResponse.data
+              .map((row: any) => String(row?.name ?? "").trim())
+              .filter(Boolean),
+          ),
+        ).sort((a, b) => a.localeCompare(b));
+        setDbCourseOptions(nextCourses);
+      }
+
+      if (!campusesResponse.error && Array.isArray(campusesResponse.data)) {
+        const nextCampuses = Array.from(
+          new Set(
+            campusesResponse.data
+              .map((row: any) => String(row?.name ?? "").trim())
+              .filter(Boolean),
+          ),
+        ).sort((a, b) => a.localeCompare(b));
+        setDbCampusOptions(nextCampuses);
+      }
+    } catch (error) {
+      console.error("Error loading filter options from Supabase", error);
+    }
+  }, [supabase]);
 
   const fetchApplications = useCallback(async () => {
     const records = new Map<string, AdmissionRecord>();
