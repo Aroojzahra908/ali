@@ -558,20 +558,26 @@ export default function Admissions() {
   );
 
   const courseOptions = useMemo(() => {
+    if (dbCourseOptions.length > 0) return dbCourseOptions;
     const set = new Set<string>();
     for (const item of items) {
       if (item.course) set.add(item.course);
     }
-    return Array.from(set).sort();
-  }, [items]);
+    return Array.from(set)
+      .filter(Boolean)
+      .sort((a, b) => a.localeCompare(b));
+  }, [dbCourseOptions, items]);
 
   const campusOptions = useMemo(() => {
+    if (dbCampusOptions.length > 0) return dbCampusOptions;
     const set = new Set<string>();
     for (const item of items) {
       if (item.campus) set.add(item.campus);
     }
-    return Array.from(set).sort();
-  }, [items]);
+    return Array.from(set)
+      .filter(Boolean)
+      .sort((a, b) => a.localeCompare(b));
+  }, [dbCampusOptions, items]);
 
   const counts = useMemo(() => {
     const now = new Date();
