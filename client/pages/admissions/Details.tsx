@@ -378,21 +378,6 @@ export function Details({
       </div>
       <Separator />
 
-      <div className="grid gap-3 sm:grid-cols-2">
-        <div>
-          <div className="text-xs text-muted-foreground">
-            Assigned Course & Batch
-          </div>
-          <div className="font-medium">{rec.course}</div>
-          <div className="text-xs text-muted-foreground">
-            Batch: {rec.batch}
-          </div>
-        </div>
-        <div>
-          <div className="text-xs text-muted-foreground">Campus</div>
-          <div className="font-medium">{rec.campus}</div>
-        </div>
-      </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-2">
