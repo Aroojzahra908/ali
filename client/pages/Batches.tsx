@@ -92,6 +92,7 @@ function statusFromDates(
 }
 
 export default function Batches() {
+  const campusOptions = useCampuses();
   const [batches, setBatches] = useState<BatchItem[]>([]);
   const [slots, setSlots] = useState<TimeSlot[]>([]);
 
