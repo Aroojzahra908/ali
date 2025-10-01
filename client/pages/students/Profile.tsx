@@ -426,11 +426,7 @@ export function Profile({
             </div>
             <div>
               <div className="text-xs text-muted-foreground">Due Date</div>
-              <Input
-                type="date"
-                value={newDue}
-                onChange={(e) => setNewDue(e.target.value)}
-              />
+              <DatePicker value={newDue} onChange={(v) => setNewDue(v)} />
             </div>
             <div className="col-span-2">
               <Button size="sm" onClick={addInstallment}>
