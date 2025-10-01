@@ -40,7 +40,10 @@ import {
   Shield,
 } from "lucide-react";
 
-import { supabase, isSupabaseConfigured as hasSupabase } from "@/lib/supabaseClient";
+import {
+  supabase,
+  isSupabaseConfigured as hasSupabase,
+} from "@/lib/supabaseClient";
 
 export type UserStatus = "active" | "suspended";
 export type Role = "Owner" | "Admin" | "Instructor" | "Frontdesk" | "Student";
@@ -136,7 +139,9 @@ export default function Users() {
                 const rec = payload.new || payload.old;
                 if (!rec) return;
                 if (payload.eventType === "DELETE") {
-                  setUsers((prev) => prev.filter((u) => u.id !== String(rec.id)));
+                  setUsers((prev) =>
+                    prev.filter((u) => u.id !== String(rec.id)),
+                  );
                   return;
                 }
                 const item: UserItem = {
@@ -190,12 +195,23 @@ export default function Users() {
     if (hasSupabase()) {
       const { data, error } = await supabase!
         .from("app_users")
-        .insert([{ name: u.name, email: u.email, phone: u.phone || null, role: u.role, status: u.status }])
+        .insert([
+          {
+            name: u.name,
+            email: u.email,
+            phone: u.phone || null,
+            role: u.role,
+            status: u.status,
+          },
+        ])
         .select("id,name,email,phone,role,status")
         .single();
       if (error) {
         const code = (error as any)?.code;
-        const desc = code === "42501" ? "Blocked by RLS: allow INSERT on app_users for your role in Supabase." : "Create failed. Check RLS and keys.";
+        const desc =
+          code === "42501"
+            ? "Blocked by RLS: allow INSERT on app_users for your role in Supabase."
+            : "Create failed. Check RLS and keys.";
         toast({ title: "Failed to create user", description: desc });
         return;
       }
@@ -205,7 +221,10 @@ export default function Users() {
       const id = `u-${Date.now()}`;
       setUsers((prev) => [...prev, { ...u, id }]);
     }
-    toast({ title: "User created", description: `${u.name} (${u.role}) added.` });
+    toast({
+      title: "User created",
+      description: `${u.name} (${u.role}) added.`,
+    });
   }
 
   async function updateUser(id: string, patch: Partial<UserItem>) {
@@ -216,10 +235,16 @@ export default function Users() {
       if (patch.phone !== undefined) update.phone = patch.phone || null;
       if (patch.role !== undefined) update.role = patch.role;
       if (patch.status !== undefined) update.status = patch.status;
-      const { error } = await supabase!.from("app_users").update(update).eq("id", id);
+      const { error } = await supabase!
+        .from("app_users")
+        .update(update)
+        .eq("id", id);
       if (error) {
         const code = (error as any)?.code;
-        const desc = code === "42501" ? "Blocked by RLS: allow UPDATE on app_users for your role in Supabase." : "Update failed. Check RLS and keys.";
+        const desc =
+          code === "42501"
+            ? "Blocked by RLS: allow UPDATE on app_users for your role in Supabase."
+            : "Update failed. Check RLS and keys.";
         toast({ title: "Update failed", description: desc });
         return;
       }
@@ -228,7 +253,8 @@ export default function Users() {
     toast({ title: "User updated" });
   }
 
-  const setStatus = (id: string, status: UserStatus) => updateUser(id, { status });
+  const setStatus = (id: string, status: UserStatus) =>
+    updateUser(id, { status });
 
   const filteredUsers = users.filter((u) => {
     const matchesQuery = [u.name, u.email, u.role, u.phone]

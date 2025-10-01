@@ -45,9 +45,19 @@ export default function Campuses() {
     let unsub: (() => void) | undefined;
     (async () => {
       try {
-        const { data, error } = await supabase.from("campuses").select("id,name,code,city,address,status,created_at").order("created_at", { ascending: false });
+        const { data, error } = await supabase
+          .from("campuses")
+          .select("id,name,code,city,address,status,created_at")
+          .order("created_at", { ascending: false });
         if (!error && Array.isArray(data)) {
-          const mapped: Campus[] = data.map((c: any) => ({ id: String(c.id), name: c.name, code: c.code, city: c.city, address: c.address || "", status: (c.status as CampusStatus) || "active" }));
+          const mapped: Campus[] = data.map((c: any) => ({
+            id: String(c.id),
+            name: c.name,
+            code: c.code,
+            city: c.city,
+            address: c.address || "",
+            status: (c.status as CampusStatus) || "active",
+          }));
           setCampuses(mapped);
           if (mapped[0]) setSelectedId(mapped[0].id);
         }
@@ -56,25 +66,43 @@ export default function Campuses() {
       try {
         const ch = (supabase as any)?.channel?.("campuses_changes");
         if (ch) {
-          ch.on("postgres_changes", { event: "*", schema: "public", table: "campuses" }, (payload: any) => {
-            const rec = payload.new || payload.old;
-            if (!rec) return;
-            const item: Campus = { id: String(rec.id), name: rec.name, code: rec.code, city: rec.city, address: rec.address || "", status: (rec.status as CampusStatus) || "active" };
-            setCampuses((prev) => {
-              if (payload.eventType === "DELETE") return prev.filter((c) => c.id !== item.id);
-              const idx = prev.findIndex((c) => c.id === item.id);
-              if (idx === -1) return [item, ...prev];
-              const copy = prev.slice();
-              copy[idx] = item;
-              return copy;
-            });
-          }).subscribe();
-          unsub = () => { try { ch.unsubscribe(); } catch {} };
+          ch.on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "campuses" },
+            (payload: any) => {
+              const rec = payload.new || payload.old;
+              if (!rec) return;
+              const item: Campus = {
+                id: String(rec.id),
+                name: rec.name,
+                code: rec.code,
+                city: rec.city,
+                address: rec.address || "",
+                status: (rec.status as CampusStatus) || "active",
+              };
+              setCampuses((prev) => {
+                if (payload.eventType === "DELETE")
+                  return prev.filter((c) => c.id !== item.id);
+                const idx = prev.findIndex((c) => c.id === item.id);
+                if (idx === -1) return [item, ...prev];
+                const copy = prev.slice();
+                copy[idx] = item;
+                return copy;
+              });
+            },
+          ).subscribe();
+          unsub = () => {
+            try {
+              ch.unsubscribe();
+            } catch {}
+          };
         }
       } catch {}
     })();
 
-    return () => { if (unsub) unsub(); };
+    return () => {
+      if (unsub) unsub();
+    };
   }, []);
 
   const selected = useMemo(
@@ -87,15 +115,29 @@ export default function Campuses() {
     try {
       const { data, error } = await supabase
         .from("campuses")
-        .insert([{ name: c.name, code: c.code, city: c.city, address: c.address || null, status: c.status }])
+        .insert([
+          {
+            name: c.name,
+            code: c.code,
+            city: c.city,
+            address: c.address || null,
+            status: c.status,
+          },
+        ])
         .select("id,name,code,city,address,status")
         .single();
       if (error) throw error;
       const id = String((data as any).id);
       setCampuses((prev) => [{ ...c, id }, ...prev]);
-      toast({ title: "Campus added", description: `${c.name} (${c.code}) created.` });
+      toast({
+        title: "Campus added",
+        description: `${c.name} (${c.code}) created.`,
+      });
     } catch (e: any) {
-      toast({ title: "Failed to add campus", description: e?.message || "Check Supabase policies" });
+      toast({
+        title: "Failed to add campus",
+        description: e?.message || "Check Supabase policies",
+      });
     }
   };
 
@@ -107,16 +149,25 @@ export default function Campuses() {
       if (patch.city !== undefined) update.city = patch.city;
       if (patch.address !== undefined) update.address = patch.address || null;
       if (patch.status !== undefined) update.status = patch.status;
-      const { error } = await supabase.from("campuses").update(update).eq("id", id);
+      const { error } = await supabase
+        .from("campuses")
+        .update(update)
+        .eq("id", id);
       if (error) throw error;
-      setCampuses((prev) => prev.map((c) => (c.id === id ? { ...c, ...patch } : c)));
+      setCampuses((prev) =>
+        prev.map((c) => (c.id === id ? { ...c, ...patch } : c)),
+      );
       toast({ title: "Campus updated" });
     } catch (e: any) {
-      toast({ title: "Update failed", description: e?.message || "Check policies" });
+      toast({
+        title: "Update failed",
+        description: e?.message || "Check policies",
+      });
     }
   };
 
-  const setStatus = (id: string, status: CampusStatus) => updateCampus(id, { status });
+  const setStatus = (id: string, status: CampusStatus) =>
+    updateCampus(id, { status });
 
   return (
     <div className="space-y-4">
