@@ -337,7 +337,7 @@ export default function AdmissionForm() {
         let createdAt = issueDateISO;
 
         if (supabase) {
-          const payload = {
+          const fullPayload = {
             name: trimmed.name,
             email: trimmed.email,
             phone: trimmed.phone,
@@ -352,16 +352,49 @@ export default function AdmissionForm() {
               { id: "V1", amount: trimmed.amount, dueDate: dueDateISO },
             ],
             documents: [],
-          };
-          const { data, error } = await supabase
-            .from("applications")
-            .insert(payload)
-            .select("app_id, created_at")
-            .single();
-          if (error) throw error;
-          if (data?.app_id !== undefined && data?.app_id !== null)
-            reference = String(data.app_id);
-          if (data?.created_at) createdAt = String(data.created_at);
+          } as const;
+          const minimalPayload = {
+            name: fullPayload.name,
+            email: fullPayload.email,
+            phone: fullPayload.phone,
+            course: fullPayload.course,
+            preferred_start: fullPayload.start_date,
+            status: "Pending",
+          } as const;
+
+          let app: any | null = null;
+          try {
+            const r1 = await supabase
+              .from("applications")
+              .insert(fullPayload as any)
+              .select("app_id, created_at")
+              .single();
+            if (r1.error) throw r1.error;
+            app = r1.data;
+          } catch (e1) {
+            try {
+              const r2 = await supabase
+                .from("applications")
+                .insert(minimalPayload as any)
+                .select("id, created_at, app_id")
+                .single();
+              if (r2.error) throw r2.error;
+              app = r2.data;
+            } catch (e2) {
+              const r3 = await supabase
+                .from("public_applications")
+                .insert(minimalPayload as any)
+                .select("id, created_at")
+                .single();
+              if (r3.error) throw r3.error;
+              app = r3.data;
+            }
+          }
+          if (app?.app_id !== undefined && app?.app_id !== null)
+            reference = String(app.app_id);
+          if (app?.id !== undefined && app?.id !== null)
+            reference = String(app.id);
+          if (app?.created_at) createdAt = String(app.created_at);
         } else {
           const response = await fetch("/api/public/applications", {
             method: "POST",
