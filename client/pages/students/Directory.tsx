@@ -201,9 +201,7 @@ export function Directory({
         .filter((name) => name.length > 0)
         .sort((a, b) => a.localeCompare(b));
     }
-    const fromData = data
-      .map((d) => d.admission.course)
-      .filter((name) => name);
+    const fromData = data.map((d) => d.admission.course).filter((name) => name);
     const stored = getAllCourseNames();
     const merged = new Set<string>([...stored, ...fromData]);
     return Array.from(merged)
