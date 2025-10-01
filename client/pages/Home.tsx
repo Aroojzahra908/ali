@@ -105,7 +105,7 @@ export default function Home() {
                   <Link to="/courses">Browse Courses</Link>
                 </Button>
                 <Button asChild variant="outline" className="border-white/60 text-white hover:bg-white/10">
-                  <Link to="/admission-form">Get Admission</Link>
+                  <Link to="/admission-form" className="text-white">Get Admission</Link>
                 </Button>
                 <Button asChild className="bg-white text-black hover:bg-white/90">
                   <Link to="/contact">Contact Us</Link>
@@ -123,6 +123,24 @@ export default function Home() {
             <Link to="/courses/upcoming" className="rounded-full border px-3 py-1.5 hover:bg-white/10">Upcoming</Link>
             <Link to="/courses/latest" className="rounded-full border px-3 py-1.5 hover:bg-white/10">Latest</Link>
           </div>
+        </div>
+      </section>
+
+      {/* Highlights */}
+      <section>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <Card className="bg-gradient-to-br from-indigo-50 to-white dark:from-indigo-900/30 dark:to-background">
+            <CardHeader><CardTitle className="text-base">10k+ Learners</CardTitle></CardHeader>
+            <CardContent className="text-sm text-muted-foreground">Trusted by learners to upskill with hands‑on projects.</CardContent>
+          </Card>
+          <Card className="bg-gradient-to-br from-fuchsia-50 to-white dark:from-fuchsia-900/30 dark:to-background">
+            <CardHeader><CardTitle className="text-base">90% Placement Support</CardTitle></CardHeader>
+            <CardContent className="text-sm text-muted-foreground">Interview prep, referrals, and portfolio reviews.</CardContent>
+          </Card>
+          <Card className="bg-gradient-to-br from-emerald-50 to-white dark:from-emerald-900/30 dark:to-background">
+            <CardHeader><CardTitle className="text-base">Mentor‑Led Sessions</CardTitle></CardHeader>
+            <CardContent className="text-sm text-muted-foreground">Live Q&A and feedback from industry mentors.</CardContent>
+          </Card>
         </div>
       </section>
 
