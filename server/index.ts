@@ -69,6 +69,10 @@ export function createServer() {
 
   app.get("/api/demo", handleDemo);
 
+  // Batches
+  app.get("/api/batches", require("./routes/batches").listBatches);
+  app.post("/api/batches", require("./routes/batches").createBatch);
+
   // Contact submissions
   app.post("/api/contact-submissions", submitContact);
   app.get("/api/contact-submissions", listContacts);
