@@ -15,11 +15,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useCampuses } from "@/lib/campusStore";
-import { VoucherCard, type VoucherDetails } from "@/components/admissions/VoucherCard";
-import { buildVoucherId, printVoucher } from "@/components/admissions/printVoucher";
+import {
+  VoucherCard,
+  type VoucherDetails,
+} from "@/components/admissions/VoucherCard";
+import {
+  buildVoucherId,
+  printVoucher,
+} from "@/components/admissions/printVoucher";
 
 export function Details({
   rec,
@@ -41,7 +53,9 @@ export function Details({
   const [newBatch, setNewBatch] = useState("");
   const [newCampus, setNewCampus] = useState("");
   const [newFee, setNewFee] = useState<string>("");
-  const [dbCourses, setDbCourses] = useState<Array<{ name: string; fees?: number }>>([]);
+  const [dbCourses, setDbCourses] = useState<
+    Array<{ name: string; fees?: number }>
+  >([]);
   const [createdApp, setCreatedApp] = useState<AdmissionRecord | null>(null);
   const [voucher, setVoucher] = useState<VoucherDetails | null>(null);
 
@@ -68,7 +82,10 @@ export function Details({
           const listC = Array.isArray(cdata)
             ? cdata
                 .filter((r: any) => r?.name)
-                .map((r: any) => ({ name: String(r.name), fees: Number(r.fees ?? 0) || 0 }))
+                .map((r: any) => ({
+                  name: String(r.name),
+                  fees: Number(r.fees ?? 0) || 0,
+                }))
             : [];
           setDbCourses(listC);
         }
@@ -287,7 +304,10 @@ export function Details({
         >
           Mark as Paid
         </Button>
-        <Button onClick={() => setEnrollOpen(true)} className="rounded-full px-6 py-2 bg-primary/80 text-white backdrop-blur-sm hover:bg-primary">
+        <Button
+          onClick={() => setEnrollOpen(true)}
+          className="rounded-full px-6 py-2 bg-primary/80 text-white backdrop-blur-sm hover:bg-primary"
+        >
           Enroll another course
         </Button>
       </div>
@@ -314,14 +334,22 @@ export function Details({
                   </SelectTrigger>
                   <SelectContent>
                     {dbCourses.map((c) => (
-                      <SelectItem key={c.name} value={c.name}>{c.name}</SelectItem>
+                      <SelectItem key={c.name} value={c.name}>
+                        {c.name}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
               <div>
                 <Label>Fee (total)</Label>
-                <Input inputMode="numeric" value={newFee} disabled readOnly placeholder="Auto from course" />
+                <Input
+                  inputMode="numeric"
+                  value={newFee}
+                  disabled
+                  readOnly
+                  placeholder="Auto from course"
+                />
               </div>
               <div>
                 <Label>Batch</Label>
@@ -331,7 +359,9 @@ export function Details({
                   </SelectTrigger>
                   <SelectContent>
                     {batchOptions.map((b) => (
-                      <SelectItem key={b} value={b}>{b}</SelectItem>
+                      <SelectItem key={b} value={b}>
+                        {b}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -344,7 +374,9 @@ export function Details({
                   </SelectTrigger>
                   <SelectContent>
                     {campusOptions.map((c) => (
-                      <SelectItem key={c} value={c}>{c}</SelectItem>
+                      <SelectItem key={c} value={c}>
+                        {c}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -352,26 +384,35 @@ export function Details({
             </div>
             {createdApp && !voucher && (
               <div className="flex justify-end">
-                <Button onClick={() => {
-                  const v: VoucherDetails = {
-                    id: buildVoucherId(createdApp.id),
-                    reference: createdApp.id,
-                    studentName: createdApp.student.name,
-                    email: createdApp.student.email,
-                    phone: createdApp.student.phone,
-                    courseName: createdApp.course,
-                    campus: createdApp.campus,
-                    amount: createdApp.fee.total,
-                    issueDate: new Date().toISOString(),
-                    dueDate: createdApp.fee.installments[0]?.dueDate || new Date().toISOString(),
-                  };
-                  setVoucher(v);
-                }}>Generate voucher</Button>
+                <Button
+                  onClick={() => {
+                    const v: VoucherDetails = {
+                      id: buildVoucherId(createdApp.id),
+                      reference: createdApp.id,
+                      studentName: createdApp.student.name,
+                      email: createdApp.student.email,
+                      phone: createdApp.student.phone,
+                      courseName: createdApp.course,
+                      campus: createdApp.campus,
+                      amount: createdApp.fee.total,
+                      issueDate: new Date().toISOString(),
+                      dueDate:
+                        createdApp.fee.installments[0]?.dueDate ||
+                        new Date().toISOString(),
+                    };
+                    setVoucher(v);
+                  }}
+                >
+                  Generate voucher
+                </Button>
               </div>
             )}
             {voucher && (
               <div className="space-y-2">
-                <VoucherCard voucher={voucher} onPrint={() => printVoucher(voucher)} />
+                <VoucherCard
+                  voucher={voucher}
+                  onPrint={() => printVoucher(voucher)}
+                />
               </div>
             )}
           </div>
@@ -399,7 +440,9 @@ export function Details({
                       {
                         id: "due",
                         amount: fee,
-                        dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+                        dueDate: new Date(
+                          Date.now() + 7 * 24 * 60 * 60 * 1000,
+                        ).toISOString(),
                       },
                     ],
                   },

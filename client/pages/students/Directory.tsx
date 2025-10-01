@@ -615,7 +615,9 @@ export function Directory({
                           Freeze
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
-                          <Link to="/dashboard/certificates">Request Certificate</Link>
+                          <Link to="/dashboard/certificates">
+                            Request Certificate
+                          </Link>
                         </DropdownMenuItem>
                       </DropdownMenuGroup>
                     </DropdownMenuContent>
@@ -626,35 +628,35 @@ export function Directory({
           ))}
         </TableBody>
       </Table>
-    {/* Profile Sheet */}
-    <Sheet open={!!view} onOpenChange={(o) => !o && setView(null)}>
-      <SheetContent side="right" className="w-[440px] sm:w-[520px]">
-        <SheetHeader>
-          <SheetTitle>Student Profile</SheetTitle>
-        </SheetHeader>
-        <div className="mt-4 space-y-4">
-          {view ? <ProfileSimple student={view} /> : null}
-          <div className="pt-2">
-            <Button
-              variant="destructive"
-              onClick={async () => {
-                if (!view) return;
-                if (!window.confirm("Delete this student?")) return;
-                try {
-                  await onDelete?.(view.id);
-                  toast({ title: "Student deleted" });
-                  setView(null);
-                } catch (e) {
-                  toast({ title: "Delete failed" });
-                }
-              }}
-            >
-              Delete Student
-            </Button>
+      {/* Profile Sheet */}
+      <Sheet open={!!view} onOpenChange={(o) => !o && setView(null)}>
+        <SheetContent side="right" className="w-[440px] sm:w-[520px]">
+          <SheetHeader>
+            <SheetTitle>Student Profile</SheetTitle>
+          </SheetHeader>
+          <div className="mt-4 space-y-4">
+            {view ? <ProfileSimple student={view} /> : null}
+            <div className="pt-2">
+              <Button
+                variant="destructive"
+                onClick={async () => {
+                  if (!view) return;
+                  if (!window.confirm("Delete this student?")) return;
+                  try {
+                    await onDelete?.(view.id);
+                    toast({ title: "Student deleted" });
+                    setView(null);
+                  } catch (e) {
+                    toast({ title: "Delete failed" });
+                  }
+                }}
+              >
+                Delete Student
+              </Button>
+            </div>
           </div>
-        </div>
-      </SheetContent>
-    </Sheet>
-  </div>
+        </SheetContent>
+      </Sheet>
+    </div>
   );
 }

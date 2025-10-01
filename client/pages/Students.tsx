@@ -107,8 +107,6 @@
 //   );
 // }
 
-
-
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useEffect, useState } from "react";
 import type { StudentRecord } from "./students/types";
@@ -185,8 +183,7 @@ export default function Students() {
               attendance: base.attendance ?? r.attendance ?? [],
               documents: base.documents ?? r.documents ?? [],
               communications: base.communications ?? r.communications ?? [],
-              enrolledCourses:
-                base.enrolledCourses ?? r.enrolled_courses ?? [],
+              enrolledCourses: base.enrolledCourses ?? r.enrolled_courses ?? [],
               notes: base.notes ?? r.notes,
             };
           });
