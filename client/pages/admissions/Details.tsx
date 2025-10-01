@@ -31,19 +31,51 @@ export function Details({
 }) {
   const { toast } = useToast();
   const [batch, setBatch] = useState(rec.batch);
-  const [campus, setCampus] = useState(rec.campus);
-  const navigate = useNavigate();
+  const [campus] = useState(rec.campus);
+  const [batchOptions, setBatchOptions] = useState<string[]>([]);
 
-  // Quick Enroll (no form) state
-  const [qCourseId, setQCourseId] = useState<string>(COURSES[0]?.id || "");
-  const [qCourseName, setQCourseName] = useState<string>(
-    COURSES[0]?.name || rec.course,
-  );
-  const [qAmount, setQAmount] = useState<number>(
-    Number(COURSES[0]?.fees || rec.fee.total || 0),
-  );
-  const [qBatch, setQBatch] = useState<string>(rec.batch);
-  const [qCampus, setQCampus] = useState<string>(rec.campus);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const set = new Set<string>();
+      try {
+        const { supabase } = await import("@/lib/supabaseClient");
+        if (supabase) {
+          const { data } = await supabase
+            .from("batches")
+            .select("batch_code")
+            .order("created_at", { ascending: false });
+          if (Array.isArray(data)) {
+            for (const r of data as any[]) if (r.batch_code) set.add(String(r.batch_code));
+          }
+        }
+      } catch {}
+      if (set.size === 0) {
+        try {
+          const res = await fetch("/api/batches");
+          if (res.ok) {
+            const p = await res.json();
+            const items = Array.isArray(p?.items) ? p.items : [];
+            for (const it of items) if (it?.batch_code) set.add(String(it.batch_code));
+          }
+        } catch {}
+      }
+      if (set.size === 0) {
+        try {
+          const { studentsMock } = await import("@/pages/students/data");
+          for (const s of studentsMock) if (s.admission?.batch) set.add(String(s.admission.batch));
+        } catch {}
+      }
+      const list = Array.from(set).sort();
+      if (!cancelled) {
+        setBatchOptions(list);
+        if (list.length && !list.includes(batch)) setBatch(list[0]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const approve = () => {
     if (rec.status === "Verified") return;
