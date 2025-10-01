@@ -632,14 +632,13 @@ function CreateEnquiry({ onCreated, openEnquiry }: { onCreated: (row: any) => vo
       try {
         const { data, error } = await supabase
           .from("courses")
-          .select("name,status,created_at")
-          .eq("status", "live")
+          .select("name,created_at")
           .order("created_at", { ascending: false });
         if (!error && Array.isArray(data)) {
           const names = data.map((d: any) => String(d.name || "")).filter(Boolean);
           setCourses(Array.from(new Set(names)));
           if (data.length === 0) {
-            toast({ title: "No courses in database", description: "Add courses in Supabase 'courses' table (status=live)." });
+            toast({ title: "No courses in database", description: "No rows in courses table." });
           }
           return;
         }
