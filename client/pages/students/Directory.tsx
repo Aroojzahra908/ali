@@ -36,6 +36,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { useEffect, useMemo, useState } from "react";
+import { useCampuses } from "@/lib/campusStore";
 import type { StudentRecord, StudentStatus } from "./types";
 import { paymentStatus } from "./types";
 import { useToast } from "@/hooks/use-toast";
@@ -69,7 +70,7 @@ export function Directory({
   const [course, setCourse] = useState<string>("");
   const [batch, setBatch] = useState<string>("");
   const [campus, setCampus] = useState<string>("");
-  const [openId, setOpenId] = useState<string | null>(null);
+  const campusOptions = useCampuses();
   const [version, setVersion] = useState(0);
   const [batchesDb, setBatchesDb] = useState<string[]>([]);
   const [coursesDb, setCoursesDb] = useState<string[]>([]);
@@ -151,9 +152,7 @@ export function Directory({
     const merged = new Set<string>([...batchesDb, ...fromData]);
     return Array.from(merged).sort();
   }, [data, batchesDb]);
-  const campuses = Array.from(
-    new Set(data.map((d) => d.admission.campus)),
-  ).sort();
+  const campuses = campusOptions.slice().sort();
 
   const effectiveStatus = lockedStatus ?? status;
 
@@ -172,7 +171,6 @@ export function Directory({
     );
   }, [data, q, effectiveStatus, course, batch, campus]);
 
-  const rec = data.find((d) => d.id === openId) || null;
 
   return (
     <div className="space-y-4">
@@ -309,13 +307,7 @@ export function Directory({
               </TableCell>
               <TableCell className="text-right">
                 <div className="inline-flex items-center gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setOpenId(s.id)}
-                  >
-                    View
-                  </Button>
+                  {/* View button removed per request */}
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button size="sm" variant="ghost" aria-label="Actions">
@@ -325,13 +317,7 @@ export function Directory({
                     <DropdownMenuContent align="end" className="w-56">
                       <DropdownMenuLabel>Quick Actions</DropdownMenuLabel>
                       <DropdownMenuGroup>
-                        <DropdownMenuItem
-                          onClick={() => {
-                            setOpenId(s.id);
-                          }}
-                        >
-                          View Profile…
-                        </DropdownMenuItem>
+                        {/* View Profile removed */}
                       </DropdownMenuGroup>
                       <DropdownMenuSeparator />
                       <DropdownMenuGroup>
@@ -584,14 +570,6 @@ export function Directory({
         </TableBody>
       </Table>
 
-      <Sheet open={!!rec} onOpenChange={(o) => !o && setOpenId(null)}>
-        <SheetContent className="w-[90vw] sm:max-w-3xl">
-          <SheetHeader>
-            <SheetTitle>Student Profile</SheetTitle>
-          </SheetHeader>
-          {rec && <ProfileSimple student={rec} />}
-        </SheetContent>
-      </Sheet>
     </div>
   );
 }
