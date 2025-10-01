@@ -4,7 +4,7 @@ import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Link } from "react-router-dom";
+import { Link, NavLink, useLocation, useParams } from "react-router-dom";
 import { mergeSupabaseCourses, getStoredCourses } from "@/lib/courseStore";
 import { COURSES } from "@/data/courses";
 import { CalendarDays, Sparkles, Clock, GraduationCap } from "lucide-react";
@@ -72,6 +72,9 @@ export default function CourseCatalog() {
     fetchCourses();
   }, []);
 
+  const loc = useLocation();
+  const params = useParams<{ cat?: string }>();
+
   const [query, setQuery] = useState("");
   const categories = useMemo(() => {
     const set = new Set<string>(["All"]);
@@ -79,6 +82,24 @@ export default function CourseCatalog() {
     return Array.from(set);
   }, [courses]);
   const [cat, setCat] = useState<string>("All");
+
+  const routeView: "all" | "featured" | "upcoming" | "latest" | "category" =
+    loc.pathname.endsWith("/featured")
+      ? "featured"
+      : loc.pathname.endsWith("/upcoming")
+      ? "upcoming"
+      : loc.pathname.endsWith("/latest")
+      ? "latest"
+      : /\/courses\/category\//.test(loc.pathname)
+      ? "category"
+      : "all";
+
+  useEffect(() => {
+    if (routeView === "category") {
+      const slug = decodeURIComponent(params.cat || "");
+      if (slug) setCat(slug);
+    }
+  }, [routeView, params.cat]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -120,6 +141,20 @@ export default function CourseCatalog() {
     return Array.from(groups.entries());
   }, [filtered]);
 
+  // Deduplicate across sections when showing combined view
+  const used = new Set<string>();
+  const takeUnique = (arr: Course[]) =>
+    arr.filter((c) => {
+      if (used.has(c.id)) return false;
+      used.add(c.id);
+      return true;
+    });
+
+  const featuredUnique = takeUnique(featured);
+  const upcomingUnique = takeUnique(upcoming);
+  const latestUnique = takeUnique(latest);
+  const byCategoryUnique = byCategory.map(([k, list]) => [k, takeUnique(list)] as [string, Course[]]).filter(([, list]) => list.length);
+
   return (
     <div className="space-y-10">
       <section className="relative overflow-hidden rounded-2xl border bg-gradient-to-br from-indigo-600 via-violet-600 to-fuchsia-600 text-white">
@@ -149,16 +184,16 @@ export default function CourseCatalog() {
               </div>
             </div>
           </div>
-          <div className="mt-6 grid gap-3 sm:grid-cols-3">
-            <div className="rounded-lg bg-white/10 px-4 py-2 text-sm">
-              Quality curriculum aligned with industry
-            </div>
-            <div className="rounded-lg bg-white/10 px-4 py-2 text-sm">Flexible batches and schedules</div>
-            <div className="rounded-lg bg-white/10 px-4 py-2 text-sm">Placement guidance and support</div>
+          <div className="mt-6 flex flex-wrap items-center gap-2 text-sm">
+            <NavLink to="/courses" className={({ isActive }) => `rounded-full border px-3 py-1.5 ${isActive && routeView === 'all' ? 'bg-white text-foreground' : 'bg-white/10 text-white hover:bg-white/20'}`}>All</NavLink>
+            <NavLink to="/courses/featured" className={({ isActive }) => `rounded-full border px-3 py-1.5 ${isActive ? 'bg-white text-foreground' : 'bg-white/10 text-white hover:bg-white/20'}`}>Featured</NavLink>
+            <NavLink to="/courses/upcoming" className={({ isActive }) => `rounded-full border px-3 py-1.5 ${isActive ? 'bg-white text-foreground' : 'bg-white/10 text-white hover:bg-white/20'}`}>Upcoming</NavLink>
+            <NavLink to="/courses/latest" className={({ isActive }) => `rounded-full border px-3 py-1.5 ${isActive ? 'bg-white text-foreground' : 'bg-white/10 text-white hover:bg-white/20'}`}>Latest</NavLink>
           </div>
         </div>
       </section>
 
+      {/* Controls */}
       <section className="space-y-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -185,61 +220,83 @@ export default function CourseCatalog() {
             </div>
           </div>
         </div>
-        {loading ? (
+        {/* Only show big grid on dedicated pages; not on the combined 'all' view */}
+        {routeView === "featured" && (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="h-40 animate-pulse rounded-lg bg-muted" />
+            {featured.map((c) => (
+              <CourseCard key={`featured-${c.id}`} course={c} />
             ))}
           </div>
-        ) : (
+        )}
+        {routeView === "upcoming" && (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {filtered.map((c) => (
-              <CourseCard key={`all-${c.id}`} course={c} />
+            {upcoming.map((c) => (
+              <CourseCard key={`upcoming-${c.id}`} course={c} />
+            ))}
+          </div>
+        )}
+        {routeView === "latest" && (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {latest.map((c) => (
+              <CourseCard key={`latest-${c.id}`} course={c} />
+            ))}
+          </div>
+        )}
+        {routeView === "category" && (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {(byCategory.find(([k]) => k === cat)?.[1] || []).map((c) => (
+              <CourseCard key={`cat-${cat}-${c.id}`} course={c} />
             ))}
           </div>
         )}
       </section>
 
-      {featured.length > 0 && (
+      {/* Combined sections with de-duplication */}
+      {routeView === "all" && featuredUnique.length > 0 && (
         <section>
           <h3 className="mb-3 text-xl font-semibold flex items-center gap-2"><Sparkles className="h-5 w-5 text-primary" /> Featured Courses</h3>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {featured.map((c) => (
+            {featuredUnique.map((c) => (
               <CourseCard key={c.id} course={c} />
             ))}
           </div>
         </section>
       )}
 
-      {upcoming.length > 0 && (
+      {routeView === "all" && upcomingUnique.length > 0 && (
         <section>
           <h3 className="mb-3 text-xl font-semibold flex items-center gap-2"><CalendarDays className="h-5 w-5 text-primary" /> Upcoming Courses</h3>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {upcoming.map((c) => (
+            {upcomingUnique.map((c) => (
               <CourseCard key={c.id} course={c} />
             ))}
           </div>
         </section>
       )}
 
-      {latest.length > 0 && (
+      {routeView === "all" && latestUnique.length > 0 && (
         <section>
           <h3 className="mb-3 text-xl font-semibold flex items-center gap-2"><Clock className="h-5 w-5 text-primary" /> Latest Courses</h3>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {latest.map((c) => (
+            {latestUnique.map((c) => (
               <CourseCard key={c.id} course={c} />
             ))}
           </div>
         </section>
       )}
 
-      {byCategory.length > 0 && (
+      {routeView === "all" && byCategoryUnique.length > 0 && (
         <section>
           <h3 className="mb-3 text-xl font-semibold">All Courses (Category Wise)</h3>
           <div className="space-y-6">
-            {byCategory.map(([catKey, list]) => (
+            {byCategoryUnique.map(([catKey, list]) => (
               <div key={catKey} className="space-y-3">
-                <h4 className="text-lg font-medium">{catKey}</h4>
+                <div className="flex items-center justify-between">
+                  <h4 className="text-lg font-medium">{catKey}</h4>
+                  <Button asChild variant="link" className="h-auto p-0">
+                    <Link to={`/courses/category/${encodeURIComponent(catKey)}`}>View all</Link>
+                  </Button>
+                </div>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {list.map((c) => (
                     <CourseCard key={`${catKey}-${c.id}`} course={c} />
