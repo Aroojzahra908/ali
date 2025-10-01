@@ -41,6 +41,7 @@ import { paymentStatus } from "./types";
 import { useToast } from "@/hooks/use-toast";
 import { ProfileSimple } from "./ProfileSimple";
 import { getAllCourseNames } from "@/lib/courseStore";
+import { supabase, isSupabaseConfigured } from "@/lib/supabaseClient";
 
 const statuses: StudentStatus[] = [
   "Current",
@@ -70,6 +71,8 @@ export function Directory({
   const [campus, setCampus] = useState<string>("");
   const [openId, setOpenId] = useState<string | null>(null);
   const [version, setVersion] = useState(0);
+  const [batchesDb, setBatchesDb] = useState<string[]>([]);
+  const [coursesDb, setCoursesDb] = useState<string[]>([]);
 
   useEffect(() => {
     setStatus(lockedStatus ?? initialStatus ?? "");
@@ -85,14 +88,69 @@ export function Directory({
     };
   }, []);
 
+  useEffect(() => {
+    if (!isSupabaseConfigured()) return;
+    (async () => {
+      const { data, error } = await supabase!
+        .from("batches")
+        .select("batch_code, course_name")
+        .order("created_at", { ascending: false });
+      if (!error && data) {
+        const bset = new Set<string>();
+        const cset = new Set<string>();
+        for (const r of data as any[]) {
+          if (r.batch_code) bset.add(r.batch_code);
+          if (r.course_name) cset.add(r.course_name);
+        }
+        setBatchesDb(Array.from(bset));
+        setCoursesDb(Array.from(cset));
+      }
+    })();
+
+    const ch = supabase!
+      .channel("students-dir-batches")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "batches" },
+        (payload) => {
+          const r: any = payload.new ?? payload.old;
+          if (!r) return;
+          setBatchesDb((prev) => {
+            const set = new Set(prev);
+            if (payload.eventType === "DELETE") {
+              set.delete(r.batch_code);
+            } else if (r.batch_code) set.add(r.batch_code);
+            return Array.from(set);
+          });
+          setCoursesDb((prev) => {
+            const set = new Set(prev);
+            if (r.course_name) set.add(r.course_name);
+            return Array.from(set);
+          });
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase!.removeChannel(ch);
+    };
+  }, []);
+
   const courses = useMemo(() => {
     const fromData = data.map((d) => d.admission.course).filter(Boolean);
     const stored = getAllCourseNames(); // only admin-added/store-synced names
-    return Array.from(new Set([...(stored || []), ...fromData])).sort();
-  }, [data, version]);
-  const batches = Array.from(
-    new Set(data.map((d) => d.admission.batch)),
-  ).sort();
+    const merged = new Set<string>([
+      ...coursesDb,
+      ...(stored || []),
+      ...fromData,
+    ]);
+    return Array.from(merged).sort();
+  }, [data, version, coursesDb]);
+  const batches = useMemo(() => {
+    const fromData = data.map((d) => d.admission.batch).filter(Boolean);
+    const merged = new Set<string>([...batchesDb, ...fromData]);
+    return Array.from(merged).sort();
+  }, [data, batchesDb]);
   const campuses = Array.from(
     new Set(data.map((d) => d.admission.campus)),
   ).sort();

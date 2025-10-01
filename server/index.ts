@@ -17,6 +17,7 @@ import {
   deletePublicApplication,
 } from "./routes/public-submissions";
 import { getSupabase } from "./lib/supabase";
+import { listBatches, createBatch } from "./routes/batches";
 
 export function createServer() {
   const app = express();
@@ -68,6 +69,10 @@ export function createServer() {
   });
 
   app.get("/api/demo", handleDemo);
+
+  // Batches
+  app.get("/api/batches", listBatches);
+  app.post("/api/batches", createBatch);
 
   // Contact submissions
   app.post("/api/contact-submissions", submitContact);
