@@ -492,6 +492,10 @@ export default function Admissions() {
     };
   }, [fetchApplications]);
 
+  useEffect(() => {
+    void loadFilterOptions();
+  }, [loadFilterOptions]);
+
   const upsert = async (next: AdmissionRecord) => {
     setItems((prev) => prev.map((r) => (r.id === next.id ? next : r)));
     if (!supabase) return;
