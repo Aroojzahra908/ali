@@ -521,7 +521,7 @@
 //                   </TableCell>
 //                   <TableCell>{c.category}</TableCell>
 //                   <TableCell>{c.duration}</TableCell>
-//                   <TableCell>��� {c.fees.toLocaleString()}</TableCell>
+//                   <TableCell>₨ {c.fees.toLocaleString()}</TableCell>
 //                   <TableCell className="text-right">{c.createdAt}</TableCell>
 //                 </TableRow>
 //               ))}
@@ -629,27 +629,46 @@ export default function CoursesAdmin() {
   // Fetch courses from Supabase
   const fetchCourses = async () => {
     setLoading(true);
-    if (isSupabaseConfigured()) {
-      const { data, error } = await supabase!
-        .from("courses")
-        .select("*")
-        .order("created_at", { ascending: false });
-      if (error) console.error(error);
-      else {
-        setCourses((data as any) || []);
-        try {
-          mergeSupabaseCourses(
-            (data || []).map((c: any) => ({
-              id: c.id,
-              name: c.name,
-              duration: c.duration,
-              fees: Number(c.fees) || 0,
-              description: c.description || "",
-            })),
-          );
-        } catch {}
+    try {
+      if (isSupabaseConfigured()) {
+        const { data, error } = await supabase!
+          .from("courses")
+          .select("*")
+          .order("created_at", { ascending: false });
+        if (error) console.error(error);
+        else {
+          setCourses((data as any) || []);
+          try {
+            mergeSupabaseCourses(
+              (data || []).map((c: any) => ({
+                id: c.id,
+                name: c.name,
+                duration: c.duration,
+                fees: Number(c.fees) || 0,
+                description: c.description || "",
+              })),
+            );
+          } catch {}
+        }
+      } else {
+        const local = getStoredCourses();
+        setCourses(
+          local.map((c) => ({
+            id: c.id,
+            name: c.name,
+            category: "Development",
+            duration: c.duration,
+            fees: c.fees,
+            description: c.description,
+            featured: false,
+            status: "live",
+            start_date: null,
+            created_at: c.createdAt,
+          })) as any,
+        );
       }
-    } else {
+    } catch (err) {
+      console.warn("Admin courses fetch failed, using local fallback", err);
       const local = getStoredCourses();
       setCourses(
         local.map((c) => ({
@@ -665,8 +684,9 @@ export default function CoursesAdmin() {
           created_at: c.createdAt,
         })) as any,
       );
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   useEffect(() => {
