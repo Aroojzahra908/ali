@@ -337,12 +337,13 @@ export default function AdmissionForm() {
         let createdAt = issueDateISO;
 
         if (supabase) {
+          const startDateVal = (startDate && startDate.trim()) || new Date().toISOString().slice(0, 10);
           const fullPayload = {
             name: trimmed.name,
             email: trimmed.email,
             phone: trimmed.phone,
             course: trimmed.courseName,
-            start_date: startDate || null,
+            start_date: startDateVal,
             message: message ? message.trim() : null,
             campus: "Main",
             batch: "TBD",
@@ -358,7 +359,15 @@ export default function AdmissionForm() {
             email: fullPayload.email,
             phone: fullPayload.phone,
             course: fullPayload.course,
-            preferred_start: fullPayload.start_date,
+            start_date: startDateVal,
+            status: "Pending",
+          } as const;
+          const publicMinimal = {
+            name: fullPayload.name,
+            email: fullPayload.email,
+            phone: fullPayload.phone,
+            course: fullPayload.course,
+            preferred_start: startDateVal,
             status: "Pending",
           } as const;
 
@@ -383,7 +392,7 @@ export default function AdmissionForm() {
             } catch (e2) {
               const r3 = await supabase
                 .from("public_applications")
-                .insert(minimalPayload as any)
+                .insert(publicMinimal as any)
                 .select("id, created_at")
                 .single();
               if (r3.error) throw r3.error;
