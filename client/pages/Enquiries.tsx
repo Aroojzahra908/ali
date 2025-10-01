@@ -71,7 +71,7 @@ const SOURCES = [
   "Referral",
   "Email Campaign",
 ] as const;
-const CAMPUSES = ["User's Campus", "Main Campus", "City Campus"] as const;
+// campuses are loaded from Supabase; no hardcoded list
 const STAGES = [
   "Prospective",
   "Need Analysis",
@@ -624,6 +624,7 @@ function CreateEnquiry({ onCreated, openEnquiry }: { onCreated: (row: any) => vo
   const [probability, setProbability] = useState<number[]>([50]);
   const [sources, setSources] = useState<string[]>([]);
   const [courses, setCourses] = useState<string[]>([]);
+  const [campuses, setCampuses] = useState<string[]>([]);
   const [recent, setRecent] = useState<any[]>([]);
   const navigate = useNavigate();
 
@@ -676,6 +677,30 @@ function CreateEnquiry({ onCreated, openEnquiry }: { onCreated: (row: any) => vo
         };
       }
     } catch {}
+
+    // Load campuses and subscribe to realtime
+    (async () => {
+      try {
+        const { data } = await supabase.from("campuses").select("name,status,created_at").order("created_at", { ascending: false });
+        const names = (data || []).map((d: any) => String(d.name || "")).filter(Boolean);
+        setCampuses(Array.from(new Set(names)));
+      } catch {}
+      try {
+        const ch2 = (supabase as any)?.channel?.("campuses_enquiries_dropdown");
+        if (ch2) {
+          ch2.on("postgres_changes", { event: "*", schema: "public", table: "campuses" }, (payload: any) => {
+            const rec = payload.new || payload.old;
+            if (!rec) return;
+            setCampuses((prev) => {
+              const set = new Set(prev);
+              if (payload.eventType === "DELETE") set.delete(String(rec.name || ""));
+              else { const n = String(rec.name || ""); if (n) set.add(n); }
+              return Array.from(set);
+            });
+          }).subscribe();
+        }
+      } catch {}
+    })();
 
     const refresh = () => load();
     window.addEventListener("courses:changed", refresh as EventListener);
@@ -965,13 +990,13 @@ function CreateEnquiry({ onCreated, openEnquiry }: { onCreated: (row: any) => vo
           </div>
           <div className="space-y-1.5">
             <Label>Preferred Campus</Label>
-            <Select name="campus" defaultValue={CAMPUSES[0]}>
+            <Select name="campus" defaultValue={campuses[0] || ""}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
-                  {CAMPUSES.map((c) => (
+                  {campuses.map((c) => (
                     <SelectItem key={c} value={c}>
                       {c}
                     </SelectItem>
