@@ -140,14 +140,14 @@ export function NewAdmissionTab({ onCreated }: Props) {
       if (supabase) {
         const { data, error } = await supabase
           .from<CourseRow>("courses")
-          .select("id, name, fees, tuition, duration, status")
+          .select("id, name, fees, duration, status, category, description, featured, start_date, created_at")
           .order("created_at", { ascending: false });
 
         if (!error && Array.isArray(data) && data.length > 0) {
           const mapped = data.map((row) => ({
             id: String(row.id ?? crypto.randomUUID()),
             name: row.name ?? "Untitled Course",
-            fees: Number(row.fees ?? row.tuition ?? 0) || 0,
+            fees: Number(row.fees ?? 0) || 0,
             duration: row.duration ?? null,
           }));
           setCourses(mapped);
