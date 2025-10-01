@@ -20,6 +20,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useMemo, useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { batches as fallbackBatches, courses as fallbackCourses } from "./data";
+import { useCampuses } from "@/lib/campusStore";
 import { StatusBadge } from "./StatusBadge";
 import { CERTIFICATE_TYPES, REQUEST_KINDS, RequestKind } from "./types";
 import type { CertificateRequest } from "./types";
