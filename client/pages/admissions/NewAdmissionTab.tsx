@@ -231,7 +231,7 @@ export function NewAdmissionTab({ onCreated }: Props) {
         let record = fallbackRecord;
 
         if (supabase) {
-          const payload = {
+          const fullPayload = {
             name: trimmedName,
             email: trimmedEmail,
             phone: trimmedPhone,
@@ -244,15 +244,51 @@ export function NewAdmissionTab({ onCreated }: Props) {
             documents: [],
             notes: trimmedNotes || null,
             preferred_start: startDate || null,
-          };
+          } as const;
 
-          const { data, error } = await supabase
-            .from("applications")
-            .insert(payload)
-            .select("*")
-            .single();
+          // Try applications with full payload, then minimal, then public_applications
+          const minimalPayload = {
+            name: fullPayload.name,
+            email: fullPayload.email,
+            phone: fullPayload.phone,
+            course: fullPayload.course,
+            preferred_start: fullPayload.preferred_start,
+            status: "Pending",
+          } as const;
 
-          if (error) throw error;
+          let data: any | null = null;
+          let lastErr: any = null;
+
+          try {
+            const r1 = await supabase
+              .from("applications")
+              .insert(fullPayload as any)
+              .select("*")
+              .single();
+            if (r1.error) throw r1.error;
+            data = r1.data;
+          } catch (e1) {
+            lastErr = e1;
+            try {
+              const r2 = await supabase
+                .from("applications")
+                .insert(minimalPayload as any)
+                .select("*")
+                .single();
+              if (r2.error) throw r2.error;
+              data = r2.data;
+            } catch (e2) {
+              lastErr = e2;
+              const r3 = await supabase
+                .from("public_applications")
+                .insert(minimalPayload as any)
+                .select("*")
+                .single();
+              if (r3.error) throw r3.error;
+              data = r3.data;
+            }
+          }
+
           record = normalizeRecord(data, fallbackRecord);
         } else {
           const response = await fetch("/api/public/applications", {
