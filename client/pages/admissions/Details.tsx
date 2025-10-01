@@ -133,9 +133,8 @@ export function Details({
     } catch {
       upsertStudent(student);
     }
-    navigate("/dashboard/students");
     toast({
-      title: "Admission confirmed",
+      title: "Enrolled",
       description: `Student added: ${student.name}`,
     });
   };
