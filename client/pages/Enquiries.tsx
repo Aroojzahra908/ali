@@ -608,11 +608,9 @@ export default function Enquiries() {
                                     />
                                   </TableCell>
                                   <TableCell>
-                                    <Input
-                                      type="date"
+                                    <DatePicker
                                       value={it.due || ""}
-                                      onChange={(e) => {
-                                        const v = e.target.value;
+                                      onChange={(v) => {
                                         const copy = [...installments];
                                         copy[idx] = { ...copy[idx], due: v };
                                         setInstallments(copy);
