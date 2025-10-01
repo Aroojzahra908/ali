@@ -414,7 +414,7 @@ export default function Batches() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
-                        {CAMPUSES.map((c) => (
+                        {campusOptions.map((c) => (
                           <SelectItem key={c} value={c}>
                             {c}
                           </SelectItem>
