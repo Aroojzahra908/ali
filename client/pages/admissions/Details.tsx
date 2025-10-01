@@ -427,39 +427,23 @@ export function Details({
       <Separator />
 
 
-      <div className="grid gap-3 sm:grid-cols-2">
-        <div className="space-y-2">
-          <div className="text-xs text-muted-foreground">Transfer</div>
-          <Label>Batch</Label>
-          <Input value={batch} onChange={(e) => setBatch(e.target.value)} />
-          <Label>Campus</Label>
-          <Input value={campus} onChange={(e) => setCampus(e.target.value)} />
-          <Button variant="outline" onClick={transfer}>
-            Transfer
-          </Button>
-        </div>
-        <div className="space-y-2">
-          <div className="text-xs text-muted-foreground">Payment Status</div>
-          <div className="font-medium">{paymentStatus(rec)}</div>
-          <div className="text-xs text-muted-foreground">
-            Total: ₨{rec.fee.total.toLocaleString()}
-          </div>
-          <div className="text-xs">Installments:</div>
-          <div className="rounded border p-2 text-xs space-y-1">
-            {rec.fee.installments.map((i) => (
-              <div key={i.id} className="flex justify-between">
-                <span>
-                  {i.id} • ₨{i.amount.toLocaleString()} • Due{" "}
-                  {new Date(i.dueDate).toLocaleDateString()}
-                </span>
-                <span className="text-muted-foreground">
-                  {i.paidAt
-                    ? `Paid ${new Date(i.paidAt).toLocaleDateString()}`
-                    : "Unpaid"}
-                </span>
-              </div>
+      <div className="space-y-2">
+        <div className="text-xs text-muted-foreground">Enroll Student</div>
+        <Label>Batch</Label>
+        <Select value={batch} onValueChange={setBatch}>
+          <SelectTrigger>
+            <SelectValue placeholder="Select batch" />
+          </SelectTrigger>
+          <SelectContent>
+            {batchOptions.map((b) => (
+              <SelectItem key={b} value={b}>
+                {b}
+              </SelectItem>
             ))}
-          </div>
+          </SelectContent>
+        </Select>
+        <div className="flex justify-end pt-2">
+          <Button onClick={confirmAdmission}>Enroll</Button>
         </div>
       </div>
 
