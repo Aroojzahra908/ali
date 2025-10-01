@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Input } from "./input";
 import { DayPicker } from "react-day-picker";
+import { CalendarDays } from "lucide-react";
 import "react-day-picker/dist/style.css";
 
 function fmt(d: Date | undefined) {
@@ -72,16 +74,34 @@ export default function DatePicker({
 
   return (
     <div className={className} ref={ref} style={{ position: "relative" }}>
-      <Input
-        id={id}
-        readOnly
-        value={selected ? fmt(selected) : ""}
-        placeholder={placeholder || "Select date"}
-        onFocus={() => setOpen(true)}
-        onClick={() => setOpen(true)}
-        required={required}
-      />
-      {/* hidden input so forms can pick up the value */}
+      <div className="relative">
+        <Input
+          id={id}
+          readOnly
+          value={selected ? fmt(selected) : ""}
+          placeholder={placeholder || "YYYY-MM-DD"}
+          onFocus={() => setOpen(true)}
+          onClick={() => setOpen(true)}
+          required={required}
+          className="pr-9"
+        />
+        <button
+          type="button"
+          aria-label="Open calendar"
+          className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+          onMouseDown={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setOpen((v) => !v);
+          }}
+        >
+          <CalendarDays className="h-4 w-4" />
+        </button>
+      </div>
       {name && (
         <input
           type="hidden"
@@ -90,7 +110,10 @@ export default function DatePicker({
         />
       )}
       {open && (
-        <div style={{ position: "absolute", zIndex: 40, marginTop: 6 }}>
+        <div
+          className="absolute z-40 mt-1 rounded-md border bg-popover p-2 shadow-md"
+          style={{ minWidth: 0 }}
+        >
           <DayPicker
             mode="single"
             selected={selected}
