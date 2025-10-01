@@ -135,6 +135,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = useCallback(
     async (email: string, password: string) => {
+      if (!isSupabaseConfigured) {
+        toast({
+          title: "Supabase not configured",
+          description:
+            "Authentication is disabled because VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY is missing. Set them in project settings.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       try {
         const { error } = await supabase.auth.signInWithPassword({
           email,
