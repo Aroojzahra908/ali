@@ -28,6 +28,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabaseClient";
 import { COURSES } from "@/data/courses";
+import { useCampuses } from "@/lib/campusStore";
 import type { AdmissionRecord } from "./types";
 
 const FALLBACK_CAMPUS = "Main";
