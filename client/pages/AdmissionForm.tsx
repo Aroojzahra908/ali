@@ -444,12 +444,11 @@ export default function AdmissionForm() {
         setPhone("");
         setMessage("");
         setStartDate("");
-      } catch (error) {
-        const description =
-          error instanceof Error ? error.message : "Please try again.";
+      } catch (error: any) {
+        const msg = error?.message || error?.hint || error?.details || String(error);
         toast({
           title: "Submission failed",
-          description,
+          description: msg,
         });
       } finally {
         setSubmitting(false);
