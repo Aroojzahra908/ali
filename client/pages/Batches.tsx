@@ -252,7 +252,7 @@ export default function Batches() {
       return;
     }
     try {
-      const { data: rows, error } = await supabase!
+      const res = await supabase!
         .from("batches")
         .insert({
           course_name: cCourse,
@@ -268,8 +268,11 @@ export default function Batches() {
           "batch_id, course_name, campus_name, batch_code, start_date, end_date, instructor, max_students, current_students, status, created_at",
         )
         .single();
-      if (error) throw error;
-      const r: any = rows;
+      if (res.error) {
+        toast({ title: "Create failed", description: res.error.message || String(res.error) });
+        return;
+      }
+      const r: any = res.data;
       const b: BatchItem = {
         id: r.batch_id,
         course: r.course_name,
