@@ -180,7 +180,7 @@ export default function Batches() {
 
   // Create form defaults
   const [cCourse, setCCourse] = useState("");
-  const [cCampus, setCCampus] = useState(CAMPUSES[0]);
+  const [cCampus, setCCampus] = useState(campusOptions[0] || "");
   const [cInstructor, setCInstructor] = useState("");
 
   const [activeBatchId, setActiveBatchId] = useState<string>(
