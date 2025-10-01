@@ -43,6 +43,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ProfileSimple } from "./ProfileSimple";
 import { getAllCourseNames } from "@/lib/courseStore";
 import { supabase, isSupabaseConfigured } from "@/lib/supabaseClient";
+import { Link } from "react-router-dom";
 
 const statuses: StudentStatus[] = [
   "Current",
@@ -609,12 +610,8 @@ export function Directory({
                         >
                           Freeze
                         </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => {
-                            toast({ title: "Certificate request submitted" });
-                          }}
-                        >
-                          Request Certificate
+                        <DropdownMenuItem asChild>
+                          <Link to="/dashboard/certificates">Request Certificate</Link>
                         </DropdownMenuItem>
                       </DropdownMenuGroup>
                     </DropdownMenuContent>
