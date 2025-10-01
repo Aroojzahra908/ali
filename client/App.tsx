@@ -44,6 +44,7 @@ import { AppLayout } from "./components/layout/AppSidebar";
 import { AppHeader } from "./components/layout/AppHeader";
 import { PublicLayout } from "./components/layout/PublicLayout";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import "@/lib/globalErrorHandlers";
 
 const queryClient = new QueryClient();
 
