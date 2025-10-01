@@ -117,7 +117,7 @@ export default function Campuses() {
       return;
     }
     try {
-      const { data, error } = await supabase
+      const res = await supabase
         .from("campuses")
         .insert([
           {
@@ -130,8 +130,12 @@ export default function Campuses() {
         ])
         .select("id,name,code,city,address,status")
         .single();
-      if (error) throw error;
-      const id = String((data as any).id);
+      if (res.error) {
+        toast({ title: "Failed to add campus", description: res.error.message || String(res.error) });
+        return;
+      }
+      const data = res.data as any;
+      const id = String(data.id);
       setCampuses((prev) => [{ ...c, id }, ...prev]);
       toast({
         title: "Campus added",
@@ -140,7 +144,7 @@ export default function Campuses() {
     } catch (e: any) {
       toast({
         title: "Failed to add campus",
-        description: e?.message || "Check Supabase policies",
+        description: e?.message || String(e) || "Check Supabase policies",
       });
     }
   };
