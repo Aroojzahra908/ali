@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { genStudentId } from "./types";
 import type { AdmissionRecord } from "./types";
 import { upsertStudent } from "@/lib/studentStore";
@@ -15,6 +15,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { useCampuses } from "@/lib/campusStore";
+import {
+  VoucherCard,
+  type VoucherDetails,
+} from "@/components/admissions/VoucherCard";
+import {
+  buildVoucherId,
+  printVoucher,
+} from "@/components/admissions/printVoucher";
 
 export function Details({
   rec,
@@ -29,6 +46,18 @@ export function Details({
   const [batch, setBatch] = useState(rec.batch);
   const [campus] = useState(rec.campus);
   const [batchOptions, setBatchOptions] = useState<string[]>([]);
+  const campusOptions = useCampuses();
+
+  const [enrollOpen, setEnrollOpen] = useState(false);
+  const [newCourse, setNewCourse] = useState("");
+  const [newBatch, setNewBatch] = useState("");
+  const [newCampus, setNewCampus] = useState("");
+  const [newFee, setNewFee] = useState<string>("");
+  const [dbCourses, setDbCourses] = useState<
+    Array<{ name: string; fees?: number }>
+  >([]);
+  const [createdApp, setCreatedApp] = useState<AdmissionRecord | null>(null);
+  const [voucher, setVoucher] = useState<VoucherDetails | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -45,6 +74,20 @@ export function Details({
             for (const r of data as any[])
               if (r.batch_code) set.add(String(r.batch_code));
           }
+          // Fetch courses from DB only
+          const { data: cdata } = await supabase
+            .from("courses")
+            .select("name,fees")
+            .order("created_at", { ascending: false });
+          const listC = Array.isArray(cdata)
+            ? cdata
+                .filter((r: any) => r?.name)
+                .map((r: any) => ({
+                  name: String(r.name),
+                  fees: Number(r.fees ?? 0) || 0,
+                }))
+            : [];
+          setDbCourses(listC);
         }
       } catch {}
       if (set.size === 0) {
@@ -56,13 +99,6 @@ export function Details({
             for (const it of items)
               if (it?.batch_code) set.add(String(it.batch_code));
           }
-        } catch {}
-      }
-      if (set.size === 0) {
-        try {
-          const { studentsMock } = await import("@/pages/students/data");
-          for (const s of studentsMock)
-            if (s.admission?.batch) set.add(String(s.admission.batch));
         } catch {}
       }
       const list = Array.from(set).sort();
@@ -268,7 +304,181 @@ export function Details({
         >
           Mark as Paid
         </Button>
+        <Button
+          onClick={() => setEnrollOpen(true)}
+          className="rounded-full px-6 py-2 bg-primary/80 text-white backdrop-blur-sm hover:bg-primary"
+        >
+          Enroll another course
+        </Button>
       </div>
+
+      <Dialog open={enrollOpen} onOpenChange={setEnrollOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Enroll another course</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <Label>Course</Label>
+                <Select
+                  value={newCourse}
+                  onValueChange={(v) => {
+                    setNewCourse(v);
+                    const found = dbCourses.find((c) => c.name === v);
+                    setNewFee(String(found?.fees ?? ""));
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select course" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {dbCourses.map((c) => (
+                      <SelectItem key={c.name} value={c.name}>
+                        {c.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Fee (total)</Label>
+                <Input
+                  inputMode="numeric"
+                  value={newFee}
+                  disabled
+                  readOnly
+                  placeholder="Auto from course"
+                />
+              </div>
+              <div>
+                <Label>Batch</Label>
+                <Select value={newBatch} onValueChange={setNewBatch}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select batch" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {batchOptions.map((b) => (
+                      <SelectItem key={b} value={b}>
+                        {b}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Campus</Label>
+                <Select value={newCampus} onValueChange={setNewCampus}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select campus" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {campusOptions.map((c) => (
+                      <SelectItem key={c} value={c}>
+                        {c}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            {createdApp && !voucher && (
+              <div className="flex justify-end">
+                <Button
+                  onClick={() => {
+                    const v: VoucherDetails = {
+                      id: buildVoucherId(createdApp.id),
+                      reference: createdApp.id,
+                      studentName: createdApp.student.name,
+                      email: createdApp.student.email,
+                      phone: createdApp.student.phone,
+                      courseName: createdApp.course,
+                      campus: createdApp.campus,
+                      amount: createdApp.fee.total,
+                      issueDate: new Date().toISOString(),
+                      dueDate:
+                        createdApp.fee.installments[0]?.dueDate ||
+                        new Date().toISOString(),
+                    };
+                    setVoucher(v);
+                  }}
+                >
+                  Generate voucher
+                </Button>
+              </div>
+            )}
+            {voucher && (
+              <div className="space-y-2">
+                <VoucherCard
+                  voucher={voucher}
+                  onPrint={() => printVoucher(voucher)}
+                />
+              </div>
+            )}
+          </div>
+          <DialogFooter className="pt-2">
+            <Button
+              onClick={async () => {
+                const fee = Math.max(0, Number(newFee || 0) || 0);
+                if (!newCourse || !newBatch || !newCampus || !fee) {
+                  toast({ title: "Please fill all fields" });
+                  return;
+                }
+                const now = new Date().toISOString();
+                const newId = `${rec.id}-${Date.now().toString().slice(-4)}`;
+                const newRecord: AdmissionRecord = {
+                  id: newId,
+                  createdAt: now,
+                  status: "Pending",
+                  student: { ...rec.student },
+                  course: newCourse,
+                  batch: newBatch,
+                  campus: newCampus,
+                  fee: {
+                    total: fee,
+                    installments: [
+                      {
+                        id: "due",
+                        amount: fee,
+                        dueDate: new Date(
+                          Date.now() + 7 * 24 * 60 * 60 * 1000,
+                        ).toISOString(),
+                      },
+                    ],
+                  },
+                  documents: [],
+                  notes: `Linked to ${rec.id}`,
+                };
+
+                try {
+                  const { supabase } = await import("@/lib/supabaseClient");
+                  if (supabase) {
+                    await supabase.from("applications").insert({
+                      app_id: newRecord.id,
+                      name: newRecord.student.name,
+                      email: newRecord.student.email,
+                      phone: newRecord.student.phone,
+                      course: newRecord.course,
+                      batch: newRecord.batch,
+                      campus: newRecord.campus,
+                      fee_total: newRecord.fee.total,
+                      fee_installments: newRecord.fee.installments,
+                      status: newRecord.status,
+                      created_at: newRecord.createdAt,
+                      notes: newRecord.notes,
+                    });
+                  }
+                } catch {}
+
+                setCreatedApp(newRecord);
+                toast({ title: "Application created" });
+              }}
+            >
+              Submit application
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

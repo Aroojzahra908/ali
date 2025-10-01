@@ -43,6 +43,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ProfileSimple } from "./ProfileSimple";
 import { getAllCourseNames } from "@/lib/courseStore";
 import { supabase, isSupabaseConfigured } from "@/lib/supabaseClient";
+import { Link } from "react-router-dom";
 
 const statuses: StudentStatus[] = [
   "Current",
@@ -56,11 +57,13 @@ const statuses: StudentStatus[] = [
 export function Directory({
   data,
   onChange,
+  onDelete,
   initialStatus,
   lockedStatus,
 }: {
   data: StudentRecord[];
   onChange: (rec: StudentRecord) => void;
+  onDelete?: (id: string) => void | Promise<void>;
   initialStatus?: StudentStatus;
   lockedStatus?: StudentStatus;
 }) {
@@ -74,6 +77,7 @@ export function Directory({
   const [version, setVersion] = useState(0);
   const [batchesDb, setBatchesDb] = useState<string[]>([]);
   const [coursesDb, setCoursesDb] = useState<string[]>([]);
+  const [view, setView] = useState<StudentRecord | null>(null);
   const supabaseReady = isSupabaseConfigured();
 
   useEffect(() => {
@@ -368,7 +372,6 @@ export function Directory({
               </TableCell>
               <TableCell className="text-right">
                 <div className="inline-flex items-center gap-2">
-                  {/* View button removed per request */}
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button size="sm" variant="ghost" aria-label="Actions">
@@ -378,7 +381,9 @@ export function Directory({
                     <DropdownMenuContent align="end" className="w-56">
                       <DropdownMenuLabel>Quick Actions</DropdownMenuLabel>
                       <DropdownMenuGroup>
-                        {/* View Profile removed */}
+                        <DropdownMenuItem onClick={() => setView(s)}>
+                          View Profile
+                        </DropdownMenuItem>
                       </DropdownMenuGroup>
                       <DropdownMenuSeparator />
                       <DropdownMenuGroup>
@@ -609,12 +614,10 @@ export function Directory({
                         >
                           Freeze
                         </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => {
-                            toast({ title: "Certificate request submitted" });
-                          }}
-                        >
-                          Request Certificate
+                        <DropdownMenuItem asChild>
+                          <Link to="/dashboard/certificates">
+                            Request Certificate
+                          </Link>
                         </DropdownMenuItem>
                       </DropdownMenuGroup>
                     </DropdownMenuContent>
@@ -625,6 +628,35 @@ export function Directory({
           ))}
         </TableBody>
       </Table>
+      {/* Profile Sheet */}
+      <Sheet open={!!view} onOpenChange={(o) => !o && setView(null)}>
+        <SheetContent side="right" className="w-[440px] sm:w-[520px]">
+          <SheetHeader>
+            <SheetTitle>Student Profile</SheetTitle>
+          </SheetHeader>
+          <div className="mt-4 space-y-4">
+            {view ? <ProfileSimple student={view} /> : null}
+            <div className="pt-2">
+              <Button
+                variant="destructive"
+                onClick={async () => {
+                  if (!view) return;
+                  if (!window.confirm("Delete this student?")) return;
+                  try {
+                    await onDelete?.(view.id);
+                    toast({ title: "Student deleted" });
+                    setView(null);
+                  } catch (e) {
+                    toast({ title: "Delete failed" });
+                  }
+                }}
+              >
+                Delete Student
+              </Button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
