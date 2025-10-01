@@ -428,9 +428,9 @@ export function Details({
                     return;
                   }
                   const now = new Date().toISOString();
-                  const newId = Date.now().toString();
-                const newRecord: AdmissionRecord = {
-                  id: newId,
+                  const fallbackId = `temp-${Date.now().toString().slice(-6)}`;
+                  let newRecord: AdmissionRecord = {
+                    id: fallbackId,
                     createdAt: now,
                     status: "Pending",
                     student: { ...rec.student },
@@ -458,20 +458,29 @@ export function Details({
                     if (supabase) {
                       const phoneDigits = (newRecord.student.phone || "").replace(/\D+/g, "");
                       const phoneValue = phoneDigits.length > 0 ? phoneDigits : null;
-                      await supabase.from("applications").insert({
-                        app_id: Number(newRecord.id) || newRecord.id,
-                        name: newRecord.student.name,
-                        email: newRecord.student.email,
-                        phone: phoneValue,
-                        course: newRecord.course,
-                        batch: newRecord.batch,
-                        campus: newRecord.campus,
-                        fee_total: newRecord.fee.total,
-                        fee_installments: newRecord.fee.installments,
-                        status: newRecord.status,
-                        created_at: newRecord.createdAt,
-                        notes: newRecord.notes,
-                      });
+                      const { data, error } = await supabase
+                        .from("applications")
+                        .insert({
+                          name: newRecord.student.name,
+                          email: newRecord.student.email,
+                          phone: phoneValue,
+                          course: newRecord.course,
+                          batch: newRecord.batch,
+                          campus: newRecord.campus,
+                          fee_total: newRecord.fee.total,
+                          fee_installments: newRecord.fee.installments,
+                          status: newRecord.status,
+                          created_at: newRecord.createdAt,
+                          notes: newRecord.notes,
+                          start_date: newRecord.fee.installments[0]?.dueDate
+                            ? newRecord.fee.installments[0]?.dueDate.slice(0, 10)
+                            : null,
+                        })
+                        .select("app_id")
+                        .single();
+                      if (!error && data?.app_id != null) {
+                        newRecord = { ...newRecord, id: String(data.app_id) };
+                      }
                     }
                   } catch {}
 
