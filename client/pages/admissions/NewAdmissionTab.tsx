@@ -119,6 +119,13 @@ export function NewAdmissionTab({ onCreated }: Props) {
   const [phone, setPhone] = useState("");
   const [courseId, setCourseId] = useState("");
   const [campus, setCampus] = useState(FALLBACK_CAMPUS);
+  const campusOptions = useCampuses();
+
+  useEffect(() => {
+    if ((!campus || campus === FALLBACK_CAMPUS) && campusOptions.length) {
+      setCampus(campusOptions[0]);
+    }
+  }, [campusOptions]);
   const [startDate, setStartDate] = useState("");
   const [notes, setNotes] = useState("");
 
