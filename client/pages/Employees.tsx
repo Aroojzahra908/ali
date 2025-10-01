@@ -23,9 +23,10 @@ export interface Employee {
 const ROLES = ["Instructor", "Counselor", "Admin", "Accountant", "Receptionist"];
 
 export default function Employees() {
+  const campusOptions = useCampuses();
   const [employees, setEmployees] = useState<Employee[]>([
-    { id: "e-1", name: "Zara Khan", role: "Instructor", email: "zara@example.com", campus: CAMPUSES[0], status: "active" },
-    { id: "e-2", name: "Bilal Ahmad", role: "Counselor", email: "bilal@example.com", campus: CAMPUSES[1], status: "transferred" },
+    { id: "e-1", name: "Zara Khan", role: "Instructor", email: "zara@example.com", campus: campusOptions[0] || "", status: "active" },
+    { id: "e-2", name: "Bilal Ahmad", role: "Counselor", email: "bilal@example.com", campus: campusOptions[1] || "", status: "transferred" },
   ]);
   const [selectedId, setSelectedId] = useState<string>(employees[0]?.id || "");
 
