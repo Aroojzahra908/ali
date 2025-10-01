@@ -20,7 +20,6 @@ export interface Employee {
   status: EmpStatus;
 }
 
-const CAMPUSES = ["Main Campus", "North Campus", "City Campus"];
 const ROLES = ["Instructor", "Counselor", "Admin", "Accountant", "Receptionist"];
 
 export default function Employees() {
