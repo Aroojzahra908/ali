@@ -2,6 +2,7 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useMemo, useState } from "react";
 import type { CertificateRequest } from "./types";
+import DatePicker from "@/components/ui/date-picker";
 
 export function ReportsTab({ data }: { data: CertificateRequest[] }) {
   const [from, setFrom] = useState("");
