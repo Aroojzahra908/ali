@@ -24,6 +24,13 @@ import {
   updateUser,
   resetPassword,
 } from "./routes/users";
+import {
+  postCertificateRequest,
+  listCertificates,
+  getCertificate,
+  updateCertificateStatus,
+  deleteCertificate,
+} from "./routes/certificates";
 
 export function createServer() {
   const app = express();
@@ -93,6 +100,13 @@ export function createServer() {
   app.post("/api/public/applications", postPublicApplication);
   app.get("/api/public/applications", listPublicApplications);
   app.post("/api/public/applications/delete", deletePublicApplication);
+
+  // Certificates: requests, listing and processing
+  app.post("/api/certificates", postCertificateRequest);
+  app.get("/api/certificates", listCertificates);
+  app.get("/api/certificates/:id", getCertificate);
+  app.patch("/api/certificates/:id/status", updateCertificateStatus);
+  app.post("/api/certificates/delete", deleteCertificate);
 
   // Admin: Users management
   // Registered only if service role env vars are present (checked inside handlers)

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,7 +22,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { toast } from "@/hooks/use-toast";
-import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 
 export type CampusStatus = "active" | "suspended";
@@ -42,6 +41,7 @@ export default function Campuses() {
   const [selectedId, setSelectedId] = useState<string>("");
 
   useEffect(() => {
+    if (!supabase) return; // Supabase not configured
     let unsub: (() => void) | undefined;
     (async () => {
       try {
@@ -112,8 +112,16 @@ export default function Campuses() {
   const suspended = campuses.filter((c) => c.status === "suspended");
 
   const addCampus = async (c: Omit<Campus, "id">) => {
+    if (!supabase) {
+      toast({
+        title: "Supabase not configured",
+        description:
+          "Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to enable campus storage.",
+      });
+      return;
+    }
     try {
-      const { data, error } = await supabase
+      const res = await supabase
         .from("campuses")
         .insert([
           {
@@ -126,8 +134,15 @@ export default function Campuses() {
         ])
         .select("id,name,code,city,address,status")
         .single();
-      if (error) throw error;
-      const id = String((data as any).id);
+      if (res.error) {
+        toast({
+          title: "Failed to add campus",
+          description: res.error.message || String(res.error),
+        });
+        return;
+      }
+      const data = res.data as any;
+      const id = String(data.id);
       setCampuses((prev) => [{ ...c, id }, ...prev]);
       toast({
         title: "Campus added",
@@ -136,12 +151,20 @@ export default function Campuses() {
     } catch (e: any) {
       toast({
         title: "Failed to add campus",
-        description: e?.message || "Check Supabase policies",
+        description: e?.message || String(e) || "Check Supabase policies",
       });
     }
   };
 
   const updateCampus = async (id: string, patch: Partial<Campus>) => {
+    if (!supabase) {
+      toast({
+        title: "Supabase not configured",
+        description:
+          "Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to enable campus storage.",
+      });
+      return;
+    }
     try {
       const update: any = {};
       if (patch.name !== undefined) update.name = patch.name;
@@ -149,11 +172,14 @@ export default function Campuses() {
       if (patch.city !== undefined) update.city = patch.city;
       if (patch.address !== undefined) update.address = patch.address || null;
       if (patch.status !== undefined) update.status = patch.status;
-      const { error } = await supabase
-        .from("campuses")
-        .update(update)
-        .eq("id", id);
-      if (error) throw error;
+      const res = await supabase.from("campuses").update(update).eq("id", id);
+      if (res.error) {
+        toast({
+          title: "Update failed",
+          description: res.error.message || String(res.error),
+        });
+        return;
+      }
       setCampuses((prev) =>
         prev.map((c) => (c.id === id ? { ...c, ...patch } : c)),
       );
@@ -161,7 +187,7 @@ export default function Campuses() {
     } catch (e: any) {
       toast({
         title: "Update failed",
-        description: e?.message || "Check policies",
+        description: e?.message || String(e) || "Check policies",
       });
     }
   };

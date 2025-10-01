@@ -7,7 +7,7 @@ import React, {
   useState,
 } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/lib/supabase";
+import supabase, { isSupabaseConfigured } from "@/lib/supabase";
 import { toast } from "@/hooks/use-toast";
 import type { RolePermissions } from "@/pages/roles/types";
 import { roles as seedRoles } from "@/pages/roles/data";
@@ -60,32 +60,47 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let mounted = true;
     (async () => {
-      const { data } = await supabase.auth.getSession();
-      const session = data.session;
-      if (!mounted) return;
-      const u = session?.user || null;
-      setUser(u?.email ? { email: u.email, uid: u.id } : null);
-      const { resolvedRole, resolvedAppRoleId } = extractRoleFromUser(u);
-      setRole(resolvedRole);
-      setAppRoleId(resolvedAppRoleId);
-      // resolve permissions
-      let base: RolePermissions | null = null;
-      if (resolvedAppRoleId) {
-        const def = seedRoles.find((x) => x.id === resolvedAppRoleId);
-        if (def) base = def.permissions;
-        try {
-          const resp = await fetch(`/api/role-perms/${resolvedAppRoleId}`);
-          if (resp.ok) {
-            const data = await resp.json();
-            if (data?.permissions) base = data.permissions as RolePermissions;
-          }
-        } catch {}
-        try {
-          const raw = localStorage.getItem(`rolePerms:${resolvedAppRoleId}`);
-          if (raw) base = JSON.parse(raw);
-        } catch {}
+      try {
+        const { data } = await supabase.auth.getSession();
+        const session = data.session;
+        if (!mounted) return;
+        const u = session?.user || null;
+        setUser(u?.email ? { email: u.email, uid: u.id } : null);
+        const { resolvedRole, resolvedAppRoleId } = extractRoleFromUser(u);
+        setRole(resolvedRole);
+        setAppRoleId(resolvedAppRoleId);
+        // resolve permissions
+        let base: RolePermissions | null = null;
+        if (resolvedAppRoleId) {
+          const def = seedRoles.find((x) => x.id === resolvedAppRoleId);
+          if (def) base = def.permissions;
+          try {
+            const resp = await fetch(`/api/role-perms/${resolvedAppRoleId}`);
+            if (resp.ok) {
+              const data = await resp.json();
+              if (data?.permissions) base = data.permissions as RolePermissions;
+            }
+          } catch {}
+          try {
+            const raw = localStorage.getItem(`rolePerms:${resolvedAppRoleId}`);
+            if (raw) base = JSON.parse(raw);
+          } catch {}
+        }
+        setPerms(base);
+      } catch (err: any) {
+        // Network or Supabase errors should not crash the app; show friendly toast
+        if (
+          err &&
+          (err.message?.toLowerCase?.().includes("failed to fetch") ||
+            err.message?.toLowerCase?.().includes("network"))
+        ) {
+          toast({
+            title: "Network error",
+            description:
+              "Unable to reach Supabase. Check VITE_SUPABASE_URL and your network connection.",
+          });
+        }
       }
-      setPerms(base);
     })();
     return () => {
       mounted = false;
@@ -128,6 +143,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = useCallback(
     async (email: string, password: string) => {
+      if (!isSupabaseConfigured) {
+        toast({
+          title: "Supabase not configured",
+          description:
+            "Authentication is disabled because VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY is missing. Set them in project settings.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       try {
         const { error } = await supabase.auth.signInWithPassword({
           email,
@@ -136,6 +161,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (error) throw error;
         navigate("/dashboard", { replace: true });
       } catch (err: any) {
+        // If the error is a network/fetch failure, show clearer guidance
+        const msg = String(err?.message || err || "Authentication error");
+        if (
+          msg.toLowerCase().includes("failed to fetch") ||
+          msg.toLowerCase().includes("network")
+        ) {
+          toast({
+            title: "Network error",
+            description:
+              "Unable to reach Supabase. Verify VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in project settings and ensure network access.",
+            variant: "destructive",
+          });
+          return;
+        }
+
         try {
           const { data, error } = await supabase.auth.signUp({
             email,

@@ -28,6 +28,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabaseClient";
 import { COURSES } from "@/data/courses";
+import { useCampuses } from "@/lib/campusStore";
 import type { AdmissionRecord } from "./types";
 
 const FALLBACK_CAMPUS = "Main";
@@ -118,6 +119,13 @@ export function NewAdmissionTab({ onCreated }: Props) {
   const [phone, setPhone] = useState("");
   const [courseId, setCourseId] = useState("");
   const [campus, setCampus] = useState(FALLBACK_CAMPUS);
+  const campusOptions = useCampuses();
+
+  useEffect(() => {
+    if ((!campus || campus === FALLBACK_CAMPUS) && campusOptions.length) {
+      setCampus(campusOptions[0]);
+    }
+  }, [campusOptions]);
   const [startDate, setStartDate] = useState("");
   const [notes, setNotes] = useState("");
 
@@ -132,15 +140,16 @@ export function NewAdmissionTab({ onCreated }: Props) {
       if (supabase) {
         const { data, error } = await supabase
           .from<CourseRow>("courses")
-          .select("id, name, fees, tuition, duration, status")
-          .eq("status", "live")
+          .select(
+            "id, name, fees, duration, status, category, description, featured, start_date, created_at",
+          )
           .order("created_at", { ascending: false });
 
         if (!error && Array.isArray(data) && data.length > 0) {
           const mapped = data.map((row) => ({
             id: String(row.id ?? crypto.randomUUID()),
             name: row.name ?? "Untitled Course",
-            fees: Number(row.fees ?? row.tuition ?? 0) || 0,
+            fees: Number(row.fees ?? 0) || 0,
             duration: row.duration ?? null,
           }));
           setCourses(mapped);
@@ -462,12 +471,18 @@ export function NewAdmissionTab({ onCreated }: Props) {
             </div>
             <div className="space-y-2">
               <Label htmlFor="campus">Campus</Label>
-              <Input
-                id="campus"
-                placeholder="Main"
-                value={campus}
-                onChange={(event) => setCampus(event.target.value)}
-              />
+              <Select value={campus} onValueChange={setCampus}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select campus" />
+                </SelectTrigger>
+                <SelectContent>
+                  {campusOptions.map((c) => (
+                    <SelectItem key={c} value={c}>
+                      {c}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 

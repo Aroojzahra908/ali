@@ -43,6 +43,8 @@ import Login from "./pages/Login";
 import { AppLayout } from "./components/layout/AppSidebar";
 import { AppHeader } from "./components/layout/AppHeader";
 import { PublicLayout } from "./components/layout/PublicLayout";
+import { ErrorBoundary } from "./components/ErrorBoundary";
+import "@/lib/globalErrorHandlers";
 
 const queryClient = new QueryClient();
 
@@ -69,179 +71,181 @@ const App = () => (
               <div className="p-6 text-sm text-muted-foreground">Loading…</div>
             }
           >
-            <Routes>
-              {/* Public site */}
-              <Route element={<PublicLayout />}>
-                <Route path="/" element={<Home />} />
-                <Route path="/courses" element={<CourseCatalog />} />
-                <Route path="/courses/featured" element={<CourseCatalog />} />
-                <Route path="/courses/upcoming" element={<CourseCatalog />} />
-                <Route path="/courses/latest" element={<CourseCatalog />} />
-                <Route
-                  path="/courses/category/:cat"
-                  element={<CourseCatalog />}
-                />
-                <Route path="/admission-form" element={<AdmissionForm />} />
-                <Route path="/contact" element={<Contact />} />
-              </Route>
+            <ErrorBoundary>
+              <Routes>
+                {/* Public site */}
+                <Route element={<PublicLayout />}>
+                  <Route path="/" element={<Home />} />
+                  <Route path="/courses" element={<CourseCatalog />} />
+                  <Route path="/courses/featured" element={<CourseCatalog />} />
+                  <Route path="/courses/upcoming" element={<CourseCatalog />} />
+                  <Route path="/courses/latest" element={<CourseCatalog />} />
+                  <Route
+                    path="/courses/category/:cat"
+                    element={<CourseCatalog />}
+                  />
+                  <Route path="/admission-form" element={<AdmissionForm />} />
+                  <Route path="/contact" element={<Contact />} />
+                </Route>
 
-              {/* Auth */}
-              <Route path="/login" element={<Login />} />
-              <Route
-                path="/roles"
-                element={<Navigate to="/dashboard/roles" replace />}
-              />
-
-              {/* Dashboard (protected) */}
-              <Route
-                element={
-                  <RequireAuth>
-                    <DashboardLayout />
-                  </RequireAuth>
-                }
-              >
+                {/* Auth */}
+                <Route path="/login" element={<Login />} />
                 <Route
-                  path="/dashboard"
-                  element={
-                    <RequirePermission module="Dashboard" redirectTo={null}>
-                      <Index />
-                    </RequirePermission>
-                  }
-                />
-                <Route
-                  path="/dashboard/students"
-                  element={
-                    <RequirePermission module="Students">
-                      <Students />
-                    </RequirePermission>
-                  }
-                />
-                <Route
-                  path="/dashboard/enquiries"
-                  element={
-                    <RequirePermission module="Enquiries">
-                      <Enquiries />
-                    </RequirePermission>
-                  }
-                />
-                <Route
-                  path="/dashboard/enquiries/:id"
-                  element={
-                    <RequirePermission module="Enquiries">
-                      <EnquiryDetails />
-                    </RequirePermission>
-                  }
-                />
-                <Route
-                  path="/dashboard/admissions"
-                  element={
-                    <RequirePermission module="Admissions">
-                      <Admissions />
-                    </RequirePermission>
-                  }
+                  path="/roles"
+                  element={<Navigate to="/dashboard/roles" replace />}
                 />
 
+                {/* Dashboard (protected) */}
                 <Route
-                  path="/dashboard/roles"
                   element={
-                    <RequireAuth allowedRoles={["owner"]}>
-                      <Roles />
+                    <RequireAuth>
+                      <DashboardLayout />
                     </RequireAuth>
                   }
-                />
-                <Route
-                  path="/dashboard/courses"
-                  element={
-                    <RequirePermission module="Courses">
-                      <Courses />
-                    </RequirePermission>
-                  }
-                />
-                {/* Fees module removed */}
-                <Route
-                  path="/dashboard/reports"
-                  element={
-                    <RequirePermission module="Reports">
-                      <Reports />
-                    </RequirePermission>
-                  }
-                />
-                <Route
-                  path="/dashboard/accounts"
-                  element={
-                    <RequireAuth allowedRoles={["owner"]}>
-                      <Accounts />
-                    </RequireAuth>
-                  }
-                />
-                <Route
-                  path="/dashboard/batches"
-                  element={
-                    <RequirePermission module="Batches">
-                      <Batches />
-                    </RequirePermission>
-                  }
-                />
-                <Route
-                  path="/dashboard/certificates"
-                  element={
-                    <RequirePermission module="Certificates">
-                      <Certificates />
-                    </RequirePermission>
-                  }
-                />
-                <Route
-                  path="/dashboard/campuses"
-                  element={
-                    <RequirePermission module="Campuses">
-                      <Campuses />
-                    </RequirePermission>
-                  }
-                />
-                <Route
-                  path="/dashboard/employees"
-                  element={
-                    <RequirePermission module="Employees">
-                      <Employees />
-                    </RequirePermission>
-                  }
-                />
-                <Route
-                  path="/dashboard/users"
-                  element={
-                    <RequirePermission module="Users">
-                      <Users />
-                    </RequirePermission>
-                  }
-                />
-                <Route
-                  path="/dashboard/events"
-                  element={
-                    <RequirePermission module="Events">
-                      <Events />
-                    </RequirePermission>
-                  }
-                />
-                <Route
-                  path="/dashboard/expenses"
-                  element={
-                    <RequirePermission module="Expenses">
-                      <Expenses />
-                    </RequirePermission>
-                  }
-                />
-                <Route
-                  path="/dashboard/contact-messages"
-                  element={
-                    <RequirePermission module="Enquiries">
-                      <ContactMessages />
-                    </RequirePermission>
-                  }
-                />
-              </Route>
+                >
+                  <Route
+                    path="/dashboard"
+                    element={
+                      <RequirePermission module="Dashboard" redirectTo={null}>
+                        <Index />
+                      </RequirePermission>
+                    }
+                  />
+                  <Route
+                    path="/dashboard/students"
+                    element={
+                      <RequirePermission module="Students">
+                        <Students />
+                      </RequirePermission>
+                    }
+                  />
+                  <Route
+                    path="/dashboard/enquiries"
+                    element={
+                      <RequirePermission module="Enquiries">
+                        <Enquiries />
+                      </RequirePermission>
+                    }
+                  />
+                  <Route
+                    path="/dashboard/enquiries/:id"
+                    element={
+                      <RequirePermission module="Enquiries">
+                        <EnquiryDetails />
+                      </RequirePermission>
+                    }
+                  />
+                  <Route
+                    path="/dashboard/admissions"
+                    element={
+                      <RequirePermission module="Admissions">
+                        <Admissions />
+                      </RequirePermission>
+                    }
+                  />
 
-              <Route path="*" element={<NotFound />} />
-            </Routes>
+                  <Route
+                    path="/dashboard/roles"
+                    element={
+                      <RequireAuth allowedRoles={["owner"]}>
+                        <Roles />
+                      </RequireAuth>
+                    }
+                  />
+                  <Route
+                    path="/dashboard/courses"
+                    element={
+                      <RequirePermission module="Courses">
+                        <Courses />
+                      </RequirePermission>
+                    }
+                  />
+                  {/* Fees module removed */}
+                  <Route
+                    path="/dashboard/reports"
+                    element={
+                      <RequirePermission module="Reports">
+                        <Reports />
+                      </RequirePermission>
+                    }
+                  />
+                  <Route
+                    path="/dashboard/accounts"
+                    element={
+                      <RequireAuth allowedRoles={["owner"]}>
+                        <Accounts />
+                      </RequireAuth>
+                    }
+                  />
+                  <Route
+                    path="/dashboard/batches"
+                    element={
+                      <RequirePermission module="Batches">
+                        <Batches />
+                      </RequirePermission>
+                    }
+                  />
+                  <Route
+                    path="/dashboard/certificates"
+                    element={
+                      <RequirePermission module="Certificates">
+                        <Certificates />
+                      </RequirePermission>
+                    }
+                  />
+                  <Route
+                    path="/dashboard/campuses"
+                    element={
+                      <RequirePermission module="Campuses">
+                        <Campuses />
+                      </RequirePermission>
+                    }
+                  />
+                  <Route
+                    path="/dashboard/employees"
+                    element={
+                      <RequirePermission module="Employees">
+                        <Employees />
+                      </RequirePermission>
+                    }
+                  />
+                  <Route
+                    path="/dashboard/users"
+                    element={
+                      <RequirePermission module="Users">
+                        <Users />
+                      </RequirePermission>
+                    }
+                  />
+                  <Route
+                    path="/dashboard/events"
+                    element={
+                      <RequirePermission module="Events">
+                        <Events />
+                      </RequirePermission>
+                    }
+                  />
+                  <Route
+                    path="/dashboard/expenses"
+                    element={
+                      <RequirePermission module="Expenses">
+                        <Expenses />
+                      </RequirePermission>
+                    }
+                  />
+                  <Route
+                    path="/dashboard/contact-messages"
+                    element={
+                      <RequirePermission module="Enquiries">
+                        <ContactMessages />
+                      </RequirePermission>
+                    }
+                  />
+                </Route>
+
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </ErrorBoundary>
           </Suspense>
         </AuthProvider>
       </BrowserRouter>

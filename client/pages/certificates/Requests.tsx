@@ -1,10 +1,25 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
+import { supabase } from "@/lib/supabaseClient";
+import { batches as fallbackBatches, courses as fallbackCourses } from "./data";
 import { StatusBadge } from "./StatusBadge";
 import { CERTIFICATE_TYPES, REQUEST_KINDS, RequestKind } from "./types";
 import type { CertificateRequest } from "./types";
@@ -25,6 +40,62 @@ export function RequestsTab({
   const [type, setType] = useState(CERTIFICATE_TYPES[0]);
   const [query, setQuery] = useState("");
 
+  const [batchOptions, setBatchOptions] = useState<string[]>(fallbackBatches);
+  const [courseOptions, setCourseOptions] = useState<string[]>(fallbackCourses);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        if (!supabase) {
+          setBatchOptions(fallbackBatches);
+          setCourseOptions(fallbackCourses);
+          return;
+        }
+
+        // Fetch batches
+        try {
+          const { data: bData, error: bErr } = await supabase
+            .from("batches")
+            .select("batch_code")
+            .order("batch_code", { ascending: true });
+          if (!bErr && Array.isArray(bData)) {
+            const codes = Array.from(
+              new Set(
+                bData
+                  .map((b: any) => String(b.batch_code || ""))
+                  .filter(Boolean),
+              ),
+            );
+            if (codes.length) setBatchOptions(codes);
+          }
+        } catch (e) {
+          // ignore
+        }
+
+        // Fetch courses
+        try {
+          const { data: cData, error: cErr } = await supabase
+            .from("courses")
+            .select("name")
+            .order("name", { ascending: true });
+          if (!cErr && Array.isArray(cData)) {
+            const names = Array.from(
+              new Set(
+                cData.map((c: any) => String(c.name || "")).filter(Boolean),
+              ),
+            );
+            if (names.length) setCourseOptions(names);
+          }
+        } catch (e) {
+          // ignore
+        }
+      } catch (err) {
+        setBatchOptions(fallbackBatches);
+        setCourseOptions(fallbackCourses);
+      }
+    })();
+  }, []);
+
   const filtered = useMemo(() => {
     if (!query.trim()) return data;
     const q = query.toLowerCase();
@@ -41,7 +112,8 @@ export function RequestsTab({
   const submit = () => {
     let newReq: CertificateRequest | null = null;
     if (kind === "student") {
-      if (!student.id && !student.name) return toast({ title: "Enter Student ID or Name" });
+      if (!student.id && !student.name)
+        return toast({ title: "Enter Student ID or Name" });
       newReq = {
         id: genId(),
         studentId: student.id || "NA",
@@ -115,7 +187,9 @@ export function RequestsTab({
               </SelectTrigger>
               <SelectContent>
                 {REQUEST_KINDS.map((k) => (
-                  <SelectItem key={k.value} value={k.value}>{k.label}</SelectItem>
+                  <SelectItem key={k.value} value={k.value}>
+                    {k.label}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -128,28 +202,64 @@ export function RequestsTab({
               </SelectTrigger>
               <SelectContent>
                 {CERTIFICATE_TYPES.map((t) => (
-                  <SelectItem key={t} value={t}>{t}</SelectItem>
+                  <SelectItem key={t} value={t}>
+                    {t}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
           <div>
             <Label>Batch</Label>
-            <Input placeholder="e.g., FSWD-2024A" value={batch} onChange={(e) => setBatch(e.target.value)} />
+            <Select value={batch} onValueChange={(v) => setBatch(v)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select batch" />
+              </SelectTrigger>
+              <SelectContent>
+                {batchOptions.map((b) => (
+                  <SelectItem key={b} value={b}>
+                    {b}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div>
             <Label>Course</Label>
-            <Input placeholder="e.g., Data Science" value={course} onChange={(e) => setCourse(e.target.value)} />
+            <Select value={course} onValueChange={(v) => setCourse(v)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select course" />
+              </SelectTrigger>
+              <SelectContent>
+                {courseOptions.map((c) => (
+                  <SelectItem key={c} value={c}>
+                    {c}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           {kind === "student" || kind === "online" ? (
             <>
               <div>
                 <Label>Student ID</Label>
-                <Input placeholder="e.g., STU-0001" value={student.id} onChange={(e) => setStudent({ ...student, id: e.target.value })} />
+                <Input
+                  placeholder="e.g., STU-0001"
+                  value={student.id}
+                  onChange={(e) =>
+                    setStudent({ ...student, id: e.target.value })
+                  }
+                />
               </div>
               <div>
                 <Label>Student Name</Label>
-                <Input placeholder="e.g., Aarav Sharma" value={student.name} onChange={(e) => setStudent({ ...student, name: e.target.value })} />
+                <Input
+                  placeholder="e.g., Aarav Sharma"
+                  value={student.name}
+                  onChange={(e) =>
+                    setStudent({ ...student, name: e.target.value })
+                  }
+                />
               </div>
             </>
           ) : null}
@@ -161,7 +271,12 @@ export function RequestsTab({
 
       <div className="flex items-center justify-between gap-2">
         <div className="text-sm font-medium">All Requests</div>
-        <Input className="max-w-xs" placeholder="Search student, batch, course…" value={query} onChange={(e) => setQuery(e.target.value)} />
+        <Input
+          className="max-w-xs"
+          placeholder="Search student, batch, course…"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+        />
       </div>
 
       <Table>
@@ -181,15 +296,21 @@ export function RequestsTab({
               <TableCell>{r.id}</TableCell>
               <TableCell>
                 <div className="font-medium">{r.studentName}</div>
-                <div className="text-xs text-muted-foreground">{r.studentId}</div>
+                <div className="text-xs text-muted-foreground">
+                  {r.studentId}
+                </div>
               </TableCell>
               <TableCell>
                 <div>{r.course}</div>
                 <div className="text-xs text-muted-foreground">{r.batch}</div>
               </TableCell>
               <TableCell>{r.type}</TableCell>
-              <TableCell><StatusBadge status={r.status} /></TableCell>
-              <TableCell className="text-right text-xs">{new Date(r.requestedAt).toLocaleString()}</TableCell>
+              <TableCell>
+                <StatusBadge status={r.status} />
+              </TableCell>
+              <TableCell className="text-right text-xs">
+                {new Date(r.requestedAt).toLocaleString()}
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>

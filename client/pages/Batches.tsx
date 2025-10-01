@@ -57,7 +57,8 @@ export interface TimeSlot {
 }
 
 // Courses now come from admin-added list via courseStore
-const CAMPUSES = ["Main Campus", "North Campus", "City Campus"];
+import { useCampuses } from "@/lib/campusStore";
+
 const INSTRUCTORS = [
   "Zara Khan",
   "Bilal Ahmad",
@@ -91,6 +92,7 @@ function statusFromDates(
 }
 
 export default function Batches() {
+  const campusOptions = useCampuses();
   const [batches, setBatches] = useState<BatchItem[]>([]);
   const [slots, setSlots] = useState<TimeSlot[]>([]);
 
@@ -178,7 +180,7 @@ export default function Batches() {
 
   // Create form defaults
   const [cCourse, setCCourse] = useState("");
-  const [cCampus, setCCampus] = useState(CAMPUSES[0]);
+  const [cCampus, setCCampus] = useState(campusOptions[0] || "");
   const [cInstructor, setCInstructor] = useState("");
 
   const [activeBatchId, setActiveBatchId] = useState<string>(
@@ -216,6 +218,10 @@ export default function Batches() {
     if (!cCourse && coursesDyn.length) setCCourse(coursesDyn[0]);
   }, [coursesDyn, cCourse]);
 
+  useEffect(() => {
+    if (!cCampus && campusOptions.length) setCCampus(campusOptions[0]);
+  }, [campusOptions, cCampus]);
+
   const genCode = (course: string, campus: string) => {
     const c = course
       .split(" ")
@@ -246,7 +252,7 @@ export default function Batches() {
       return;
     }
     try {
-      const { data: rows, error } = await supabase!
+      const res = await supabase!
         .from("batches")
         .insert({
           course_name: cCourse,
@@ -262,8 +268,14 @@ export default function Batches() {
           "batch_id, course_name, campus_name, batch_code, start_date, end_date, instructor, max_students, current_students, status, created_at",
         )
         .single();
-      if (error) throw error;
-      const r: any = rows;
+      if (res.error) {
+        toast({
+          title: "Create failed",
+          description: res.error.message || String(res.error),
+        });
+        return;
+      }
+      const r: any = res.data;
       const b: BatchItem = {
         id: r.batch_id,
         course: r.course_name,
@@ -405,7 +417,7 @@ export default function Batches() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
-                        {CAMPUSES.map((c) => (
+                        {campusOptions.map((c) => (
                           <SelectItem key={c} value={c}>
                             {c}
                           </SelectItem>
