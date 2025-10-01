@@ -256,30 +256,7 @@ export function Details({
           <Badge>{rec.status}</Badge>
         </div>
       </div>
-      <Separator />
-
-      <div className="space-y-2">
-        <div className="text-xs text-muted-foreground">Enroll Student</div>
-        <Label>Batch</Label>
-        <Select value={batch} onValueChange={setBatch}>
-          <SelectTrigger>
-            <SelectValue placeholder="Select batch" />
-          </SelectTrigger>
-          <SelectContent>
-            {batchOptions.map((b) => (
-              <SelectItem key={b} value={b}>
-                {b}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <div className="flex justify-end pt-2">
-          <Button onClick={confirmAdmission}>Enroll</Button>
-        </div>
-      </div>
-
-      <Separator />
-
+    
       <div className="flex flex-wrap gap-3 items-center">
         <Button onClick={confirmAdmission} className="rounded-full px-6 py-2">
           Approve & Move to Students
