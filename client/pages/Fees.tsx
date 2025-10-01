@@ -718,7 +718,7 @@ export default function Fees() {
                 </div>
                 <div className="space-y-1.5">
                   <Label>Start Date</Label>
-                  <Input name="start" type="date" defaultValue={today()} />
+                  <DatePicker name="start" defaultValue={today()} />
                 </div>
                 <div className="space-y-1.5">
                   <Label>Total Fee Assigned</Label>
