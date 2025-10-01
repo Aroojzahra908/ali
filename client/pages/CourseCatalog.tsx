@@ -169,7 +169,7 @@ export default function CourseCatalog() {
               <h1 className="mt-2 text-3xl font-bold leading-tight sm:text-4xl">Build real skills with our courses</h1>
               <p className="mt-2 max-w-2xl text-white/80">Hands-on training, expert mentors, and flexible schedules. Start today and fast‑track your growth.</p>
               <div className="mt-5 flex flex-wrap gap-3">
-                <Button asChild variant="secondary" className="bg-white text-foreground hover:bg-white/90">
+                <Button asChild className="bg-white text-black hover:bg-white hover:text-black">
                   <Link to="/admission-form">Get Admission</Link>
                 </Button>
                 <Button asChild className="bg-white text-black hover:bg-white/90">

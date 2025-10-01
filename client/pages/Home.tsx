@@ -104,8 +104,8 @@ export default function Home() {
                 <Button asChild className="bg-white text-foreground hover:bg-white/90">
                   <Link to="/courses">Browse Courses</Link>
                 </Button>
-                <Button asChild variant="outline" className="border-white/60 text-white hover:bg-white/10">
-                  <Link to="/admission-form" className="text-white">Get Admission</Link>
+                <Button asChild className="bg-white text-black hover:bg-white hover:text-black">
+                  <Link to="/admission-form">Get Admission</Link>
                 </Button>
                 <Button asChild className="bg-white text-black hover:bg-white/90">
                   <Link to="/contact">Contact Us</Link>
