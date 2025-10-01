@@ -109,11 +109,11 @@ export default function Employees() {
                 </div>
                 <div className="space-y-1.5">
                   <Label>Campus</Label>
-                  <Select name="campus" defaultValue={CAMPUSES[0]}>
+                  <Select name="campus" defaultValue={campusOptions[0] || ""}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
-                        {CAMPUSES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                        {campusOptions.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                       </SelectGroup>
                     </SelectContent>
                   </Select>
